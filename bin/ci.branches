@@ -1,0 +1,12 @@
+#!/bin/sh -exu
+
+export LC_COLLATE=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+if find $HOME/.cabal/packages/hackage.haskell.org/00-index.cache -type f -mtime +1 | grep -q 00-index; then
+    cabal update
+fi
+
+# test-only token (can only send notify, and only to ambiata-test.)
+export HIPCHAT_TOKEN=I9sXvAlxtrh5urTGKJCdCfyq21g5jC2Odojx4DJD
+make test
