@@ -1,13 +1,6 @@
-import           Data.Text (Text, pack)
-
-import           Warden
-
 import           Options.Applicative
 
-import           System.Environment
 import           System.Exit
-
-import           Text.Read (readMaybe)
 
 data Command =
   Command {
@@ -15,8 +8,8 @@ data Command =
 
 main :: IO ()
 main =
-  execParser (info commandParser idm) >>= \c -> do
-    putStrLn "TODO"
+  execParser (info commandParser idm) >>= \_ -> do
+    putStrLn "TODO" >> exitFailure
 
 commandParser :: Parser Command
 commandParser =
