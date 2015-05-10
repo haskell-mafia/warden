@@ -58,10 +58,10 @@ test-suite test
   build-depends:
                        base                            >= 3          && < 5
                      , aeson
-                     , warden
-                     , orphanarium-aeson
-                     , orphanarium-corpus
+                     , disorder-aeson
+                     , disorder-corpus
                      , p
                      , text
                      , QuickCheck
                      , quickcheck-instances            == 0.3.*
+                     , warden
