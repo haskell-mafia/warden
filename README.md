@@ -13,40 +13,6 @@ or for enforcing the regulations associated with it.
 Warden is the gatekeeper for data entering our system.
 
 
-Configuration
--------------
-
-Warden needs a description of a view and the checks to run.
-
-A minimal description:
-
-```
-[warden]
-        format: pdv|cdv|psv|csv|json|etc...
-```
-
-This will run the bare minimum set of checks:
- - No corrupt/long lines.
- - Each row tokenizes correctly with a consistent length.
- - (Very) Basic PII checks.
-
-Each format also supports a number of additional checks, for example:
-
-```
-[pdv]
-        columns: 4
-        types:
-                string
-                int
-                string
-                string
-
-```
-
-From the information provided, a maximal set of statistics and
-cross-checks will be determined for the dataset.
-
-
 Metadata
 --------
 
@@ -68,12 +34,19 @@ state will be clear:
  - Enough to do roll-ups to determine the "health" of a
    feed overall.
 
+ - These should be something we can eventually push to a
+   centralized service (brandix?).
+
 
 Running
 -------
 
 Warden is a command line tool, and will be run directly against a
-local copy of a view. The view must contain the warden configuration.
+local copy of a view.
+
+Where a view is the traditional hive-style,
+`year=..../month=../day=../dataset` partitioning.
+
 Warden will run on all files that require checks. Warden will store
 its metadata back into the view.
 
@@ -95,6 +68,7 @@ options to:
 Future Work
 -----------
 
+ - Fixed schema configuration.
  - Automate schema/check inference based on a sample dataset.
  - Tighter integration with monitoring tools (sending alerts, feeding into smarter online checking etc...).
  - warden integration for downstream tools so they only accept warden approved feeds.
