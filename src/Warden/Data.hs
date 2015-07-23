@@ -13,12 +13,8 @@ module Warden.Data (
   , Median(..)
   , Variance(..)
   , NumericSummary(..)
-  , RowSchema
-  , WardenCheck
-  , fromRow
-  , initial
-  , update
-  , finalize
+  , RowSchema(..)
+  , WardenCheck(..)
   , inferFields
   ) where
 
@@ -50,13 +46,14 @@ data WardenStatus = Green
 --                what failures look like - row(s) affected, et cetera
 data CheckResult = CheckResult WardenStatus Text
 
-class RowSchema a where
-    fromRow :: SVRow -> Maybe a
+data RowSchema a = RowSchema
+  { fromRow :: SVRow -> Maybe a }
 
-class (RowSchema b) => WardenCheck a b where
-    initial   :: a
-    update    :: a -> b -> a
-    finalize  :: a -> CheckResult
+data WardenCheck a b = WardenCheck
+  { initial   :: a
+  , update    :: a -> RowSchema b -> a
+  , finalize  :: a -> CheckResult
+  }
 
 newtype Minimum = Minimum { getMininum :: Double }
   deriving (Eq, Show)
