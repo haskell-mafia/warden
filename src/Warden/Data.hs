@@ -7,6 +7,12 @@ module Warden.Data (
   , WardenStatus(..)
   , CheckResult(..)
   , SVParseState(..)
+  , Minimum(..)
+  , Maximum(..)
+  , Mean(..)
+  , Median(..)
+  , Variance(..)
+  , NumericSummary(..)
   , RowSchema
   , WardenCheck
   , fromRow
@@ -14,16 +20,10 @@ module Warden.Data (
   , update
   , finalize
   , inferFields
-
-  , badRecords
-  , totalRecords
-  , numFields
-  , fieldCounts
   ) where
 
 import P
 
-import Control.Lens
 import Data.Map (Map)
 import Data.Vector (Vector)
 import Data.Text (Text)
@@ -35,16 +35,20 @@ data SVRow = SVFields (Vector Text)
   deriving (Eq, Show)
 
 data WardenStatus = Green
-                   -- ^ No issues detected.
-                 | Yellow
-                   -- ^ Some values are concerning and should be investigated 
-                   --   by a human.
-                 | Red
-                   -- ^ At least one check failed. 
-                 | Unknown
-                   -- ^ We broke, or weren't given enough data.
+                    -- ^ No issues detected.
+                  | Yellow
+                    -- ^ Some values are concerning and should be investigated 
+                    --   by a human.
+                  | Red
+                    -- ^ At least one check failed, processing should not
+                    --   proceed without human intervention.
+                  | Unknown
+                    -- ^ We broke, or weren't given enough data.
+  deriving (Eq, Show, Ord)
 
-data CheckResult = CheckResult
+-- FIXME(sharif): this could use more structure once we have a better idea of
+--                what failures look like - row(s) affected, et cetera
+data CheckResult = CheckResult WardenStatus Text
 
 class RowSchema a where
     fromRow :: SVRow -> Maybe a
@@ -53,6 +57,37 @@ class (RowSchema b) => WardenCheck a b where
     initial   :: a
     update    :: a -> b -> a
     finalize  :: a -> CheckResult
+
+newtype Minimum = Minimum { getMininum :: Double }
+  deriving (Eq, Show)
+
+newtype Maximum = Maximum { getMaximum :: Double }
+  deriving (Eq, Show)
+
+newtype Mean = Mean { getMean :: Double }
+  deriving (Eq, Show)
+
+newtype Median = Median { getMedian :: Double }
+  deriving (Eq, Show)
+
+newtype Variance = Variance { getVariance :: Double }
+  deriving (Eq, Show)
+
+-- | So we can cheaply keep track of long-term change in numeric datasets.
+--   Will probably also end up in brandix.
+
+-- NB(sharif): I'm not sure if the median is worth calculating as it
+--             can't be done cheaply, but it's handy for tests like
+--             S-H-ESD; should rethink once we know more about which
+--             tests actually work.
+data NumericSummary = NumericSummary
+  { _min :: Minimum
+  , _max :: Maximum
+  , _mean :: Mean
+  , _var :: Maybe Variance
+  , _median :: Maybe Median
+  }
+  deriving (Eq, Show)
 
 -- | We try parsing a field as each of these in order until we find one that 
 --   works.
@@ -77,8 +112,6 @@ data SVParseState = SVParseState
   , _numFields    :: Integer
   , _fieldCounts  :: Vector (Map FieldLooks Integer, TextCount)
   } deriving (Eq, Show)
-
-makeLenses ''SVParseState
 
 inferFields :: (Monad m)
             => Producer SVRow m ()
