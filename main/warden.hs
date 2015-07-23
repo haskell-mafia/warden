@@ -1,16 +1,29 @@
-import           Options.Applicative
+{-# LANGUAGE LambdaCase #-}
 
+import           Options.Applicative
 import           System.Exit
 
-data Command =
-  Command {
-    } deriving (Eq, Show)
+import           X.Options.Applicative
+
+data Command = Check FilePath
+  deriving (Eq, Show)
 
 main :: IO ()
-main =
-  execParser (info commandParser idm) >>= \_ -> do
-    putStrLn "TODO" >> exitFailure
+main = do
+  dispatch parse >>= \case
+    VersionCommand -> do
+      exitSuccess
+    RunCommand DryRun c -> do
+      print c
+      exitSuccess
+    RunCommand RealRun _ -> do
+      putStrLn "nyi"
+      exitSuccess
 
-commandParser :: Parser Command
-commandParser =
-  pure Command
+parse :: Parser (SafeCommand Command)
+parse = safeCommand (Check <$> view)
+
+view :: Parser FilePath
+view = strArgument $
+     metavar "VIEW"
+  <> help "Path to view."
