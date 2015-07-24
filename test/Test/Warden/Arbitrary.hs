@@ -15,6 +15,7 @@ import Test.QuickCheck
 newtype SVSep = SVSep { getSVSep :: Word8 }
   deriving (Eq, Show, Ord)
 
+-- | [^a-zA-Z]
 instance Arbitrary SVSep where
   arbitrary = elements $ SVSep <$> ([32..64] <> [91..96] <> [123..126])
 
@@ -32,8 +33,6 @@ newtype FieldCount = FieldCount { getFieldCount :: Int }
 
 instance Arbitrary FieldCount where
   arbitrary = FieldCount <$> choose (1, 10)
-
-instance Arbitrary Text where
 
 validSVField :: SVSep
              -> Gen Text

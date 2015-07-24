@@ -30,7 +30,6 @@ prop_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs -
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
-    BL.writeFile "/tmp/xsv" $ encodeWith opts svrs
     res <- withFile fp ReadMode $ \h -> do
       runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
     case res of
@@ -44,4 +43,4 @@ prop_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs -
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ verboseCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
