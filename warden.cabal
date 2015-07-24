@@ -16,7 +16,7 @@ library
                      , attoparsec                      == 0.12.*
                      , bifunctors                      >= 4 && < 6
                      , bytestring                      == 0.10.*
-                     , cassava                        
+                     , cassava                         == 0.4.*
                      , containers                      == 0.5.*
                      , directory                       == 1.2.*
                      , either                          == 4.3.*
