@@ -37,8 +37,9 @@ instance Arbitrary FieldCount where
 validSVField :: SVSep
              -> Gen Text
 validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
-  (listOf1 arbitrary) `suchThat` (all validWord)
+  (listOf arbitrary) `suchThat` (all validWord)
  where
+  -- not the separator, and valid UTF-8/ASCII.
   validWord w = w /= s && w <= 127
 
 validSVRow :: SVSep -> FieldCount -> Gen ValidSVRow
