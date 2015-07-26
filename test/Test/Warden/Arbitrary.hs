@@ -32,7 +32,7 @@ newtype FieldCount = FieldCount { getFieldCount :: Int }
   deriving (Eq, Show, Ord)
 
 instance Arbitrary FieldCount where
-  arbitrary = FieldCount <$> choose (1, 10)
+  arbitrary = FieldCount <$> choose (2, 10)
 
 validSVField :: SVSep
              -> Gen Text
