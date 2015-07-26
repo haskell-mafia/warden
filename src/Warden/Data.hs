@@ -1,6 +1,6 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Warden.Data (
     Row(..)
@@ -18,14 +18,14 @@ module Warden.Data (
   , inferFields
   ) where
 
-import P
+import           P
 
-import Data.Map (Map)
-import Data.Vector (Vector)
-import Data.Text (Text)
-import Pipes
+import           Data.Map     (Map)
+import           Data.Text    (Text)
+import           Data.Vector  (Vector)
+import           Pipes
 
--- | Raw record. Can be extended to support JSON objects as well as xSV if 
+-- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
 data Row = SVFields (Vector Text)
            | RowFailure Text
@@ -35,7 +35,7 @@ data Row = SVFields (Vector Text)
 data WardenStatus = Green
                     -- ^ No issues detected.
                   | Yellow
-                    -- ^ Some values are concerning and should be investigated 
+                    -- ^ Some values are concerning and should be investigated
                     --   by a human.
                   | Red
                     -- ^ At least one check failed, processing should not
@@ -52,9 +52,9 @@ data RowSchema a = RowSchema
   { fromRow :: Row -> Maybe a }
 
 data WardenCheck a b = WardenCheck
-  { initial   :: a
-  , update    :: a -> RowSchema b -> a
-  , finalize  :: a -> CheckResult
+  { initial  :: a
+  , update   :: a -> RowSchema b -> a
+  , finalize :: a -> CheckResult
   }
 
 newtype Minimum = Minimum { getMininum :: Double }
@@ -80,15 +80,15 @@ newtype Variance = Variance { getVariance :: Double }
 --             S-H-ESD; should rethink once we know more about which
 --             tests actually work.
 data NumericSummary = NumericSummary
-  { _min :: Minimum
-  , _max :: Maximum
-  , _mean :: Mean
-  , _var :: Maybe Variance
+  { _min    :: Minimum
+  , _max    :: Maximum
+  , _mean   :: Mean
+  , _var    :: Maybe Variance
   , _median :: Maybe Median
   }
   deriving (Eq, Show)
 
--- | We try parsing a field as each of these in order until we find one that 
+-- | We try parsing a field as each of these in order until we find one that
 --   works.
 data FieldLooks = LooksEmpty
                 | LooksIntegral
