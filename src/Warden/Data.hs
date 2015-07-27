@@ -126,9 +126,9 @@ data SVParseState = SVParseState
 
 makeLenses ''SVParseState
 
-data Field = IntegralField Integer
-           | RealField Double
-           | TextField Text
+data ParsedField = IntegralField Integer
+                 | RealField Double
+                 | TextField Text
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 [] Nothing
