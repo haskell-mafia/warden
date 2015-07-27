@@ -73,8 +73,8 @@ validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
 validSVRow :: SVSep -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
 
-validRow :: FieldCount -> Gen Row
-validRow (FieldCount n) = (SVFields . V.fromList) <$>
+tokenizedRow :: FieldCount -> Gen Row
+tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
   vectorOf n (oneof [textField, integralField, realField])
 
 textField :: Gen Text

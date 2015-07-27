@@ -17,8 +17,8 @@ import Test.Warden.Arbitrary
 
 import Warden.Data
 
-prop_valid_parse_state :: FieldCount -> RowCount -> Property
-prop_valid_parse_state i n = forAll (vectorOf (getRowCount n) $ validRow i) $ \rows ->
+prop_tok_count_state :: FieldCount -> RowCount -> Property
+prop_tok_count_state i n = forAll (vectorOf (getRowCount n) $ tokenizedRow i) $ \rows ->
   let st = runIdentity . countFields $ each rows in
          ((st ^. totalRows) === fromIntegral (getRowCount n))
     .&&. ((st ^. badRows) === 0)
