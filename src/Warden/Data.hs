@@ -17,8 +17,8 @@ module Warden.Data (
   , RowSchema(..)
   , WardenCheck(..)
   , countFields
-  , totalRecords
-  , badRecords
+  , totalRows
+  , badRows
   , numFields
   , fieldCounts
   ) where
@@ -118,8 +118,8 @@ data TextCount = TextCount     (Map Text Integer)
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRecords   :: Integer
-  , _totalRecords :: Integer
+  { _badRows      :: Integer
+  , _totalRows    :: Integer
   , _numFields    :: [Int]
   , _fieldCounts  :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
@@ -133,14 +133,15 @@ data Field = IntegralField Integer
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 [] Nothing
 
+-- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: SVParseState
                    -> Row
                    -> SVParseState
 updateSVParseState st row =
   let good = countGood row
       bad  = countBad row  in
-    (totalRecords %~ ((good + bad) +))
-  . (badRecords %~ (bad +))
+    (totalRows %~ ((good + bad) +))
+  . (badRows %~ (bad +))
   . (numFields %~ (updateNumFields row))
   . (fieldCounts %~ (updateFieldCounts row))
   $ st
