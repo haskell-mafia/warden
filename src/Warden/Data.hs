@@ -121,7 +121,7 @@ data SVParseState = SVParseState
   { _badRecords   :: Integer
   , _totalRecords :: Integer
   , _numFields    :: [Int]
-  , _fieldCounts  :: Vector (Map FieldLooks Integer, TextCount)
+  , _fieldCounts  :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
 makeLenses ''SVParseState
@@ -131,7 +131,7 @@ data Field = IntegralField Integer
            | TextField Text
 
 initialSVParseState :: SVParseState
-initialSVParseState = SVParseState 0 0 [] (V.fromList [])
+initialSVParseState = SVParseState 0 0 [] Nothing
 
 updateSVParseState :: SVParseState
                    -> Row
@@ -156,8 +156,10 @@ updateSVParseState st row =
     | otherwise                     = ns
   updateNumFields _ ns              = ns
 
-  updateFieldCounts (SVFields v) fc = V.zipWith updateFieldCount v fc
-  updateFieldCounts _ fc            = fc
+  updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
+    V.replicate (V.length v) (M.empty, TextCount M.empty)
+  updateFieldCounts (SVFields v) (Just fc) = Just $ V.zipWith updateFieldCount v fc
+  updateFieldCounts _ fc                   = fc
 
   updateFieldCount t fc = bimap (updateFieldLooks t) (updateTextCount t) fc
 

@@ -20,10 +20,10 @@ import Warden.Data
 prop_valid_parse_state :: FieldCount -> RowCount -> Property
 prop_valid_parse_state i n = forAll (vectorOf (getRowCount n) $ validRow i) $ \rows ->
   let st = runIdentity . countFields $ each rows in
-       ((st ^. totalRecords) === fromIntegral (getRowCount n))
-  .&&. ((st ^. badRecords) === 0)
-  .&&. ((st ^. numFields) === [(getFieldCount i)])
-  .&&. (V.length (st ^. fieldCounts) == (getFieldCount i))
+         ((st ^. totalRecords) === fromIntegral (getRowCount n))
+    .&&. ((st ^. badRecords) === 0)
+    .&&. ((st ^. numFields) === [(getFieldCount i)])
+    .&&. ((V.length <$> (st ^. fieldCounts)) === Just (getFieldCount i))
 
 return []
 tests :: IO Bool
