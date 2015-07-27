@@ -10,10 +10,15 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Char
 import Data.Csv
+import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, decodeUtf8')
+import qualified Data.Vector as V
 import Data.Word
 import Test.QuickCheck
+
+import Disorder.Corpus
+import Warden.Data
 
 newtype SVSep = SVSep { getSVSep :: Word8 }
   deriving (Eq, Show, Ord)
@@ -21,6 +26,7 @@ newtype SVSep = SVSep { getSVSep :: Word8 }
 instance Arbitrary SVSep where
   arbitrary = elements $ SVSep <$> filter (not . affectsRowState) [32..127]
 
+-- | Valid rows for testing the tokenizer.
 newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
@@ -66,3 +72,16 @@ validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
 
 validSVRow :: SVSep -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
+
+validRow :: FieldCount -> Gen Row
+validRow (FieldCount n) = (SVFields . V.fromList) <$>
+  vectorOf n (oneof [textField, integralField, realField])
+
+textField :: Gen Text
+textField = elements southpark
+
+integralField :: Gen Text
+integralField = (T.pack . show) <$> (arbitrary :: Gen Integer)
+
+realField :: Gen Text
+realField = (T.pack . show) <$> (arbitrary :: Gen Double)

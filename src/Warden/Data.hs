@@ -17,6 +17,10 @@ module Warden.Data (
   , RowSchema(..)
   , WardenCheck(..)
   , countFields
+  , totalRecords
+  , badRecords
+  , numFields
+  , fieldCounts
   ) where
 
 import           P
