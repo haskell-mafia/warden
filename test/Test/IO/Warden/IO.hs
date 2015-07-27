@@ -45,7 +45,7 @@ prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \
 prop_invalid_svrows :: SVSep -> RowCount -> Property
 prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
-    let fp = tmp </> "cruft_sv"
+    let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
     res <- withFile fp ReadMode $ \h -> do
       runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
@@ -57,6 +57,15 @@ prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \
  where
   rowFailed (RowFailure _) = True
   rowFailed _              = False
+
+prop_invalid_svdoc :: SVSep -> Property
+prop_invalid_svdoc s = forAll invalidSVDocument $ \doc ->
+  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
+    let fp = tmp </> "sv"
+    BL.writeFile fp doc
+    res <- withFile fp ReadMode $ \h -> do
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
+    pure $ True === isLeft res
 
 return []
 tests :: IO Bool
