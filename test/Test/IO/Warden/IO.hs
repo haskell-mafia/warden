@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Test.IO.Warden.IO where
 
@@ -25,8 +26,8 @@ import Warden.Data
 import Warden.Error
 import Warden.IO
 
-prop_svrows :: SVSep -> FieldCount -> RowCount -> Property
-prop_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->
+prop_valid_svrows :: SVSep -> FieldCount -> RowCount -> Property
+prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
@@ -40,6 +41,22 @@ prop_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs -
       Right x -> fail $ "impossible result from decoding: " <> show x
  where
   opts = defaultEncodeOptions { encDelimiter = getSVSep s }
+
+prop_invalid_svrows :: SVSep -> RowCount -> Property
+prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \svrs ->
+  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
+    let fp = tmp </> "cruft_sv"
+    BL.writeFile fp $ (BL.intercalate "\r\n") svrs
+    res <- withFile fp ReadMode $ \h -> do
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
+    case res of
+      Left err -> fail . T.unpack $ renderWardenError err
+      Right (SVEOF:rs) ->
+        pure $ [] === filter (not . rowFailed) rs
+      Right x -> fail $ "impossible result from decoding: " <> show x
+ where
+  rowFailed (RowFailure _) = True
+  rowFailed _              = False
 
 return []
 tests :: IO Bool

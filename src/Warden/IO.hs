@@ -33,7 +33,7 @@ readSVRows sep h = do
         yieldRows rs
     yieldRows (Nil Nothing _) =
         yield SVEOF
-    yieldRows (Nil (Just err) _) =
-        lift . left . LoadError . T.pack $ show err
+    yieldRows (Nil (Just err) rest) =
+        lift . left . LoadError . T.pack $ show err <> "with remaining: " <> show rest
 
     opts = defaultDecodeOptions { decDelimiter = sep }
