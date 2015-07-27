@@ -18,9 +18,8 @@ import Test.QuickCheck
 newtype SVSep = SVSep { getSVSep :: Word8 }
   deriving (Eq, Show, Ord)
 
--- | [^a-zA-Z]
 instance Arbitrary SVSep where
-  arbitrary = elements $ SVSep <$> ([32..64] <> [91..96] <> [123..126])
+  arbitrary = elements $ SVSep <$> filter (not . affectsRowState) [32..127]
 
 newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
@@ -43,8 +42,8 @@ affectsRowState w = elem w $ (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\
 
 invalidSVDocument :: Gen ByteString
 invalidSVDocument = BL.pack <$> do
-  body <- (listOf arbitrary) `suchThat` (not . any affectsRowState)
-  suffix <- elements $ pure ((fromIntegral . ord) <$> ['"', '\''])
+  body <- (listOf1 arbitrary) `suchThat` (not . (any affectsRowState))
+  suffix <- elements $ pure $ (fromIntegral . ord) <$> ['"', '\'']
   pure $ body <> suffix
 
 invalidSVRow :: SVSep -> Gen ByteString
