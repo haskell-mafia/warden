@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Warden.Data (
-    SVRow(..)
+    Row(..)
   , WardenStatus(..)
   , CheckResult(..)
   , SVParseState(..)
@@ -25,8 +25,10 @@ import Data.Vector (Vector)
 import Data.Text (Text)
 import Pipes
 
-data SVRow = SVFields (Vector Text)
-           | SVFailure Text
+-- | Raw record. Can be extended to support JSON objects as well as xSV if 
+--   needed.
+data Row = SVFields (Vector Text)
+           | RowFailure Text
            | SVEOF
   deriving (Eq, Show)
 
@@ -47,7 +49,7 @@ data WardenStatus = Green
 data CheckResult = CheckResult WardenStatus Text
 
 data RowSchema a = RowSchema
-  { fromRow :: SVRow -> Maybe a }
+  { fromRow :: Row -> Maybe a }
 
 data WardenCheck a b = WardenCheck
   { initial   :: a
@@ -111,7 +113,7 @@ data SVParseState = SVParseState
   } deriving (Eq, Show)
 
 inferFields :: (Monad m)
-            => Producer SVRow m ()
+            => Producer Row m ()
             -> m SVParseState
 inferFields = fail "nyi"
 
