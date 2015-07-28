@@ -8,6 +8,7 @@ module Warden.Data (
   , WardenStatus(..)
   , CheckResult(..)
   , SVParseState(..)
+  , FieldLooks(..)
   , Minimum(..)
   , Maximum(..)
   , Mean(..)
@@ -164,7 +165,7 @@ updateSVParseState st row =
 
   updateFieldCount t fc = bimap (updateFieldLooks t) (updateTextCount t) fc
 
-field :: Parser Field
+field :: Parser ParsedField
 field = choice
   [ IntegralField <$> decimal
   , RealField     <$> double
@@ -187,7 +188,7 @@ updateFieldLooks :: Text
                  -> Map FieldLooks Integer
 updateFieldLooks "" m = increment LooksEmpty m
 updateFieldLooks t m  = case (parseOnly (field <* endOfInput) t) of
-  Left _                  -> increment LooksBroken m -- can't happen
+  Left _                  -> increment LooksBroken m   -- Not valid UTF-8.
   Right (IntegralField _) -> increment LooksIntegral m
   Right (RealField _)     -> increment LooksReal m
   Right (TextField _)     -> increment LooksText m

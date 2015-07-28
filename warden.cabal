@@ -76,6 +76,7 @@ test-suite test
                      , bytestring                      == 0.10.*
                      , vector                          == 0.11.*
                      , cassava                         == 0.4.*
+                     , containers                      == 0.5.*
                      , either                          == 4.3.*
                      , filepath                        == 1.3.*
                      , lens                            == 4.12.*
