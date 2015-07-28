@@ -187,11 +187,13 @@ updateFieldLooks :: Text
                  -> Map FieldLooks Integer
                  -> Map FieldLooks Integer
 updateFieldLooks "" m = M.insertWith (+) LooksEmpty 1 m
-updateFieldLooks t m  = case (parseOnly field t) of
-  Left _                  -> M.insertWith (+) LooksBroken 1 m   -- Not valid UTF-8.
-  Right (IntegralField _) -> M.insertWith (+) LooksIntegral 1 m
-  Right (RealField _)     -> M.insertWith (+) LooksReal 1 m
-  Right (TextField _)     -> M.insertWith (+) LooksText 1 m
+updateFieldLooks t m  =
+  let looksLike = case parseOnly field t of
+                    Left _                  -> LooksBroken   -- Not valid UTF-8.
+                    Right (IntegralField _) -> LooksIntegral
+                    Right (RealField _)     -> LooksReal
+                    Right (TextField _)     -> LooksText
+  in M.insertWith (+) looksLike 1 m
 
 updateTextCount :: Text
                 -> TextCount
