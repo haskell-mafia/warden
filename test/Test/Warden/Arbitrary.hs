@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
+{-# OPTIONS_GHC -fno-warn-orphans       #-}
 
 module Test.Warden.Arbitrary where
 
@@ -9,7 +10,6 @@ import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
 import           Data.Text            (Text)
-import qualified Data.Text            as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
 import           Data.Word
@@ -73,13 +73,16 @@ validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
 
 tokenizedRow :: FieldCount -> Gen Row
 tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
-  vectorOf n (oneof [textField, integralField, realField])
+  liftM renderParsedField <$> (vectorOf n (arbitrary :: Gen ParsedField))
 
-textField :: Gen Text
-textField = elements southpark
+instance Arbitrary ParsedField where
+  arbitrary = oneof [textField, integralField, realField]
 
-integralField :: Gen Text
-integralField = (T.pack . show) <$> (arbitrary :: Gen Integer)
+textField :: Gen ParsedField
+textField = TextField <$> elements southpark
 
-realField :: Gen Text
-realField = (T.pack . show) <$> (arbitrary :: Gen Double)
+integralField :: Gen ParsedField
+integralField = IntegralField <$> (arbitrary :: Gen Integer)
+
+realField :: Gen ParsedField
+realField = RealField <$> (arbitrary :: Gen Double)

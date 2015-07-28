@@ -7,6 +7,7 @@ module Warden.Data (
   , WardenStatus(..)
   , CheckResult(..)
   , SVParseState(..)
+  , ParsedField(..)
   , FieldLooks(..)
   , Minimum(..)
   , Maximum(..)
@@ -16,6 +17,8 @@ module Warden.Data (
   , NumericSummary(..)
   , RowSchema(..)
   , WardenCheck(..)
+  , renderParsedField
+  , field
   , countFields
   , totalRows
   , badRows
@@ -29,6 +32,7 @@ import           Data.Attoparsec.Text
 import           Data.Map                   (Map)
 import qualified Data.Map                   as M
 import           Data.Text                  (Text)
+import qualified Data.Text                  as T
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
 import           P
@@ -128,6 +132,13 @@ makeLenses ''SVParseState
 data ParsedField = IntegralField Integer
                  | RealField Double
                  | TextField Text
+  deriving (Eq, Show)
+
+renderParsedField :: ParsedField
+                  -> Text
+renderParsedField (IntegralField i) = T.pack $ show i
+renderParsedField (RealField d)     = T.pack $ show d
+renderParsedField (TextField t)     = t
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 [] Nothing
@@ -167,7 +178,7 @@ updateSVParseState st row =
 
 field :: Parser ParsedField
 field = choice
-  [ IntegralField <$> decimal <* endOfInput
+  [ IntegralField <$> signed decimal <* endOfInput
   , RealField     <$> double <* endOfInput
   , TextField     <$> takeText
   ]
@@ -187,7 +198,7 @@ updateFieldLooks :: Text
                  -> Map FieldLooks Integer
                  -> Map FieldLooks Integer
 updateFieldLooks "" m = increment LooksEmpty m
-updateFieldLooks t m  = case (parseOnly (field <* endOfInput) t) of
+updateFieldLooks t m  = case (parseOnly field t) of
   Left _                  -> increment LooksBroken m   -- Not valid UTF-8.
   Right (IntegralField _) -> increment LooksIntegral m
   Right (RealField _)     -> increment LooksReal m
