@@ -105,7 +105,7 @@ data FieldLooks = LooksEmpty
                 | LooksIntegral
                 | LooksReal
                 | LooksText
-                | LooksBroken -- ^ Can't happen.
+                | LooksBroken   -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord)
 
 -- | We keep track of the number of unique values we get in each field; if
