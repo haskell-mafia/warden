@@ -168,9 +168,9 @@ updateSVParseState st row =
 
 field :: Parser ParsedField
 field = choice
-  [ IntegralField <$> decimal
-  , RealField     <$> double
-  , TextField     <$> takeWhile1 (\_ -> True)
+  [ IntegralField <$> decimal <* endOfInput
+  , RealField     <$> double <* endOfInput
+  , TextField     <$> takeWhile1 (\_ -> True) <* endOfInput
   ]
 
 increment :: (Ord a, Integral b)
