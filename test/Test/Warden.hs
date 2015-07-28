@@ -32,4 +32,4 @@ prop_tok_count_state i n = forAll (vectorOf (getRowCount n) $ tokenizedRow i) $ 
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $quickCheckAll
