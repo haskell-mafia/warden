@@ -169,7 +169,7 @@ field :: Parser ParsedField
 field = choice
   [ IntegralField <$> decimal <* endOfInput
   , RealField     <$> double <* endOfInput
-  , TextField     <$> takeWhile1 (\_ -> True) <* endOfInput
+  , TextField     <$> takeText
   ]
 
 increment :: (Ord a, Integral b)
