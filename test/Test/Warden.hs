@@ -4,11 +4,10 @@
 
 module Test.Warden where
 
-import           P
-
 import           Control.Lens              hiding (each)
 import qualified Data.Map                  as M
 import qualified Data.Vector               as V
+import           P
 import           Pipes
 import           System.IO
 import           Test.QuickCheck

@@ -3,8 +3,6 @@
 
 module Test.Warden.Arbitrary where
 
-import           P
-
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
@@ -15,9 +13,9 @@ import qualified Data.Text            as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
 import           Data.Word
-import           Test.QuickCheck
-
 import           Disorder.Corpus
+import           P
+import           Test.QuickCheck
 import           Warden.Data
 
 newtype SVSep = SVSep { getSVSep :: Word8 }

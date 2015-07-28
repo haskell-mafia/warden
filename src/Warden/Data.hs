@@ -24,8 +24,6 @@ module Warden.Data (
   , fieldCounts
   ) where
 
-import           P
-
 import           Control.Lens
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
@@ -34,6 +32,7 @@ import qualified Data.Map                   as M
 import           Data.Text                  (Text)
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
+import           P
 import           Pipes
 import qualified Pipes.Prelude              as PP
 
