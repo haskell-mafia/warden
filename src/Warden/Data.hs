@@ -14,6 +14,9 @@ module Warden.Data (
   , Mean(..)
   , Median(..)
   , Variance(..)
+  , accumMinimum
+  , accumMaximum
+  , accumMean
   , NumericSummary(..)
   , RowSchema(..)
   , WardenCheck(..)
@@ -74,11 +77,30 @@ data WardenCheck a b = WardenCheck
 newtype Minimum = Minimum { getMininum :: Double }
   deriving (Eq, Show)
 
+accumCompare :: (a -> a -> Bool)
+             -> a -> a -> a
+accumCompare cmp cur prev
+  | cmp cur prev = cur
+  | otherwise    = prev
+
+accumMinimum :: Ord a
+             => a -> a -> a
+accumMinimum = accumCompare (<)
+
 newtype Maximum = Maximum { getMaximum :: Double }
   deriving (Eq, Show)
 
+accumMaximum :: Ord a
+             => a -> a -> a
+accumMaximum = accumCompare (>)
+
 newtype Mean = Mean { getMean :: Double }
   deriving (Eq, Show)
+
+accumMean :: Real a
+          => Int
+          -> Double -> a -> Double
+accumMean n acc x = acc + ((fromRational . toRational) x) / (fromIntegral n)
 
 newtype Median = Median { getMedian :: Double }
   deriving (Eq, Show)
