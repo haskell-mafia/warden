@@ -147,11 +147,13 @@ updateSVParseState st row =
   . (fieldCounts %~ (updateFieldCounts row))
   $ st
  where
-  countGood (SVFields _)  = 1
-  countGood _             = 0
+  countGood (SVFields _)   = 1
+  countGood (RowFailure _) = 0
+  countGood SVEOF          = 0
 
-  countBad (RowFailure _) = 1
-  countBad _              = 0
+  countBad (SVFields _)    = 0
+  countBad (RowFailure _)  = 1
+  countBad SVEOF           = 0
 
   updateNumFields (SVFields v) ns
     | elem (V.length v) ns == False = (V.length v) : ns
