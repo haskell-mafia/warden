@@ -154,9 +154,9 @@ updateSVParseState st row =
   countBad SVEOF           = 0
 
   updateNumFields (SVFields v) ns
-    | elem (V.length v) ns == False = (V.length v) : ns
-    | otherwise                     = ns
-  updateNumFields _ ns              = ns
+    | not (elem (V.length v) ns) = (V.length v) : ns
+    | otherwise                  = ns
+  updateNumFields _ ns           = ns
 
   updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
     V.replicate (V.length v) (M.empty, TextCount M.empty)
