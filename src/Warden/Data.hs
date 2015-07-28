@@ -29,8 +29,8 @@ module Warden.Data (
 import           Control.Lens
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
-import           Data.Map                   (Map)
-import qualified Data.Map                   as M
+import           Data.Map.Strict            (Map)
+import qualified Data.Map.Strict            as M
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Vector                (Vector)
