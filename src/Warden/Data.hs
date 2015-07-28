@@ -1,6 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude     #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Warden.Data (
     Row(..)
@@ -75,32 +75,13 @@ data WardenCheck a b = WardenCheck
   }
 
 newtype Minimum = Minimum { getMininum :: Double }
-  deriving (Eq, Show)
-
-accumCompare :: (a -> a -> Bool)
-             -> a -> a -> a
-accumCompare cmp cur prev
-  | cmp cur prev = cur
-  | otherwise    = prev
-
-accumMinimum :: Ord a
-             => a -> a -> a
-accumMinimum = accumCompare (<)
+  deriving (Eq, Show, Ord)
 
 newtype Maximum = Maximum { getMaximum :: Double }
-  deriving (Eq, Show)
-
-accumMaximum :: Ord a
-             => a -> a -> a
-accumMaximum = accumCompare (>)
+  deriving (Eq, Show, Ord)
 
 newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show)
-
-accumMean :: Real a
-          => Int
-          -> Double -> a -> Double
-accumMean n acc x = acc + ((fromRational . toRational) x) / (fromIntegral n)
+  deriving (Eq, Show, Ord)
 
 newtype Median = Median { getMedian :: Double }
   deriving (Eq, Show)
@@ -110,19 +91,37 @@ newtype Variance = Variance { getVariance :: Double }
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
-
--- NB(sharif): I'm not sure if the median is worth calculating as it
---             can't be done cheaply, but it's handy for tests like
---             S-H-ESD; should rethink once we know more about which
---             tests actually work.
-data NumericSummary = NumericSummary
-  { _min    :: Minimum
-  , _max    :: Maximum
-  , _mean   :: Mean
-  , _var    :: Maybe Variance
-  , _median :: Maybe Median
-  }
+data NumericSummary = NumericSummary Minimum
+                                     Maximum
+                                     Mean
+                                     (Maybe Variance)
+                                     (Maybe Median)
   deriving (Eq, Show)
+
+accumCompare :: (a -> a -> Bool)
+             -> a -> a -> a
+accumCompare cmp cur prev
+  | cmp cur prev = cur
+  | otherwise    = prev
+
+accumMinimum :: Real a
+             => Minimum -> a -> Minimum
+accumMinimum (Minimum acc) x =
+  let x' = (fromRational . toRational) x in
+  Minimum $ accumCompare (<) acc x'
+
+accumMaximum :: Real a
+             => Maximum -> a -> Maximum
+accumMaximum (Maximum acc) x =
+  let x' = (fromRational . toRational) x in
+  Maximum $ accumCompare (>) acc x'
+
+accumMean :: Real a
+          => Int
+          -> Mean -> a -> Mean
+accumMean n (Mean acc) x =
+  let x' = (fromRational . toRational) x in
+  Mean $ acc + x' / (fromIntegral n)
 
 -- | We try parsing a field as each of these in order until we find one that
 --   works.
