@@ -70,7 +70,18 @@ test-suite test
                      , p
                      , text
                      , QuickCheck                      == 2.7.*
+                     , attoparsec                      == 0.12.*
                      , quickcheck-instances            == 0.3.*
+                     , temporary                       == 1.2.*
+                     , disorder-core
+                     , bytestring                      == 0.10.*
+                     , vector                          == 0.11.*
+                     , cassava                         == 0.4.*
+                     , containers                      == 0.5.*
+                     , either                          == 4.3.*
+                     , filepath                        == 1.3.*
+                     , lens                            == 4.12.*
+                     , pipes                           == 4.1.*
                      , warden
 
 test-suite test-io

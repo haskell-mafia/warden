@@ -1,10 +1,8 @@
-import           Control.Monad
+import           Disorder.Core.Main
 
-import           System.Exit
-import           System.IO
-
+import qualified Test.Warden
 
 main :: IO ()
-main =
-  hSetBuffering stdout LineBuffering >> mapM id [
-    ] >>= \rs -> when (not . all id $ rs) exitFailure
+main = disorderMain [
+           Test.Warden.tests
+         ]

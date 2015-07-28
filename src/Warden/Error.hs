@@ -6,9 +6,9 @@ module Warden.Error (
   , renderWardenError
 ) where
 
-import P
+import           P
 
-import Data.Text (Text)
+import           Data.Text (Text)
 
 data WardenError = LoadError Text
   deriving (Eq, Show)

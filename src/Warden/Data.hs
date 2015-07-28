@@ -1,12 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Warden.Data (
     Row(..)
   , WardenStatus(..)
   , CheckResult(..)
   , SVParseState(..)
+  , ParsedField(..)
+  , FieldLooks(..)
   , Minimum(..)
   , Maximum(..)
   , Mean(..)
@@ -15,17 +17,29 @@ module Warden.Data (
   , NumericSummary(..)
   , RowSchema(..)
   , WardenCheck(..)
-  , inferFields
+  , renderParsedField
+  , field
+  , countFields
+  , totalRows
+  , badRows
+  , numFields
+  , fieldCounts
   ) where
 
-import P
+import           Control.Lens
+import           Data.Attoparsec.Combinator
+import           Data.Attoparsec.Text
+import           Data.Map                   (Map)
+import qualified Data.Map                   as M
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           Data.Vector                (Vector)
+import qualified Data.Vector                as V
+import           P
+import           Pipes
+import qualified Pipes.Prelude              as PP
 
-import Data.Map (Map)
-import Data.Vector (Vector)
-import Data.Text (Text)
-import Pipes
-
--- | Raw record. Can be extended to support JSON objects as well as xSV if 
+-- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
 data Row = SVFields (Vector Text)
            | RowFailure Text
@@ -35,7 +49,7 @@ data Row = SVFields (Vector Text)
 data WardenStatus = Green
                     -- ^ No issues detected.
                   | Yellow
-                    -- ^ Some values are concerning and should be investigated 
+                    -- ^ Some values are concerning and should be investigated
                     --   by a human.
                   | Red
                     -- ^ At least one check failed, processing should not
@@ -52,9 +66,9 @@ data RowSchema a = RowSchema
   { fromRow :: Row -> Maybe a }
 
 data WardenCheck a b = WardenCheck
-  { initial   :: a
-  , update    :: a -> RowSchema b -> a
-  , finalize  :: a -> CheckResult
+  { initial  :: a
+  , update   :: a -> RowSchema b -> a
+  , finalize :: a -> CheckResult
   }
 
 newtype Minimum = Minimum { getMininum :: Double }
@@ -80,20 +94,21 @@ newtype Variance = Variance { getVariance :: Double }
 --             S-H-ESD; should rethink once we know more about which
 --             tests actually work.
 data NumericSummary = NumericSummary
-  { _min :: Minimum
-  , _max :: Maximum
-  , _mean :: Mean
-  , _var :: Maybe Variance
+  { _min    :: Minimum
+  , _max    :: Maximum
+  , _mean   :: Mean
+  , _var    :: Maybe Variance
   , _median :: Maybe Median
   }
   deriving (Eq, Show)
 
--- | We try parsing a field as each of these in order until we find one that 
+-- | We try parsing a field as each of these in order until we find one that
 --   works.
 data FieldLooks = LooksEmpty
                 | LooksIntegral
                 | LooksReal
                 | LooksText
+                | LooksBroken   -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord)
 
 -- | We keep track of the number of unique values we get in each field; if
@@ -106,14 +121,106 @@ data TextCount = TextCount     (Map Text Integer)
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRecords   :: Integer
-  , _totalRecords :: Integer
-  , _numFields    :: Integer
-  , _fieldCounts  :: Vector (Map FieldLooks Integer, TextCount)
+  { _badRows     :: Integer
+  , _totalRows   :: Integer
+  , _numFields   :: [Int]
+  , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
-inferFields :: (Monad m)
+makeLenses ''SVParseState
+
+data ParsedField = IntegralField Integer
+                 | RealField Double
+                 | TextField Text
+  deriving (Eq, Show)
+
+renderParsedField :: ParsedField
+                  -> Text
+renderParsedField (IntegralField i) = T.pack $ show i
+renderParsedField (RealField d)     = T.pack $ show d
+renderParsedField (TextField t)     = t
+
+initialSVParseState :: SVParseState
+initialSVParseState = SVParseState 0 0 [] Nothing
+
+-- | Accumulator for field/row counts on tokenized raw data.
+updateSVParseState :: SVParseState
+                   -> Row
+                   -> SVParseState
+updateSVParseState st row =
+  let good = countGood row
+      bad  = countBad row  in
+    (totalRows %~ ((good + bad) +))
+  . (badRows %~ (bad +))
+  . (numFields %~ (updateNumFields row))
+  . (fieldCounts %~ (updateFieldCounts row))
+  $ st
+ where
+  countGood (SVFields _)   = 1
+  countGood (RowFailure _) = 0
+  countGood SVEOF          = 0
+
+  countBad (SVFields _)    = 0
+  countBad (RowFailure _)  = 1
+  countBad SVEOF           = 0
+
+  updateNumFields (SVFields v) ns
+    | not (elem (V.length v) ns) = (V.length v) : ns
+    | otherwise                  = ns
+  updateNumFields _ ns           = ns
+
+  updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
+    V.replicate (V.length v) (M.empty, TextCount M.empty)
+  updateFieldCounts (SVFields v) (Just fc) = Just $ V.zipWith updateFieldCount v fc
+  updateFieldCounts _ fc                   = fc
+
+  updateFieldCount t fc = bimap (updateFieldLooks t) (updateTextCount t) fc
+
+field :: Parser ParsedField
+field = choice
+  [ IntegralField <$> signed decimal <* endOfInput
+  , RealField     <$> double <* endOfInput
+  , TextField     <$> takeText
+  ]
+
+increment :: (Ord a, Integral b)
+          => a
+          -> Map a b
+          -> Map a b
+increment k m = case M.lookup k m of
+  Nothing -> M.insert k (fromIntegral one) m
+  Just n  -> M.insert k ((fromIntegral one) + n) m
+ where
+  one :: Integer
+  one = 1
+
+updateFieldLooks :: Text
+                 -> Map FieldLooks Integer
+                 -> Map FieldLooks Integer
+updateFieldLooks "" m = increment LooksEmpty m
+updateFieldLooks t m  = case (parseOnly field t) of
+  Left _                  -> increment LooksBroken m   -- Not valid UTF-8.
+  Right (IntegralField _) -> increment LooksIntegral m
+  Right (RealField _)     -> increment LooksReal m
+  Right (TextField _)     -> increment LooksText m
+
+updateTextCount :: Text
+                -> TextCount
+                -> TextCount
+updateTextCount _ LooksFreeform = LooksFreeform
+updateTextCount t (TextCount tc) = case M.lookup t tc of
+  Nothing -> TextCount $ M.insert t 1 tc
+  Just n  -> if n > freeformTextThreshold
+               then LooksFreeform
+               else TextCount $ M.insert t (n+1) tc
+
+-- | Number of occurrences of a value before we conclude that it's
+--   not likely to be an enumerated field. May need to make this
+--   tunable per-dataset at some point.
+freeformTextThreshold :: Integer
+freeformTextThreshold = 100
+
+countFields :: (Monad m)
             => Producer Row m ()
             -> m SVParseState
-inferFields = fail "nyi"
-
+countFields = PP.fold updateSVParseState initialSVParseState id

@@ -1,19 +1,22 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
+{-# OPTIONS_GHC -fno-warn-orphans       #-}
 
 module Test.Warden.Arbitrary where
 
-import P
-
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString as BS
+import qualified Data.ByteString      as BS
+import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
-import Data.Char
-import Data.Csv
-import Data.Text (Text)
-import Data.Text.Encoding (decodeUtf8, decodeUtf8')
-import Data.Word
-import Test.QuickCheck
+import           Data.Char
+import           Data.Csv
+import           Data.Text            (Text)
+import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
+import qualified Data.Vector          as V
+import           Data.Word
+import           Disorder.Corpus
+import           P
+import           Test.QuickCheck
+import           Warden.Data
 
 newtype SVSep = SVSep { getSVSep :: Word8 }
   deriving (Eq, Show, Ord)
@@ -21,6 +24,7 @@ newtype SVSep = SVSep { getSVSep :: Word8 }
 instance Arbitrary SVSep where
   arbitrary = elements $ SVSep <$> filter (not . affectsRowState) [32..127]
 
+-- | Valid rows for testing the tokenizer.
 newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
@@ -59,10 +63,26 @@ validSVField :: SVSep
 validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
   (listOf arbitrary) `suchThat` isValid
  where
-  isValid bs = 
+  isValid bs =
        isRight (decodeUtf8' (BS.pack bs))
     && all (/= s) bs
     && not (any affectsRowState bs)
 
 validSVRow :: SVSep -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
+
+tokenizedRow :: FieldCount -> Gen Row
+tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
+  liftM renderParsedField <$> (vectorOf n (arbitrary :: Gen ParsedField))
+
+instance Arbitrary ParsedField where
+  arbitrary = oneof [textField, integralField, realField]
+
+textField :: Gen ParsedField
+textField = TextField <$> elements southpark
+
+integralField :: Gen ParsedField
+integralField = IntegralField <$> (arbitrary :: Gen Integer)
+
+realField :: Gen ParsedField
+realField = RealField <$> (arbitrary :: Gen Double)

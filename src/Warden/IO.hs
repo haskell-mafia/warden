@@ -4,19 +4,20 @@ module Warden.IO (
     readSVRows
   ) where
 
-import P
+import           P
 
-import Control.Monad.Trans.Either
-import Data.Csv.Streaming
-import Data.Csv (DecodeOptions(..), defaultDecodeOptions)
-import qualified Data.Text as T
-import Data.Word
-import Pipes
-import qualified Pipes.ByteString as PB
-import System.IO
+import           Control.Monad.Trans.Either
+import           Data.Csv                   (DecodeOptions (..),
+                                             defaultDecodeOptions)
+import           Data.Csv.Streaming
+import qualified Data.Text                  as T
+import           Data.Word
+import           Pipes
+import qualified Pipes.ByteString           as PB
+import           System.IO
 
-import Warden.Data
-import Warden.Error
+import           Warden.Data
+import           Warden.Error
 
 readSVRows :: Word8
            -> Handle
