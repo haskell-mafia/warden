@@ -183,26 +183,15 @@ field = choice
   , TextField     <$> takeText
   ]
 
-increment :: (Ord a, Integral b)
-          => a
-          -> Map a b
-          -> Map a b
-increment k m = case M.lookup k m of
-  Nothing -> M.insert k (fromIntegral one) m
-  Just n  -> M.insert k ((fromIntegral one) + n) m
- where
-  one :: Integer
-  one = 1
-
 updateFieldLooks :: Text
                  -> Map FieldLooks Integer
                  -> Map FieldLooks Integer
-updateFieldLooks "" m = increment LooksEmpty m
+updateFieldLooks "" m = M.insertWith (+) LooksEmpty 1 m
 updateFieldLooks t m  = case (parseOnly field t) of
-  Left _                  -> increment LooksBroken m   -- Not valid UTF-8.
-  Right (IntegralField _) -> increment LooksIntegral m
-  Right (RealField _)     -> increment LooksReal m
-  Right (TextField _)     -> increment LooksText m
+  Left _                  -> M.insertWith (+) LooksBroken 1 m   -- Not valid UTF-8.
+  Right (IntegralField _) -> M.insertWith (+) LooksIntegral 1 m
+  Right (RealField _)     -> M.insertWith (+) LooksReal 1 m
+  Right (TextField _)     -> M.insertWith (+) LooksText 1 m
 
 updateTextCount :: Text
                 -> TextCount
