@@ -29,8 +29,8 @@ module Warden.Data (
 import           Control.Lens
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
-import           Data.Map                   (Map)
-import qualified Data.Map                   as M
+import           Data.Map.Strict            (Map)
+import qualified Data.Map.Strict            as M
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Vector                (Vector)
@@ -183,26 +183,17 @@ field = choice
   , TextField     <$> takeText
   ]
 
-increment :: (Ord a, Integral b)
-          => a
-          -> Map a b
-          -> Map a b
-increment k m = case M.lookup k m of
-  Nothing -> M.insert k (fromIntegral one) m
-  Just n  -> M.insert k ((fromIntegral one) + n) m
- where
-  one :: Integer
-  one = 1
-
 updateFieldLooks :: Text
                  -> Map FieldLooks Integer
                  -> Map FieldLooks Integer
-updateFieldLooks "" m = increment LooksEmpty m
-updateFieldLooks t m  = case (parseOnly field t) of
-  Left _                  -> increment LooksBroken m   -- Not valid UTF-8.
-  Right (IntegralField _) -> increment LooksIntegral m
-  Right (RealField _)     -> increment LooksReal m
-  Right (TextField _)     -> increment LooksText m
+updateFieldLooks "" m = M.insertWith (+) LooksEmpty 1 m
+updateFieldLooks t m  =
+  let looksLike = case parseOnly field t of
+                    Left _                  -> LooksBroken   -- Not valid UTF-8.
+                    Right (IntegralField _) -> LooksIntegral
+                    Right (RealField _)     -> LooksReal
+                    Right (TextField _)     -> LooksText
+  in M.insertWith (+) looksLike 1 m
 
 updateTextCount :: Text
                 -> TextCount
