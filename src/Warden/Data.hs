@@ -119,10 +119,10 @@ data TextCount = TextCount     (Map Text Integer)
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRows      :: Integer
-  , _totalRows    :: Integer
-  , _numFields    :: [Int]
-  , _fieldCounts  :: Maybe (Vector (Map FieldLooks Integer, TextCount))
+  { _badRows     :: Integer
+  , _totalRows   :: Integer
+  , _numFields   :: [Int]
+  , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
 makeLenses ''SVParseState

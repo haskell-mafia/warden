@@ -1,22 +1,22 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Test.Warden where
 
-import P
+import           P
 
-import Control.Lens hiding (each)
-import qualified Data.Map as M
-import qualified Data.Vector as V
-import Pipes
-import System.IO
-import Test.QuickCheck
-import Test.QuickCheck.Instances ()
+import           Control.Lens              hiding (each)
+import qualified Data.Map                  as M
+import qualified Data.Vector               as V
+import           Pipes
+import           System.IO
+import           Test.QuickCheck
+import           Test.QuickCheck.Instances ()
 
-import Test.Warden.Arbitrary
+import           Test.Warden.Arbitrary
 
-import Warden.Data
+import           Warden.Data
 
 prop_tok_count_state :: FieldCount -> RowCount -> Property
 prop_tok_count_state i n = forAll (vectorOf (getRowCount n) $ tokenizedRow i) $ \rows ->

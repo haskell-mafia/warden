@@ -1,24 +1,24 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 
 module Test.Warden.Arbitrary where
 
-import P
+import           P
 
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString as BS
+import qualified Data.ByteString      as BS
+import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
-import Data.Char
-import Data.Csv
-import qualified Data.Text as T
-import Data.Text (Text)
-import Data.Text.Encoding (decodeUtf8, decodeUtf8')
-import qualified Data.Vector as V
-import Data.Word
-import Test.QuickCheck
+import           Data.Char
+import           Data.Csv
+import           Data.Text            (Text)
+import qualified Data.Text            as T
+import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
+import qualified Data.Vector          as V
+import           Data.Word
+import           Test.QuickCheck
 
-import Disorder.Corpus
-import Warden.Data
+import           Disorder.Corpus
+import           Warden.Data
 
 newtype SVSep = SVSep { getSVSep :: Word8 }
   deriving (Eq, Show, Ord)
@@ -65,7 +65,7 @@ validSVField :: SVSep
 validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
   (listOf arbitrary) `suchThat` isValid
  where
-  isValid bs = 
+  isValid bs =
        isRight (decodeUtf8' (BS.pack bs))
     && all (/= s) bs
     && not (any affectsRowState bs)
