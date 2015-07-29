@@ -35,7 +35,7 @@ import           P
 import           Pipes
 import qualified Pipes.Prelude              as PP
 
-import Warden.Data.Numeric
+import           Warden.Data.Numeric
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.

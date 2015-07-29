@@ -5,6 +5,7 @@
 module Test.Warden where
 
 import           Control.Lens              hiding (each)
+import qualified Data.Aeson                as A
 import           Data.Attoparsec.Text
 import qualified Data.Map                  as M
 import qualified Data.Vector               as V
@@ -33,6 +34,9 @@ prop_tok_count_state i n = forAll (vectorOf (getRowCount n) $ tokenizedRow i) $ 
 
 prop_roundtrip_parsed_field :: ParsedField -> Property
 prop_roundtrip_parsed_field = tripping renderParsedField (parseOnly field)
+
+prop_roundtrip_json_numericsummary :: NumericSummary -> Property
+prop_roundtrip_json_numericsummary = tripping A.encode A.decode
 
 return []
 tests :: IO Bool

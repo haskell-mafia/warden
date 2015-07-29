@@ -86,3 +86,29 @@ integralField = IntegralField <$> (arbitrary :: Gen Integer)
 
 realField :: Gen ParsedField
 realField = RealField <$> (arbitrary :: Gen Double)
+
+--
+-- numeric instances
+--
+
+instance Arbitrary Minimum where
+  arbitrary = Minimum <$> arbitrary
+
+instance Arbitrary Maximum where
+  arbitrary = Maximum <$> arbitrary
+
+instance Arbitrary Mean where
+  arbitrary = Mean <$> arbitrary
+
+instance Arbitrary Variance where
+  arbitrary = Variance <$> (arbitrary `suchThat` (> 0.0))
+
+instance Arbitrary Median where
+  arbitrary = Median <$> arbitrary
+
+instance Arbitrary NumericSummary where
+  arbitrary = NumericSummary <$> arbitrary
+                             <*> arbitrary
+                             <*> arbitrary
+                             <*> arbitrary
+                             <*> arbitrary

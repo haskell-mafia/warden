@@ -45,6 +45,8 @@ library
                        Warden.Data.Numeric
                        Warden.Error
                        Warden.IO
+                       Warden.Serial.Json
+                       Warden.Serial.Json.Numeric
 
 executable             warden
     ghc-options:       -Wall -threaded -O2
@@ -67,6 +69,7 @@ test-suite test
 
   build-depends:
                        base                            >= 3          && < 5
+                     , aeson                           == 0.8.*
                      , disorder-corpus
                      , p
                      , text
