@@ -101,7 +101,7 @@ instance Arbitrary Mean where
   arbitrary = Mean <$> arbitrary
 
 instance Arbitrary Variance where
-  arbitrary = Variance <$> (arbitrary `suchThat` (> 0.0))
+  arbitrary = Variance . Just <$> (arbitrary `suchThat` (> 0.0))
 
 instance Arbitrary Median where
   arbitrary = Median <$> arbitrary

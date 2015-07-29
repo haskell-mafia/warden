@@ -11,9 +11,9 @@ module Warden.Data.Numeric (
   , Variance(..)
   , mkVariance
   , NumericSummary(..)
-  , accumMinimum
-  , accumMaximum
-  , accumMean
+  , updateMinimum
+  , updateMaximum
+  , updateMean
   ) where
 
 import           Data.Aeson
@@ -21,25 +21,25 @@ import           Data.Aeson.Types
 import           Data.Text        (Text)
 import           P
 
-newtype Minimum = Minimum { getMininum :: Double }
-  deriving (Eq, Show, Ord, ToJSON, FromJSON)
-
-newtype Maximum = Maximum { getMaximum :: Double }
-  deriving (Eq, Show, Ord, ToJSON, FromJSON)
-
-newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show, Ord, ToJSON, FromJSON)
-
-newtype Median = Median { getMedian :: Double }
+newtype Minimum = Minimum { getMinimum :: Maybe Double }
   deriving (Eq, Show, ToJSON, FromJSON)
 
-newtype Variance = Variance { getVariance :: Double }
+newtype Maximum = Maximum { getMaximum :: Maybe Double }
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+newtype Mean = Mean { getMean :: Maybe Double }
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+newtype Median = Median { getMedian :: Maybe Double }
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+newtype Variance = Variance { getVariance :: Maybe Double }
   deriving (Eq, Show, ToJSON)
 
 mkVariance :: Double -> Maybe Variance
 mkVariance v
   | v < 0.0   = Nothing
-  | otherwise = Just (Variance v)
+  | otherwise = Just (Variance (Just v))
 
 instance FromJSON Variance where
   parseJSON (Number v) = case mkVariance ((fromRational . toRational) v) of
@@ -53,8 +53,8 @@ instance FromJSON Variance where
 data NumericSummary = NumericSummary Minimum
                                      Maximum
                                      Mean
-                                     (Maybe Variance)
-                                     (Maybe Median)
+                                     Variance
+                                     Median
   deriving (Eq, Show)
 
 instance ToJSON NumericSummary where
@@ -79,27 +79,34 @@ instance FromJSON NumericSummary where
       v    -> fail $ "NumericSummary: unknown version [" <> v <> "]"
   parseJSON x          = typeMismatch "NumericSummary" x
 
-accumCompare :: (a -> a -> Bool)
-             -> a -> a -> a
-accumCompare cmp cur prev
-  | cmp cur prev = cur
-  | otherwise    = prev
+updateCompare :: (a -> a -> Bool)
+              -> Maybe a -> a -> Maybe a
+updateCompare _ Nothing first = Just first
+updateCompare cmp (Just prev) cur
+  | cmp cur prev = Just cur
+  | otherwise    = Just prev
 
-accumMinimum :: Real a
-             => Minimum -> a -> Minimum
-accumMinimum (Minimum acc) x =
+updateMinimum :: Real a
+              => Minimum -> a -> Minimum
+updateMinimum (Minimum acc) x =
   let x' = (fromRational . toRational) x in
-  Minimum $ accumCompare (<) acc x'
+  Minimum $ updateCompare (<) acc x'
 
-accumMaximum :: Real a
-             => Maximum -> a -> Maximum
-accumMaximum (Maximum acc) x =
+updateMaximum :: Real a
+              => Maximum -> a -> Maximum
+updateMaximum (Maximum acc) x =
   let x' = (fromRational . toRational) x in
-  Maximum $ accumCompare (>) acc x'
+  Maximum $ updateCompare (>) acc x'
 
-accumMean :: Real a
-          => Int
-          -> Mean -> a -> Mean
-accumMean n (Mean acc) x =
+-- | This fold requires `n` to be known; quotient-of-sums could be used for
+--   small datasets (or small values), but in the general case is prone to
+--   overflow.
+updateMean :: Real a
+           => Int
+           -> Mean -> a -> Mean
+updateMean n (Mean Nothing) x =
   let x' = (fromRational . toRational) x in
-  Mean $ acc + x' / (fromIntegral n)
+  Mean . Just $ x' / (fromIntegral n)
+updateMean n (Mean (Just acc)) x =
+  let x' = (fromRational . toRational) x in
+  Mean . Just $ acc + x' / (fromIntegral n)
