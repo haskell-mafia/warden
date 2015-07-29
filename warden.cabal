@@ -13,6 +13,7 @@ description:           warden.
 library
   build-depends:
                        base                            >= 3          && < 5
+                     , aeson                           == 0.8.*
                      , attoparsec                      == 0.12.*
                      , bifunctors                      >= 4 && < 6
                      , bytestring                      == 0.10.*
@@ -41,9 +42,9 @@ library
                        Paths_warden
                        Warden
                        Warden.Data
+                       Warden.Data.Numeric
                        Warden.Error
                        Warden.IO
-
 
 executable             warden
     ghc-options:       -Wall -threaded -O2
