@@ -71,9 +71,11 @@ test-suite test
                        base                            >= 3          && < 5
                      , aeson                           == 0.8.*
                      , disorder-corpus
+                     , disorder-aeson
                      , p
                      , text
                      , QuickCheck                      == 2.7.*
+                     , ieee754                         == 0.7.*
                      , attoparsec                      == 0.12.*
                      , quickcheck-instances            == 0.3.*
                      , temporary                       == 1.2.*
