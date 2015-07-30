@@ -5,13 +5,12 @@
 module Test.Warden where
 
 import           Control.Lens              hiding (each)
-import           Data.AEq                  (AEq)
-import qualified Data.AEq                  as AEQ
 import           Data.Attoparsec.Text
 import qualified Data.Map                  as M
 import qualified Data.Vector               as V
 import           Disorder.Aeson
 import           Disorder.Core.Tripping
+import           Disorder.Core.Property
 import           P
 import           Pipes
 import           System.IO
@@ -65,12 +64,6 @@ prop_updatemaximum_negative =
     forAll ((arbitrary :: Gen Double) `suchThat` (<= c)) $ \x ->
       let mx = Maximum (Just c)
       in (updateMaximum mx x) === mx
-
-(~~~) :: (AEq a, Show a) => a -> a -> Property
-x ~~~ y = counterexample cex prop
-  where
-    cex          = concat ["|", show x, " - ", show y, "| > ɛ"]
-    prop         = x AEQ.~== y
 
 prop_updatemean :: Int -> Property
 prop_updatemean n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
