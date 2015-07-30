@@ -73,6 +73,18 @@ prop_updatemean n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
               else Nothing
   in soq ~~~ qos
 
+monoidId :: (Monoid a, Show a, Eq a) => a -> Property
+monoidId mn =
+       (mn <> mempty === mn)
+  .&&. (mempty <> mn === mn)
+
+prop_minimum_monoid_id :: Minimum -> Property
+prop_minimum_monoid_id = monoidId
+
+prop_maximum_monoid_id :: Maximum -> Property
+prop_maximum_monoid_id = monoidId
+
+
 return []
 tests :: IO Bool
 tests = $quickCheckAll
