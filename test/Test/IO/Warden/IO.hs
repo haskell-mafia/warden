@@ -57,7 +57,7 @@ prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \
   rowFailed _              = False
 
 prop_invalid_svdoc :: SVSep -> Property
-prop_invalid_svdoc s = forAll invalidSVDocument $ \doc ->
+prop_invalid_svdoc s = forAll (invalidSVDocument s) $ \doc ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp doc

@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Warden.Serial.Json.Numeric (
     toNumericSummary,

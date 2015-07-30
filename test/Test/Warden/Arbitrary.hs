@@ -40,15 +40,25 @@ newtype FieldCount = FieldCount { getFieldCount :: Int }
 instance Arbitrary FieldCount where
   arbitrary = FieldCount <$> choose (2, 10)
 
--- Our parser is stateless at the field level, unless it sees these characters.
+-- Bytes which can break the row-statelessness of the parser.
 affectsRowState :: Word8 -> Bool
-affectsRowState w = elem w $ (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\\']
+affectsRowState w = elem w $ special
+ where
+  special :: [Word8]
+  special = (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\\']
 
-invalidSVDocument :: Gen ByteString
-invalidSVDocument = BL.pack <$> do
-  body <- (listOf1 arbitrary) `suchThat` (not . (any affectsRowState))
-  suffix <- elements $ pure $ (fromIntegral . ord) <$> ['"', '\'']
-  pure $ body <> suffix
+-- Get an invalid xSV document by sticking a quote in an inconvenient place.
+invalidSVDocument :: SVSep -> Gen ByteString
+invalidSVDocument (SVSep s) = (BL.pack . concat) <$> do
+  w1 <- fieldWords
+  w2 <- fieldWords
+  pure [w1, [fromIntegral (ord '"')], w2]
+ where
+  fieldWords :: Gen [Word8]
+  fieldWords = (listOf1 (elements alphaWords)) `suchThat` (not . (elem s))
+
+  alphaWords :: [Word8]
+  alphaWords = [65..91] <> [97..123]
 
 invalidSVRow :: SVSep -> Gen ByteString
 invalidSVRow (SVSep s) = BL.intercalate (BL.pack [s]) <$> listOf1 invalidSVField
