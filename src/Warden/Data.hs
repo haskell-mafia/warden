@@ -1,6 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude     #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Warden.Data (
     Row(..)
@@ -9,12 +9,6 @@ module Warden.Data (
   , SVParseState(..)
   , ParsedField(..)
   , FieldLooks(..)
-  , Minimum(..)
-  , Maximum(..)
-  , Mean(..)
-  , Median(..)
-  , Variance(..)
-  , NumericSummary(..)
   , RowSchema(..)
   , WardenCheck(..)
   , renderParsedField
@@ -24,6 +18,8 @@ module Warden.Data (
   , badRows
   , numFields
   , fieldCounts
+
+  , module Warden.Data.Numeric
   ) where
 
 import           Control.Lens
@@ -38,6 +34,8 @@ import qualified Data.Vector                as V
 import           P
 import           Pipes
 import qualified Pipes.Prelude              as PP
+
+import           Warden.Data.Numeric
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
@@ -70,37 +68,6 @@ data WardenCheck a b = WardenCheck
   , update   :: a -> RowSchema b -> a
   , finalize :: a -> CheckResult
   }
-
-newtype Minimum = Minimum { getMininum :: Double }
-  deriving (Eq, Show)
-
-newtype Maximum = Maximum { getMaximum :: Double }
-  deriving (Eq, Show)
-
-newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show)
-
-newtype Median = Median { getMedian :: Double }
-  deriving (Eq, Show)
-
-newtype Variance = Variance { getVariance :: Double }
-  deriving (Eq, Show)
-
--- | So we can cheaply keep track of long-term change in numeric datasets.
---   Will probably also end up in brandix.
-
--- NB(sharif): I'm not sure if the median is worth calculating as it
---             can't be done cheaply, but it's handy for tests like
---             S-H-ESD; should rethink once we know more about which
---             tests actually work.
-data NumericSummary = NumericSummary
-  { _min    :: Minimum
-  , _max    :: Maximum
-  , _mean   :: Mean
-  , _var    :: Maybe Variance
-  , _median :: Maybe Median
-  }
-  deriving (Eq, Show)
 
 -- | We try parsing a field as each of these in order until we find one that
 --   works.

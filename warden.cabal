@@ -13,6 +13,7 @@ description:           warden.
 library
   build-depends:
                        base                            >= 3          && < 5
+                     , aeson                           == 0.8.*
                      , attoparsec                      == 0.12.*
                      , bifunctors                      >= 4 && < 6
                      , bytestring                      == 0.10.*
@@ -41,9 +42,11 @@ library
                        Paths_warden
                        Warden
                        Warden.Data
+                       Warden.Data.Numeric
                        Warden.Error
                        Warden.IO
-
+                       Warden.Serial.Json
+                       Warden.Serial.Json.Numeric
 
 executable             warden
     ghc-options:       -Wall -threaded -O2
@@ -66,10 +69,13 @@ test-suite test
 
   build-depends:
                        base                            >= 3          && < 5
+                     , aeson                           == 0.8.*
                      , disorder-corpus
+                     , disorder-aeson
                      , p
                      , text
                      , QuickCheck                      == 2.7.*
+                     , ieee754                         == 0.7.*
                      , attoparsec                      == 0.12.*
                      , quickcheck-instances            == 0.3.*
                      , temporary                       == 1.2.*
