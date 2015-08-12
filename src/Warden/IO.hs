@@ -19,6 +19,8 @@ import           System.IO
 import           Warden.Data
 import           Warden.Error
 
+-- FIXME(sio): this is going to explode (SVSeparator doesn't do what I
+-- thought it did) - this should just take a Producer
 readSVRows :: Word8
            -> Handle
            -> Producer Row (EitherT WardenError IO) ()
