@@ -18,11 +18,8 @@ import           P
 import           Test.QuickCheck
 import           Warden.Data
 
-newtype SVSep = SVSep { getSVSep :: Word8 }
-  deriving (Eq, Show, Ord)
-
-instance Arbitrary SVSep where
-  arbitrary = elements $ SVSep <$> filter (not . affectsRowState) [32..127]
+instance Arbitrary Separator where
+  arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
 
 -- | Valid rows for testing the tokenizer.
 newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
@@ -48,8 +45,8 @@ affectsRowState w = elem w $ special
   special = (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\\']
 
 -- Get an invalid xSV document by sticking a quote in an inconvenient place.
-invalidSVDocument :: SVSep -> Gen ByteString
-invalidSVDocument (SVSep s) = (BL.pack . concat) <$> do
+invalidSVDocument :: Separator -> Gen ByteString
+invalidSVDocument (Separator s) = (BL.pack . concat) <$> do
   w1 <- fieldWords
   w2 <- fieldWords
   pure [w1, [fromIntegral (ord '"')], w2]
@@ -60,17 +57,17 @@ invalidSVDocument (SVSep s) = (BL.pack . concat) <$> do
   alphaWords :: [Word8]
   alphaWords = [65..91] <> [97..123]
 
-invalidSVRow :: SVSep -> Gen ByteString
-invalidSVRow (SVSep s) = BL.intercalate (BL.pack [s]) <$> listOf1 invalidSVField
+invalidSVRow :: Separator -> Gen ByteString
+invalidSVRow (Separator s) = BL.intercalate (BL.pack [s]) <$> listOf1 invalidSVField
 
 invalidSVField :: Gen ByteString
 invalidSVField = BL.pack <$> (listOf arbitrary) `suchThat` isInvalidText
  where
   isInvalidText bs = (isLeft . decodeUtf8' . BS.pack) bs && not (any affectsRowState bs)
 
-validSVField :: SVSep
+validSVField :: Separator
              -> Gen Text
-validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
+validSVField (Separator s) = (decodeUtf8 . BS.pack) <$>
   (listOf arbitrary) `suchThat` isValid
  where
   isValid bs =
@@ -78,7 +75,7 @@ validSVField (SVSep s) = (decodeUtf8 . BS.pack) <$>
     && all (/= s) bs
     && not (any affectsRowState bs)
 
-validSVRow :: SVSep -> FieldCount -> Gen ValidSVRow
+validSVRow :: Separator -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
 
 tokenizedRow :: FieldCount -> Gen Row

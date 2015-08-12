@@ -24,13 +24,13 @@ import           Warden.Data
 import           Warden.Error
 import           Warden.IO
 
-prop_valid_svrows :: SVSep -> FieldCount -> RowCount -> Property
+prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
 prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) -> do
@@ -38,15 +38,15 @@ prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \
         pure $ expected === rs
       Right x -> fail $ "impossible result from decoding: " <> show x
  where
-  opts = defaultEncodeOptions { encDelimiter = getSVSep s }
+  opts = defaultEncodeOptions { encDelimiter = unSeparator s }
 
-prop_invalid_svrows :: SVSep -> RowCount -> Property
+prop_invalid_svrows :: Separator -> RowCount -> Property
 prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) ->
@@ -56,13 +56,13 @@ prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \
   rowFailed (RowFailure _) = True
   rowFailed _              = False
 
-prop_invalid_svdoc :: SVSep -> Property
+prop_invalid_svdoc :: Separator -> Property
 prop_invalid_svdoc s = forAll (invalidSVDocument s) $ \doc ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp doc
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows (getSVSep s) h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
     pure $ True === isLeft res
 
 return []

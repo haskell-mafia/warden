@@ -7,6 +7,7 @@ module Warden.Data.SeparatedValues (
   , SVParseState(..)
   , ParsedField(..)
   , FieldLooks(..)
+  , Separator(..)
 
   , field
   , renderParsedField
@@ -25,14 +26,18 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
-
 import           Data.Map.Strict            (Map)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Map.Strict            as M
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
+import           GHC.Word
+
 import           P
+
+newtype Separator = Separator { unSeparator :: Word8 }
+  deriving (Eq, Show)
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
