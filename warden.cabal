@@ -43,7 +43,9 @@ library
                        Warden
                        Warden.Data
                        Warden.Data.Numeric
+                       Warden.Data.SeparatedValues
                        Warden.Error
+                       Warden.Fold
                        Warden.IO
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric

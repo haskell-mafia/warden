@@ -11,7 +11,6 @@ import           Data.Csv                   (DecodeOptions (..),
                                              defaultDecodeOptions)
 import           Data.Csv.Streaming
 import qualified Data.Text                  as T
-import           Data.Word
 import           Pipes
 import qualified Pipes.ByteString           as PB
 import           System.IO
@@ -19,10 +18,12 @@ import           System.IO
 import           Warden.Data
 import           Warden.Error
 
-readSVRows :: Word8
+-- FIXME(sio): this is going to explode (SVSeparator doesn't do what I
+-- thought it did) - this should just take a Producer
+readSVRows :: Separator
            -> Handle
            -> Producer Row (EitherT WardenError IO) ()
-readSVRows sep h = do
+readSVRows (Separator sep) h = do
     b <- PB.toLazyM $ PB.fromHandle h
     yieldRows $ decodeWith opts NoHeader b
   where
