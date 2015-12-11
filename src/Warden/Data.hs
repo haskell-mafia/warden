@@ -23,8 +23,14 @@ import           Warden.Error
 import           Warden.Data.Numeric as X
 import           Warden.Data.SeparatedValues as X
 
-data CheckStatus = CheckPassed | CheckFailed
-  deriving (Eq, Show, Ord, Enum)
+data CheckStatus = CheckPassed | CheckFailed Failure
+  deriving (Eq, Show)
+
+instance Ord CheckStatus where
+  compare CheckPassed (CheckFailed _)     = LT
+  compare CheckPassed CheckPassed         = EQ
+  compare (CheckFailed _) CheckPassed     = GT
+  compare (CheckFailed _) (CheckFailed _) = EQ
 
 data Failure =
     SanityCheckFailure Insanity
@@ -43,4 +49,4 @@ renderInsanity :: Insanity -> Text
 renderInsanity EmptyFile = "file of zero size"
 renderInsanity IrregularFile = "not a regular file"
 
-type FileCheck = (FilePath -> EitherT WardenError IO [CheckResult])
+type FileCheck = (FilePath -> EitherT WardenError IO [CheckStatus])
