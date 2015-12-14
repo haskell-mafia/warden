@@ -50,6 +50,7 @@ library
                        Warden.Fold
                        Warden.IO
                        Warden.Numeric
+                       Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric
 
