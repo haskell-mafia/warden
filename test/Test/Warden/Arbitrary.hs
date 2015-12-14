@@ -4,7 +4,7 @@
 
 module Test.Warden.Arbitrary where
 
-import           Data.AEq
+import           Data.AEq (AEq, (===), (~==))
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
