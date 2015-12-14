@@ -1,45 +1,52 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
 
 module Warden.Data (
-    WardenCheck(..)
-  , WardenStatus(..)
-  , CheckResult(..)
-  , RowSchema(..)
+    FileCheck
+  , CheckStatus(..)
+  , Failure(..)
+  , Insanity(..)
+  , renderFailure
 
-  , module Warden.Data.Numeric
-  , module Warden.Data.SeparatedValues
+  , module X
   ) where
 
 import           Data.Text (Text)
 
 import           P
 
-import           Warden.Data.Numeric
-import           Warden.Data.SeparatedValues
+import           System.IO
 
-data WardenStatus = Green
-                    -- ^ No issues detected.
-                  | Yellow
-                    -- ^ Some values are concerning and should be investigated
-                    --   by a human.
-                  | Red
-                    -- ^ At least one check failed, processing should not
-                    --   proceed without human intervention.
-                  | Unknown
-                    -- ^ We broke, or weren't given enough data.
-  deriving (Eq, Show, Ord)
+import           X.Control.Monad.Trans.Either (EitherT)
 
--- FIXME(sharif): this could use more structure once we have a better idea of
---                what failures look like - row(s) affected, et cetera
-data CheckResult = CheckResult WardenStatus Text
+import           Warden.Error
+import           Warden.Data.Numeric as X
+import           Warden.Data.SeparatedValues as X
 
-data RowSchema a = RowSchema
-  { fromRow :: Row -> Maybe a }
+data CheckStatus = CheckPassed | CheckFailed Failure
+  deriving (Eq, Show)
 
-data WardenCheck a b = WardenCheck
-  { initial  :: a
-  , update   :: a -> RowSchema b -> a
-  , finalize :: a -> CheckResult
-  }
+instance Ord CheckStatus where
+  compare CheckPassed (CheckFailed _)     = LT
+  compare CheckPassed CheckPassed         = EQ
+  compare (CheckFailed _) CheckPassed     = GT
+  compare (CheckFailed _) (CheckFailed _) = EQ
+
+data Failure =
+    SanityCheckFailure Insanity
+  deriving (Eq, Show)
+
+data Insanity =
+    EmptyFile
+  | IrregularFile
+  deriving (Eq, Show)
+
+renderFailure :: Failure -> Text
+renderFailure (SanityCheckFailure f) =
+  "sanity checks failed: " <> renderInsanity f
+
+renderInsanity :: Insanity -> Text
+renderInsanity EmptyFile = "file of zero size"
+renderInsanity IrregularFile = "not a regular file"
+
+type FileCheck = (FilePath -> EitherT WardenError IO [CheckStatus])

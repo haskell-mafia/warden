@@ -24,7 +24,7 @@ import           P
 -- | Semigroup <cmp, a> => Monoid <mcompare, Maybe a>
 mcompare :: (a -> a -> Bool)
          -> Maybe a -> Maybe a -> Maybe a
-mcompare _ Nothing first       = first
+mcompare _ Nothing init        = init
 mcompare _ (Just prev) Nothing = Just prev
 mcompare cmp (Just prev) (Just cur)
   | cmp cur prev               = Just cur

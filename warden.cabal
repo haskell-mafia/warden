@@ -14,21 +14,22 @@ library
   build-depends:
                        base                            >= 3          && < 5
                      , aeson                           == 0.8.*
+                     , ambiata-p
+                     , ambiata-x-either
                      , attoparsec                      == 0.12.*
-                     , bifunctors                      >= 4 && < 6
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
                      , containers                      == 0.5.*
                      , directory                       == 1.2.*
                      , either                          == 4.3.*
                      , filepath                        == 1.3.*
-                     , lens                            == 4.12.*
-                     , p
+                     , lens
                      , pipes                           == 4.1.*
                      , pipes-bytestring                == 2.1.*
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , vector                          == 0.11.*
+                     , unix                            == 2.7.*
+                     , vector                          == 0.10.*
 
 
   ghc-options:
@@ -41,6 +42,7 @@ library
   exposed-modules:
                        Paths_warden
                        Warden
+                       Warden.Check
                        Warden.Data
                        Warden.Data.Numeric
                        Warden.Data.SeparatedValues
@@ -54,10 +56,10 @@ executable             warden
     ghc-options:       -Wall -threaded -O2
     main-is:           main/warden.hs
     build-depends:     base
-                     , warden
+                     , ambiata-x-optparse
                      , optparse-applicative            == 0.11.*
                      , text
-                     , x-optparse
+                     , warden
 
 test-suite test
   type:                exitcode-stdio-1.0
@@ -71,25 +73,25 @@ test-suite test
 
   build-depends:
                        base                            >= 3          && < 5
-                     , aeson                           == 0.8.*
-                     , disorder-corpus
-                     , disorder-aeson
-                     , p
-                     , text
                      , QuickCheck                      == 2.7.*
-                     , ieee754                         == 0.7.*
+                     , aeson                           == 0.8.*
+                     , ambiata-disorder-aeson
+                     , ambiata-disorder-core
+                     , ambiata-disorder-corpus
+                     , ambiata-p
                      , attoparsec                      == 0.12.*
-                     , quickcheck-instances            == 0.3.*
-                     , temporary                       == 1.2.*
-                     , disorder-core
                      , bytestring                      == 0.10.*
-                     , vector                          == 0.11.*
                      , cassava                         == 0.4.*
                      , containers                      == 0.5.*
                      , either                          == 4.3.*
                      , filepath                        == 1.3.*
-                     , lens                            == 4.12.*
+                     , ieee754                         == 0.7.*
+                     , lens                            == 4.9.*
                      , pipes                           == 4.1.*
+                     , quickcheck-instances            == 0.3.*
+                     , temporary                       == 1.2.*
+                     , text
+                     , vector                          == 0.10.*
                      , warden
 
 test-suite test-io
@@ -104,19 +106,21 @@ test-suite test-io
 
   build-depends:
                        base                            >= 3          && < 5
-                     , disorder-corpus
-                     , p
-                     , text
-                     , either                          == 4.3.*
                      , QuickCheck                      == 2.7.*
-                     , quickcheck-instances            == 0.3.*
-                     , warden
-                     , disorder-core
-                     , cassava                         == 0.4.*
+                     , ambiata-disorder-core
+                     , ambiata-disorder-corpus
+                     , ambiata-p
+                     , ambiata-x-either
                      , bytestring                      == 0.10.*
+                     , cassava                         == 0.4.*
+                     , directory
+                     , either                          == 4.3.*
                      , filepath                        == 1.3.*
                      , pipes                           == 4.1.*
+                     , quickcheck-instances            == 0.3.*
                      , temporary
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , vector                          == 0.11.*
+                     , vector                          == 0.10.*
+                     , unix                            == 2.7.*
+                     , warden
