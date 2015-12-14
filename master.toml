@@ -1,0 +1,13 @@
+[master]
+  runner = "s3://ambiata-dist/master-ambiata/master-haskell-library-0.0.1-20151210220945-684de5a"
+  version = 1
+  sha1 = "9268b44228d8ec534f70150cf194689a84e05fa7"
+
+[build.dist]
+  HADDOCK="true"
+  BENCH = "true"
+
+[build.branches]
+  BENCH = "true"
+
+
