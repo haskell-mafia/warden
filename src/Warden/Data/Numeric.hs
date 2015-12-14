@@ -7,18 +7,17 @@ module Warden.Data.Numeric (
     Minimum(..)
   , Maximum(..)
   , Mean(..)
+  , Count(..)
   , Median(..)
   , Variance(..)
   , mkVariance
   , NumericSummary(..)
-  , updateMinimum
-  , updateMaximum
-  , updateMean
   ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Text        (Text)
+
 import           P
 
 -- | Semigroup <cmp, a> => Monoid <mcompare, Maybe a>
@@ -44,7 +43,10 @@ instance Monoid Maximum where
   mempty  = Maximum Nothing
   mappend (Maximum x) (Maximum y) = Maximum $ mcompare (>) x y
 
-newtype Mean = Mean { getMean :: Maybe Double }
+newtype Count = Count { getCount :: Int }
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+newtype Mean = Mean { getMean :: Double }
   deriving (Eq, Show, ToJSON, FromJSON)
 
 newtype Median = Median { getMedian :: Maybe Double }
@@ -95,28 +97,3 @@ instance FromJSON NumericSummary where
                 <*> o .: "median"
       v    -> fail $ "NumericSummary: unknown version [" <> v <> "]"
   parseJSON x          = typeMismatch "NumericSummary" x
-
-updateMinimum :: Real a
-              => Minimum -> a -> Minimum
-updateMinimum acc x =
-  let x' = (Minimum . Just . fromRational . toRational) x
-  in acc <> x'
-
-updateMaximum :: Real a
-              => Maximum -> a -> Maximum
-updateMaximum acc x =
-  let x' = (Maximum . Just . fromRational . toRational) x
-  in acc <> x'
-
--- | This fold requires `n` to be known; quotient-of-sums could be used for
---   small datasets (or small values), but in the general case is prone to
---   overflow.
-updateMean :: Real a
-           => Int
-           -> Mean -> a -> Mean
-updateMean n (Mean Nothing) x =
-  let x' = (fromRational . toRational) x in
-  Mean . Just $ x' / (fromIntegral n)
-updateMean n (Mean (Just acc)) x =
-  let x' = (fromRational . toRational) x in
-  Mean . Just $ acc + x' / (fromIntegral n)

@@ -4,6 +4,7 @@
 
 module Test.Warden.Arbitrary where
 
+import           Data.AEq
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
@@ -13,10 +14,19 @@ import           Data.Text            (Text)
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
 import           Data.Word
+
 import           Disorder.Corpus
+
 import           P
-import           Test.QuickCheck
+
+import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
+import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof)
+
 import           Warden.Data
+
+instance AEq Mean where
+  (Mean x) === (Mean y) = x === y
+  (Mean x) ~== (Mean y) = x ~== y
 
 instance Arbitrary Separator where
   arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
