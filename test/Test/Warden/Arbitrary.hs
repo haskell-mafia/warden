@@ -23,6 +23,7 @@ import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, list
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof)
 
 import           Warden.Data
+import           Warden.Sampling.Reservoir
 
 instance AEq Mean where
   (Mean x) === (Mean y) = x === y
@@ -129,3 +130,20 @@ instance Arbitrary NumericSummary where
                              <*> arbitrary
                              <*> arbitrary
                              <*> arbitrary
+
+instance Arbitrary ReservoirSize where
+  arbitrary = ReservoirSize <$> choose (1, 100)
+
+instance Arbitrary Seen where
+  arbitrary = Seen <$> choose (1, 10000)
+
+instance Arbitrary XDist where
+  arbitrary = XDist <$> arbitrary <*> arbitrary
+
+instance Arbitrary Probability where
+  arbitrary = Probability <$> choose (0.0, 1.0)
+
+instance AEq Probability where
+  (Probability p) === (Probability q) = p === q
+  (Probability p) ~== (Probability q) = p ~== q
+

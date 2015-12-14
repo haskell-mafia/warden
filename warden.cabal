@@ -26,6 +26,7 @@ library
                      , lens
                      , pipes                           == 4.1.*
                      , pipes-bytestring                == 2.1.*
+                     , statistics                      == 0.13.2.*
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
                      , unix                            == 2.7.*

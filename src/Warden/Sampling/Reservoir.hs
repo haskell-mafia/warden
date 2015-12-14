@@ -13,7 +13,11 @@ module Warden.Sampling.Reservoir (
   , Seen(..)
   , ReservoirSize(..)
   , Sigma(..)
-  , X(..)
+  , XDist(..)
+  , Probability(..)
+  , probability
+  , xCDF
+  , xQuantile
   ) where
 
 import           Data.Vector.Unboxed (Vector)
@@ -28,19 +32,29 @@ data ReservoirAcc =
 newtype ReservoirSize =
   ReservoirSize {
     unReservoirSize :: Int
-  } deriving (Eq, Show, Num)
+  } deriving (Eq, Show)
 
 newtype Seen =
   Seen {
     unSeen :: Int
-  } deriving (Eq, Show, Num)
+  } deriving (Eq, Show)
+
+newtype Probability =
+  Probability {
+    unProbability :: Double
+  } deriving (Eq, Show)
+
+probability :: Double -> Maybe Probability
+probability p
+  | p < 0 || p > 1 = Nothing
+  | otherwise      = Just $ Probability p
 
 -- | Discrete random variable parameterised by the size of the sample and the
 -- number of records seen thus far. Sigma(n, t) is the number of records skipped
 -- over for a sample of size n, at the index t.
 --
--- PMF: \( f(s) = \frac{n}{t+s+1} \frac{t^{\underbar{n}}}{(t+s)^{\underbar{n}}} \)
--- CDF: \( F(s) = 1 - \frac{t^{\underbar{n}}}{(t+s+1)^{\underbar{n}}} \)
+-- PMF: \( f(x) = \frac{n}{t+x+1} \frac{t^{\underbar{n}}}{(t+x)^{\underbar{n}}} \)
+-- CDF: \( F(x) = 1 - \frac{t^{\underbar{n}}}{(t+x+1)^{\underbar{n}}} \)
 data Sigma = Sigma ReservoirSize Seen
   deriving (Show)
 
@@ -49,5 +63,26 @@ data Sigma = Sigma ReservoirSize Seen
 --
 -- PDF: \( g(x) = \frac{n}{t+x} (\frac{t}{t+x})^n, x \ge 0 \)
 -- CDF: \( G(x) = 1 - (\frac{t}{t+x})^n \) (\( \int_0^x g(x) dx \))
-data X = X ReservoirSize Seen
+data XDist = XDist ReservoirSize Seen
   deriving (Show)
+
+xCDF :: XDist -> Double -> Probability
+xCDF (XDist (ReservoirSize n) (Seen t)) x
+    | x < 0     = Probability 0
+    | otherwise = Probability $ 1 - (t' / (t' + x)) ** n'
+    where
+      n' :: Double
+      n' = fromIntegral n
+
+      t' :: Double
+      t' = fromIntegral t
+
+xQuantile :: XDist -> Probability -> Double
+xQuantile (XDist (ReservoirSize n) (Seen t)) (Probability x) =
+  t' * (x ** (- (1 / n')) - 1)
+  where
+    t' :: Double
+    t' = fromIntegral t
+
+    n' :: Double
+    n' = fromIntegral n
