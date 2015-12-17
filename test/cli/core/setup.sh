@@ -1,0 +1,20 @@
+WARDEN=${1:-./dist/build/warden/warden}
+export AWS_DEFAULT_REGION="ap-southeast-2"
+export AMBIATA_ENV="test"
+
+banner () {
+    echo
+    echo ===========
+    echo == "$*"
+    echo ===========
+    echo
+}
+
+fail () {
+    echo "  \`- [FAILED] $1"
+    exit 1
+}
+
+check () {
+    [ "$1" = "$2" ] || ( echo "FAIL: $1 != $2" ; exit 1 )
+}

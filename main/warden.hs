@@ -20,7 +20,7 @@ data Command = Check View
 
 main :: IO ()
 main = do
-  dispatch wardenP >>= \case
+  dispatch (safeCommand wardenP) >>= \case
     VersionCommand -> do
       exitSuccess
     RunCommand DryRun c -> do
@@ -34,8 +34,12 @@ main = do
 run :: Command -> EitherT WardenError IO [Text]
 run (Check v) = (NE.toList . renderCheckResult) <$> check v
 
-wardenP :: Parser (SafeCommand Command)
-wardenP = safeCommand (Check <$> viewP)
+wardenP :: Parser Command
+wardenP = subparser $
+     command' "check" "Run checks over a view." checkP
+
+checkP :: Parser Command
+checkP = Check <$> viewP
 
 viewP :: Parser View
 viewP = View <$> (strArgument $

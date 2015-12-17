@@ -1,4 +1,4 @@
-name:                  warden
+name:                  ambiata-warden
 version:               0.0.1
 license:               AllRightsReserved
 author:                Ambiata <info@ambiata.com>
@@ -62,12 +62,12 @@ executable             warden
     ghc-options:       -Wall -threaded -O2
     main-is:           main/warden.hs
     build-depends:     base
+                     , ambiata-warden
                      , ambiata-x-eithert
                      , ambiata-x-optparse
                      , optparse-applicative            == 0.11.*
                      , semigroups
                      , text
-                     , warden
 
 test-suite test
   type:                exitcode-stdio-1.0
@@ -87,6 +87,7 @@ test-suite test
                      , ambiata-disorder-core
                      , ambiata-disorder-corpus
                      , ambiata-p
+                     , ambiata-warden
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -101,7 +102,6 @@ test-suite test
                      , temporary                       == 1.2.*
                      , text
                      , vector                          == 0.10.*
-                     , warden
 
 test-suite test-io
     type:                exitcode-stdio-1.0
@@ -119,6 +119,7 @@ test-suite test-io
                      , ambiata-disorder-core
                      , ambiata-disorder-corpus
                      , ambiata-p
+                     , ambiata-warden
                      , ambiata-x-eithert
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -134,4 +135,21 @@ test-suite test-io
                      , transformers                    >= 0.3 && < 5
                      , unix                            == 2.7.*
                      , vector                          == 0.10.*
-                     , warden
+
+test-suite test-cli
+  type:
+                    exitcode-stdio-1.0
+
+  main-is:
+                    test-cli.hs
+
+  ghc-options:
+                    -Wall -threaded -O2
+
+  hs-source-dirs:
+                    test
+
+  build-depends:
+                      base                            >= 3          && < 5
+                    , ambiata-warden
+                    , ambiata-disorder-core

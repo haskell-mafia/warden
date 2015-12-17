@@ -1,0 +1,23 @@
+#!/bin/sh -eu
+
+. $(dirname $0)/../core/setup.sh
+
+banner Display Version
+#---------------------
+
+$WARDEN -v
+
+$WARDEN --version
+
+banner Display Help
+#------------------
+
+$WARDEN -h
+
+$WARDEN --help
+
+WARDEN="$WARDEN --dry-run"
+
+$WARDEN check .
+
+$WARDEN check /not/a/real/view
