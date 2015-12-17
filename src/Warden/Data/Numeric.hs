@@ -9,9 +9,11 @@ module Warden.Data.Numeric (
   , Mean(..)
   , Count(..)
   , Median(..)
-  , Variance(..)
-  , mkVariance
+  , StdDev(..)
   , NumericSummary(..)
+  , Variance(..)
+  , fromVariance
+  , mkStdDev
   ) where
 
 import           Data.Aeson
@@ -52,37 +54,42 @@ newtype Mean = Mean { getMean :: Double }
 newtype Median = Median { getMedian :: Maybe Double }
   deriving (Eq, Show, ToJSON, FromJSON)
 
-newtype Variance = Variance { getVariance :: Maybe Double }
+newtype Variance = Variance { getVariance :: Double }
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+fromVariance :: Variance -> StdDev
+fromVariance = StdDev . sqrt . getVariance
+
+newtype StdDev = StdDev { getStdDev :: Double }
   deriving (Eq, Show, ToJSON)
 
-mkVariance :: Double -> Maybe Variance
-mkVariance v
+mkStdDev :: Double -> Maybe StdDev
+mkStdDev v
   | v < 0.0   = Nothing
-  | otherwise = Just (Variance (Just v))
+  | otherwise = Just $ StdDev v
 
-instance FromJSON Variance where
-  parseJSON (Number v) = case mkVariance ((fromRational . toRational) v) of
-    Nothing -> fail "Variance must not be negative"
+instance FromJSON StdDev where
+  parseJSON (Number v) = case mkStdDev ((fromRational . toRational) v) of
+    Nothing -> fail "StdDev must not be negative"
     Just v' -> pure v'
-  parseJSON Null       = pure $ Variance Nothing
-  parseJSON x          = typeMismatch "Variance" x
+  parseJSON x          = typeMismatch "StdDev" x
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
 data NumericSummary = NumericSummary Minimum
                                      Maximum
                                      Mean
-                                     Variance
+                                     StdDev
                                      Median
   deriving (Eq, Show)
 
 instance ToJSON NumericSummary where
-  toJSON (NumericSummary mn mx mean v md) = object [
+  toJSON (NumericSummary mn mx mean s md) = object [
       "version"  .= ("v1" :: Text)
     , "minimum"  .= mn
     , "maximum"  .= mx
     , "mean"     .= mean
-    , "variance" .= v
+    , "stddev"   .= s
     , "median"   .= md
     ]
 
@@ -93,7 +100,7 @@ instance FromJSON NumericSummary where
                 <$> o .: "minimum"
                 <*> o .: "maximum"
                 <*> o .: "mean"
-                <*> o .: "variance"
+                <*> o .: "stddev"
                 <*> o .: "median"
       v    -> fail $ "NumericSummary: unknown version [" <> v <> "]"
   parseJSON x          = typeMismatch "NumericSummary" x
