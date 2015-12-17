@@ -4,6 +4,7 @@
 
 module Test.Warden.Arbitrary where
 
+import           Data.AEq (AEq, (===), (~==))
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
@@ -13,10 +14,20 @@ import           Data.Text            (Text)
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
 import           Data.Word
+
 import           Disorder.Corpus
+
 import           P
-import           Test.QuickCheck
+
+import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
+import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof)
+
 import           Warden.Data
+import           Warden.Sampling.Reservoir
+
+instance AEq Mean where
+  (Mean x) === (Mean y) = x === y
+  (Mean x) ~== (Mean y) = x ~== y
 
 instance Arbitrary Separator where
   arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
@@ -119,3 +130,20 @@ instance Arbitrary NumericSummary where
                              <*> arbitrary
                              <*> arbitrary
                              <*> arbitrary
+
+instance Arbitrary ReservoirSize where
+  arbitrary = ReservoirSize <$> choose (1, 100)
+
+instance Arbitrary Seen where
+  arbitrary = Seen <$> choose (1, 10000)
+
+instance Arbitrary XDist where
+  arbitrary = XDist <$> arbitrary <*> arbitrary
+
+instance Arbitrary Probability where
+  arbitrary = Probability <$> choose (0.0, 1.0)
+
+instance AEq Probability where
+  (Probability p) === (Probability q) = p === q
+  (Probability p) ~== (Probability q) = p ~== q
+
