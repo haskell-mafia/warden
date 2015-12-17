@@ -10,6 +10,8 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
@@ -146,4 +148,38 @@ instance Arbitrary Probability where
 instance AEq Probability where
   (Probability p) === (Probability q) = p === q
   (Probability p) ~== (Probability q) = p ~== q
+
+instance Arbitrary a => Arbitrary (NonEmpty a) where
+  arbitrary = NE.fromList <$> listOf1 arbitrary
+
+instance Arbitrary CheckStatus where
+  arbitrary = oneof [
+      pure CheckPassed
+    , CheckFailed <$> arbitrary
+    ]
+
+newtype CheckStatusPassed =
+  CheckStatusPassed {
+    unCheckStatusPassed :: CheckStatus
+  } deriving (Eq, Show)
+
+instance Arbitrary CheckStatusPassed where
+  arbitrary = pure $ CheckStatusPassed CheckPassed
+
+newtype CheckStatusFailed =
+  CheckStatusFailed {
+    unCheckStatusFailed :: CheckStatus
+  } deriving (Eq, Show)
+
+instance Arbitrary CheckStatusFailed where
+  arbitrary = (CheckStatusFailed . CheckFailed) <$> arbitrary
+
+instance Arbitrary Failure where
+  arbitrary = oneof [SanityCheckFailure <$> arbitrary]
+
+instance Arbitrary Insanity where
+  arbitrary = elements [
+      EmptyFile
+    , IrregularFile
+    ]
 

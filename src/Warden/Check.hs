@@ -2,31 +2,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Check (
-    sanity
-  , typeC
-  , sizeC
+    checks
   ) where
-
-import           Control.Monad.IO.Class (liftIO)
 
 import           P
 
-import           System.Posix.Files (isRegularFile, getSymbolicLinkStatus, fileSize)
-import           System.Posix.Files (FileStatus)
-
 import           Warden.Data
+import qualified Warden.Check.File as File
 
-sanity :: FileCheck
-sanity fn = do
-  st <- liftIO $ getSymbolicLinkStatus fn
-  pure $ [typeC st, sizeC st]
-
-typeC :: FileStatus -> CheckStatus
-typeC st
-  | isRegularFile st = CheckPassed
-  | otherwise        = CheckFailed $ SanityCheckFailure IrregularFile
-
-sizeC :: FileStatus -> CheckStatus
-sizeC st
-  | fileSize st > 0 = CheckPassed
-  | otherwise       = CheckFailed $ SanityCheckFailure EmptyFile
+checks :: [WardenCheck]
+checks = concat [
+    WardenFileCheck <$> File.fileChecks
+  ]
