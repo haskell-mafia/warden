@@ -10,7 +10,9 @@ import           P
 
 import           Data.Text (Text)
 
-data WardenError = LoadError Text
+data WardenError =
+    LoadError Text
+  | WardenNotImplementedError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -18,3 +20,4 @@ renderWardenError :: WardenError
 renderWardenError = ("warden: " <>) . render'
   where
     render' (LoadError e) = "error loading dataset: " <> e
+    render' WardenNotImplementedError = "implement me!"

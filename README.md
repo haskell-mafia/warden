@@ -54,7 +54,7 @@ This means you should be always able to run the following on a
 configured view:
 
 ```
-warden path/to/view
+warden check path/to/view
 ```
 
 This will validate all outstanding data-sets. There will also be
