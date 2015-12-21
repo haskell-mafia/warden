@@ -14,3 +14,4 @@ import           X.Control.Monad.Trans.Either (EitherT, left)
 
 check :: View -> EitherT WardenError IO CheckResult
 check _ = left WardenNotImplementedError
+

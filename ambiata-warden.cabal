@@ -14,7 +14,9 @@ library
   build-depends:
                        base                            >= 3          && < 5
                      , aeson                           == 0.8.*
+                     , ambiata-lane
                      , ambiata-p
+                     , ambiata-x-attoparsec
                      , ambiata-x-eithert
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
@@ -50,6 +52,7 @@ library
                        Warden.Data
                        Warden.Data.Numeric
                        Warden.Data.SeparatedValues
+                       Warden.Data.View
                        Warden.Error
                        Warden.Fold
                        Warden.IO
@@ -57,6 +60,7 @@ library
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric
+                       Warden.View
 
 executable             warden
     ghc-options:       -Wall -threaded -O2
@@ -83,9 +87,12 @@ test-suite test
                        base                            >= 3          && < 5
                      , QuickCheck                      == 2.7.*
                      , aeson                           == 0.8.*
+                     , ambiata-delorean
+                     , ambiata-delorean-test
                      , ambiata-disorder-aeson
                      , ambiata-disorder-core
                      , ambiata-disorder-corpus
+                     , ambiata-lane
                      , ambiata-p
                      , ambiata-warden
                      , attoparsec                      == 0.12.*
@@ -116,8 +123,11 @@ test-suite test-io
   build-depends:
                        base                            >= 3          && < 5
                      , QuickCheck                      == 2.7.*
+                     , ambiata-delorean
+                     , ambiata-delorean-test
                      , ambiata-disorder-core
                      , ambiata-disorder-corpus
+                     , ambiata-lane
                      , ambiata-p
                      , ambiata-warden
                      , ambiata-x-eithert

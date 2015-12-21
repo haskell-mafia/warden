@@ -36,4 +36,3 @@ prop_resolveCheckStatus_fail ss =
 return []
 tests :: IO Bool
 tests = $quickCheckAll
-
