@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
 import qualified Data.List.NonEmpty as NE
@@ -5,7 +6,11 @@ import           Data.Text (Text)
 import qualified Data.Text.IO as T
 
 import           Options.Applicative
+
+import           P
+
 import           System.Exit
+import           System.IO (IO, print)
 
 import           Warden.Commands
 import           Warden.Data
@@ -32,7 +37,7 @@ main = do
       exitSuccess
 
 run :: Command -> EitherT WardenError IO [Text]
-run (Check v) = (concatMap (NE.toList . renderCheckResult)) <$> check v
+run (Check v) = (NE.toList . join . fmap renderCheckResult) <$> check v
 
 wardenP :: Parser Command
 wardenP = subparser $

@@ -66,6 +66,7 @@ executable             warden
     ghc-options:       -Wall -threaded -O2
     main-is:           main/warden.hs
     build-depends:     base
+                     , ambiata-p
                      , ambiata-warden
                      , ambiata-x-eithert
                      , ambiata-x-optparse

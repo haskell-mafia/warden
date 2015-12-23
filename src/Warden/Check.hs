@@ -6,6 +6,8 @@ module Warden.Check (
   , runCheck
   ) where
 
+import           Data.List.NonEmpty (NonEmpty(..))
+
 import           P
 
 import           System.IO (IO)
@@ -19,7 +21,6 @@ import           X.Control.Monad.Trans.Either (EitherT)
 runCheck :: ViewFile -> WardenCheck -> EitherT WardenError IO CheckResult
 runCheck f (WardenFileCheck fc) = File.runFileCheck fc f
 
-checks :: [WardenCheck]
-checks = concat [
-    WardenFileCheck <$> File.fileChecks
-  ]
+checks :: NonEmpty WardenCheck
+checks =
+     WardenFileCheck <$> File.fileChecks

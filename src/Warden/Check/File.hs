@@ -11,7 +11,8 @@ module Warden.Check.File (
 
 import           Control.Monad.IO.Class (liftIO)
 
-import           Data.List.NonEmpty ((<|))
+import           Data.List.NonEmpty (NonEmpty, (<|))
+import qualified Data.List.NonEmpty as NE
 
 import           P
 
@@ -30,8 +31,8 @@ runFileCheck (FileCheck desc chk) f = do
   r <- chk f
   pure $ FileCheckResult desc f r
 
-fileChecks :: [FileCheck]
-fileChecks = [
+fileChecks :: NonEmpty FileCheck
+fileChecks = NE.fromList [
     FileCheck (CheckDescription "basic sanity checks") sanity
   ]
 

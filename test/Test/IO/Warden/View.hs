@@ -5,6 +5,7 @@
 module Test.IO.Warden.View where
 
 import           Data.List (sort)
+import           Data.List.NonEmpty (NonEmpty(..))
 
 import           Disorder.Core.IO (testIO)
 
@@ -66,7 +67,7 @@ prop_traverseView_deep = testIO $ do
 prop_traverseView_good :: Property
 prop_traverseView_good = testIO $ do
   r <- runEitherT $ traverseView (View "test/data/good-view")
-  pure $ r === (Right [ViewFile "test/data/good-view/year=2015/month=04/day=04/bar"])
+  pure $ r === (Right $ ViewFile "test/data/good-view/year=2015/month=04/day=04/bar" :| [])
 
 return []
 tests :: IO Bool
