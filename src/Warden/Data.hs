@@ -69,7 +69,6 @@ renderCheckResult (FileCheckResult cd vf st) =
       , ": "
       , renderCheckDescription cd
       ]
-  
 
 data CheckStatus = CheckPassed | CheckFailed (NonEmpty Failure)
   deriving (Eq, Show)

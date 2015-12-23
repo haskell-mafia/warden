@@ -32,7 +32,7 @@ main = do
       exitSuccess
 
 run :: Command -> EitherT WardenError IO [Text]
-run (Check v) = (NE.toList . renderCheckResult) <$> check v
+run (Check v) = (concatMap (NE.toList . renderCheckResult)) <$> check v
 
 wardenP :: Parser Command
 wardenP = subparser $
