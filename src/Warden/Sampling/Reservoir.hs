@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-
 Implementation of Vitter's Algorithm Z for constant-memory single-pass
@@ -21,6 +22,8 @@ module Warden.Sampling.Reservoir (
   ) where
 
 import           Data.Vector.Unboxed (Vector)
+
+import           P
 
 data ReservoirAcc =
   ReservoirAcc {

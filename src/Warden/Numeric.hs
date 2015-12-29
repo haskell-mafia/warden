@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Warden.Numeric (
     MeanAcc(..)
   , updateMinimum
