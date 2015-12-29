@@ -30,7 +30,7 @@ prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) -> do
@@ -46,7 +46,7 @@ prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \
     let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) ->
@@ -62,7 +62,7 @@ prop_invalid_svdoc s = forAll (invalidSVDocument s) $ \doc ->
     let fp = tmp </> "sv"
     BL.writeFile fp doc
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     pure $ True === isLeft res
 
 return []

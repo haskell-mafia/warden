@@ -1,30 +1,46 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Warden.Rows (
-    readSVRows
+    readSVHandle
+  , readSVView
+  , decodeSVRows
   ) where
+
+import           Control.Monad.Trans.Either
+
+import           Data.ByteString.Lazy (ByteString)
+import           Data.Csv (DecodeOptions (..), defaultDecodeOptions)
+import           Data.Csv.Streaming
+import qualified Data.Text as T
 
 import           P
 
-import           Control.Monad.Trans.Either
-import           Data.Csv                   (DecodeOptions (..),
-                                             defaultDecodeOptions)
-import           Data.Csv.Streaming
-import qualified Data.Text                  as T
 import           Pipes
-import qualified Pipes.ByteString           as PB
+import qualified Pipes.ByteString as PB
+
 import           System.IO
 
 import           Warden.Data
 import           Warden.Error
 
--- FIXME(sio): this is going to explode (SVSeparator doesn't do what I
--- thought it did) - this should just take a Producer
-readSVRows :: Separator
-           -> Handle
+readSVView :: Separator
+           -> [ViewFile]
            -> Producer Row (EitherT WardenError IO) ()
-readSVRows (Separator sep) h = do
-    b <- PB.toLazyM $ PB.fromHandle h
+readSVView sep fs = do
+  -- FIXME: probably want to chunk this
+  hs <- liftIO $ mapM (flip openFile ReadMode) (unViewFile <$> fs)
+  sequence_ $ (readSVHandle sep) <$> hs
+
+readSVHandle :: Separator
+             -> Handle
+             -> Producer Row (EitherT WardenError IO) ()
+readSVHandle sep h =
+  decodeSVRows sep =<< (PB.toLazyM $ PB.fromHandle h)
+
+decodeSVRows :: Separator
+             -> ByteString
+             -> Producer Row (EitherT WardenError IO) ()
+decodeSVRows (Separator sep) b = do
     yieldRows $ decodeWith opts NoHeader b
   where
     yieldRows (Cons (Right r) rs) = do

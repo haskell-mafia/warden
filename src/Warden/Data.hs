@@ -7,6 +7,7 @@ module Warden.Data (
   , CheckResult(..)
   , WardenCheck(..)
   , FileCheck(..)
+  , RowCheck(..)
   , Failure(..)
   , Insanity(..)
   , checkFailed
@@ -17,6 +18,8 @@ module Warden.Data (
 
   , module X
   ) where
+
+import           Control.Foldl (FoldM)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -49,8 +52,12 @@ renderCheckDescription = unCheckDescription
 data FileCheck =
     FileCheck CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
 
+data RowCheck =
+    RowCheck CheckDescription (FoldM (EitherT WardenError IO) Row CheckStatus)
+
 data CheckResult =
     FileCheckResult CheckDescription ViewFile CheckStatus
+  | RowCheckResult CheckDescription CheckStatus
   deriving (Eq, Show)
 
 data Verbosity =
@@ -67,6 +74,13 @@ renderCheckResult (FileCheckResult cd vf st) =
         "file "
       , renderViewFile vf
       , ": "
+      , renderCheckDescription cd
+      ]
+renderCheckResult (RowCheckResult cd st) =
+  header <| (renderCheckStatus st)
+  where
+    header = T.concat [
+        "row: "
       , renderCheckDescription cd
       ]
 
