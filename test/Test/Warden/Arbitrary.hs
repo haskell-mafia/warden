@@ -54,9 +54,6 @@ newtype RowCount = RowCount { getRowCount :: Int }
 instance Arbitrary RowCount where
   arbitrary = RowCount <$> choose (1, 100)
 
-newtype FieldCount = FieldCount { getFieldCount :: Int }
-  deriving (Eq, Show, Ord)
-
 instance Arbitrary FieldCount where
   arbitrary = FieldCount <$> choose (2, 10)
 

@@ -6,11 +6,11 @@ module Warden.Rows (
   , decodeSVRows
   ) where
 
-import           Control.Monad.Trans.Either
-
 import           Data.ByteString.Lazy (ByteString)
 import           Data.Csv (DecodeOptions (..), defaultDecodeOptions)
 import           Data.Csv.Streaming
+import qualified Data.List.NonEmpty as NE
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 
 import           P
@@ -23,12 +23,14 @@ import           System.IO
 import           Warden.Data
 import           Warden.Error
 
+import           X.Control.Monad.Trans.Either
+
 readSVView :: Separator
-           -> [ViewFile]
+           -> NonEmpty ViewFile
            -> Producer Row (EitherT WardenError IO) ()
 readSVView sep fs = do
   -- FIXME: probably want to chunk this
-  hs <- liftIO $ mapM (flip openFile ReadMode) (unViewFile <$> fs)
+  hs <- liftIO $ mapM (flip openFile ReadMode) (unViewFile <$> (NE.toList fs))
   sequence_ $ (readSVHandle sep) <$> hs
 
 readSVHandle :: Separator

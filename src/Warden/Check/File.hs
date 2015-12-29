@@ -26,8 +26,8 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-runFileCheck :: FileCheck -> ViewFile -> EitherT WardenError IO CheckResult
-runFileCheck (FileCheck desc chk) f = do
+runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError IO CheckResult
+runFileCheck f (FileCheck desc chk) = do
   r <- chk f
   pure $ FileCheckResult desc f r
 

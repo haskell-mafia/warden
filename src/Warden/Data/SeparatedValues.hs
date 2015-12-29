@@ -1,12 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Warden.Data.SeparatedValues (
-    Row(..)
-  , SVParseState(..)
-  , ParsedField(..)
+    FieldCount(..)
   , FieldLooks(..)
+  , ParsedField(..)
+  , Row(..)
+  , SVParseState(..)
   , Separator(..)
 
   , field
@@ -26,15 +28,20 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
-import           Data.Map.Strict            (Map)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import qualified Data.Map.Strict            as M
-import           Data.Vector                (Vector)
-import qualified Data.Vector                as V
+import           Data.Map.Strict (Map)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+import           Data.Vector (Vector)
+import qualified Data.Vector as V
 import           GHC.Word
 
 import           P
+
+newtype FieldCount =
+  FieldCount {
+    unFieldCount :: Int
+  } deriving (Eq, Show, Num)
 
 newtype Separator = Separator { unSeparator :: Word8 }
   deriving (Eq, Show)
@@ -68,7 +75,7 @@ data TextCount = TextCount     (Map Text Integer)
 data SVParseState = SVParseState
   { _badRows     :: Integer
   , _totalRows   :: Integer
-  , _numFields   :: [Int]
+  , _numFields   :: [FieldCount]
   , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
@@ -109,10 +116,12 @@ updateSVParseState st row =
   countBad (RowFailure _)  = 1
   countBad SVEOF           = 0
 
-  updateNumFields (SVFields v) ns
-    | not (elem (V.length v) ns) = (V.length v) : ns
-    | otherwise                  = ns
-  updateNumFields _ ns           = ns
+  updateNumFields (SVFields v) ns =
+    let n = FieldCount $ V.length v in
+    if not (elem n ns)
+      then n : ns 
+      else ns
+  updateNumFields _ ns = ns
 
   updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
     V.replicate (V.length v) (M.empty, TextCount M.empty)

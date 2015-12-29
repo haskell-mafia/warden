@@ -4,17 +4,21 @@
 
 module Test.IO.Warden.Rows where
 
-import           Control.Monad.Trans.Either
+
 import qualified Data.ByteString.Lazy       as BL
 import           Data.Csv
 import qualified Data.Text                  as T
 import qualified Data.Vector                as V
+
 import           Disorder.Core.IO
+
 import           P
 import qualified Pipes.Prelude              as PP
+
 import           System.FilePath
 import           System.IO
 import           System.IO.Temp
+
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances  ()
 
@@ -23,6 +27,8 @@ import           Test.Warden.Arbitrary
 import           Warden.Data
 import           Warden.Error
 import           Warden.Rows
+
+import           X.Control.Monad.Trans.Either
 
 prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
 prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->

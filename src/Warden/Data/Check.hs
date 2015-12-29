@@ -8,6 +8,7 @@ module Warden.Data.Check (
   , Failure(..)
   , FileCheck(..)
   , Insanity(..)
+  , RowFailure(..)
   , RowCheck(..)
   , WardenCheck(..)
   , checkFailed
@@ -36,6 +37,7 @@ import           X.Control.Monad.Trans.Either (EitherT)
 
 data WardenCheck =
     WardenFileCheck FileCheck
+  | WardenRowCheck RowCheck
 
 newtype CheckDescription =
   CheckDescription {
@@ -111,6 +113,7 @@ instance Ord CheckStatus where
 
 data Failure =
     SanityCheckFailure Insanity
+  | RowCheckFailure RowFailure
   deriving (Eq, Show)
 
 data Insanity =
@@ -118,10 +121,28 @@ data Insanity =
   | IrregularFile
   deriving (Eq, Show)
 
+data RowFailure =
+    FieldCountMismatch [FieldCount]
+  | ZeroRows
+  | HasBadRows Integer
+  deriving (Eq, Show)
+
 renderFailure :: Failure -> Text
 renderFailure (SanityCheckFailure f) =
-  "sanity checks failed: " <> renderInsanity f
+  "sanity check failed: " <> renderInsanity f
+renderFailure (RowCheckFailure f) =
+  "row check failed: " <> renderRowFailure f
 
 renderInsanity :: Insanity -> Text
 renderInsanity EmptyFile = "file of zero size"
 renderInsanity IrregularFile = "not a regular file"
+
+renderRowFailure :: RowFailure -> Text
+renderRowFailure (FieldCountMismatch cs) =
+  "differing field counts: " <> T.pack (show cs)
+renderRowFailure ZeroRows =
+  "no rows in xSV document"
+renderRowFailure c =
+  T.pack (show c) <> " rows failed to parse"
+
+
