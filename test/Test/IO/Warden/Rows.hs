@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Test.IO.Warden.IO where
+module Test.IO.Warden.Rows where
 
 import           Control.Monad.Trans.Either
 import qualified Data.ByteString.Lazy       as BL
@@ -22,7 +22,7 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.IO
+import           Warden.Rows
 
 prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
 prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->

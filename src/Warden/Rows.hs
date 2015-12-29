@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Warden.IO (
+module Warden.Rows (
     readSVRows
   ) where
 

@@ -56,8 +56,8 @@ library
                        Warden.Data.View
                        Warden.Error
                        Warden.Fold
-                       Warden.IO
                        Warden.Numeric
+                       Warden.Rows
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric
