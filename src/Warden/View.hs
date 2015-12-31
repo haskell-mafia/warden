@@ -52,7 +52,9 @@ traverseDirectory (MaxDepth depth) preds dn =
   pure $ DirTree dn subtrees leaves
   where
     visitable ('.':_) _ = False
+    visitable ('_':_) _ = False
     visitable _ st      = isDirectory st
 
     validLeaf ('.':_) _ = False
+    validLeaf ('_':_) _ = False
     validLeaf _ st      = isRegularFile st
