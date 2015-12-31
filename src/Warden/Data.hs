@@ -9,14 +9,10 @@ module Warden.Data (
   , FileCheck(..)
   , Failure(..)
   , Insanity(..)
-  , View(..)
-  , ViewFile(..)
   , checkFailed
   , renderFailure
   , renderCheckResult
   , renderCheckStatus
-  , renderView
-  , renderViewFile
   , resolveCheckStatus
 
   , module X
@@ -34,24 +30,10 @@ import           System.IO
 import           X.Control.Monad.Trans.Either (EitherT)
 
 import           Warden.Error
+
 import           Warden.Data.Numeric as X
 import           Warden.Data.SeparatedValues as X
-
-newtype View =
-  View {
-    unView :: FilePath
-  } deriving (Eq, Show)
-
-renderView :: View -> Text
-renderView = T.pack . unView
-
-newtype ViewFile =
-  ViewFile {
-    unViewFile :: FilePath
-  } deriving (Eq, Show)
-
-renderViewFile :: ViewFile -> Text
-renderViewFile = T.pack . unViewFile
+import           Warden.Data.View as X
 
 data WardenCheck =
     WardenFileCheck FileCheck
@@ -87,7 +69,6 @@ renderCheckResult (FileCheckResult cd vf st) =
       , ": "
       , renderCheckDescription cd
       ]
-  
 
 data CheckStatus = CheckPassed | CheckFailed (NonEmpty Failure)
   deriving (Eq, Show)

@@ -14,7 +14,7 @@ import           System.IO
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
-import           Test.Warden.Arbitrary ()
+import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Numeric
@@ -53,17 +53,22 @@ prop_updateMaximum_associative :: Int -> Property
 prop_updateMaximum_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   associativity updateMaximum (Maximum Nothing) xs getMaximum
 
-prop_updateMean :: Int -> Property
-prop_updateMean n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  let soq = finalizeMean $ foldl updateMean MeanInitial xs
-      qos = if n > 0
-              then Just . Mean $ ((sum xs) / (fromIntegral n))
-              else Nothing
-  in soq ~~~ qos
+prop_updateMeanDev :: NPlus -> Property
+prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
+  let nsMeanDev = finalizeMeanDev $ foldl updateMeanDev MeanDevInitial xs
 
-prop_updateMean_associative :: Int -> Property
-prop_updateMean_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  associativity updateMean MeanInitial xs finalizeMean
+      mu = (sum xs) / (fromIntegral n)
+      var = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs
+      sd = StdDev $ sqrt var
+      uMeanDev = Just (Mean mu, sd)
+  in nsMeanDev ~~~ uMeanDev
+  where
+    two :: Integer
+    two = 2
+
+prop_updateMeanDev_associative :: Int -> Property
+prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
+  associativity updateMeanDev MeanDevInitial xs finalizeMeanDev
 
 associativity :: (Show c, AEq c)
               => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property

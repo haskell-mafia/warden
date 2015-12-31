@@ -7,3 +7,15 @@
 [submodule "lib/p"]
 	path = lib/p
 	url = git@github.com:ambiata/p
+[submodule "lib/lane"]
+	path = lib/lane
+	url = git@github.com:ambiata/lane.git
+[submodule "lib/mismi"]
+	path = lib/mismi
+	url = git@github.com:ambiata/mismi.git
+[submodule "lib/delorean"]
+	path = lib/delorean
+	url = git@github.com:ambiata/delorean.git
+[submodule "lib/twine"]
+	path = lib/twine
+	url = git@github.com:ambiata/twine.git
