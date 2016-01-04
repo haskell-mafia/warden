@@ -258,7 +258,7 @@ monthLabel = do
 
 yearLabel :: Gen DirName
 yearLabel = do
-  n <- choose (1000, 9999)
+  n <- choose (1600, 9999)
   pure . DirName $ "year=" <> (show (n :: Int))
 
 instance Arbitrary ValidDirTree where
