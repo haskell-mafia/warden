@@ -27,4 +27,4 @@ prop_traverseView_invalid = withInvalidDirTree $ \v -> do
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10, maxSize = 20 })
