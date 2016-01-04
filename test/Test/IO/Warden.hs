@@ -2,8 +2,6 @@
 
 module Test.IO.Warden where
 
-import           Control.Monad.IO.Class (liftIO)
-
 import qualified Data.Text as T
 
 import           Disorder.Core.IO (testIO)
@@ -15,7 +13,6 @@ import           System.FilePath ((</>))
 import           System.IO
 import           System.IO.Temp (withTempFile, withTempDirectory)
 import           System.Posix.Directory (getWorkingDirectory)
-import           System.Posix.Files (touchFile)
 
 import           Test.QuickCheck (Gen, Testable, Property, forAll, arbitrary)
 import           Test.Warden.Arbitrary
@@ -44,19 +41,21 @@ writeView r t =
   let dirs = fmap (r </>) $ directoryDirs t
       files = fmap (r </>) $ directoryFiles t in do
   mapM_ (createDirectoryIfMissing True) dirs
-  mapM_ touchFile files
+  mapM_ touch files
+  where
+    touch fp = writeFile fp ""
 
-withValidView :: Testable a => (View -> EitherT WardenError IO a) -> Property
-withValidView a = forAll (arbitrary :: Gen ValidDirTree) $ \(ValidDirTree dt) ->
-  withView dt a
+withValidDirTree :: Testable a => (View -> IO a) -> Property
+withValidDirTree a = forAll (arbitrary :: Gen ValidDirTree) $ \(ValidDirTree dt) ->
+  withDirTree dt a
 
-withInvalidView :: Testable a => (View -> EitherT WardenError IO a) -> Property
-withInvalidView a = forAll (arbitrary :: Gen InvalidDirTree) $ \(InvalidDirTree dt) ->
-  withView dt a
+withInvalidDirTree :: Testable a => (View -> IO a) -> Property
+withInvalidDirTree a = forAll (arbitrary :: Gen InvalidDirTree) $ \(InvalidDirTree dt) ->
+  withDirTree dt a
 
-withView :: Testable a => DirTree -> (View -> EitherT WardenError IO a) -> Property
-withView dt a = testIO . withTempDirectory "." "invalid-view" $ \tmp -> unsafeWarden $
+withDirTree :: Testable a => DirTree -> (View -> IO a) -> Property
+withDirTree dt a = testIO . withTempDirectory "." "test-view" $ \tmp -> do
   let (DirTree v _ _) = dt
-      v'              = View $ tmp </> unDirName v in do
-  liftIO $ writeView tmp dt
+  let v'              = View $ tmp </> unDirName v
+  writeView tmp dt
   a v'
