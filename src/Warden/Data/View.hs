@@ -10,6 +10,7 @@ module Warden.Data.View(
   , NonViewFile(..)
   , View(..)
   , ViewFile(..)
+  , directoryDirs
   , directoryFiles
   , isViewFile
   , joinDir
@@ -95,6 +96,15 @@ joinDir = joinPath . fmap unDirName
 
 joinFile :: [DirName] -> FilePath -> FilePath
 joinFile ds f = (joinDir ds) </> f
+
+-- | Penultimate nodes in the tree (the deepest non-leaf for each path).
+directoryDirs :: DirTree -> [FilePath]
+directoryDirs = go []
+  where
+    go preds (DirTree root [] _) =
+      pure $ joinDir (reverse (root : preds))
+    go preds (DirTree root branches _) =
+      concatMap (go (root : preds)) branches
 
 directoryFiles :: DirTree -> [FilePath]
 directoryFiles = go []
