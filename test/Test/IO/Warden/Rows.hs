@@ -31,7 +31,7 @@ import           Warden.Rows
 import           X.Control.Monad.Trans.Either
 
 prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
-prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->
+prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
@@ -47,7 +47,7 @@ prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \
   opts = defaultEncodeOptions { encDelimiter = unSeparator s }
 
 prop_invalid_svrows :: Separator -> RowCount -> Property
-prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \svrs ->
+prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs

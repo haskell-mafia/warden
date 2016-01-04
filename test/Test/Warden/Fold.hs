@@ -23,9 +23,9 @@ import           Warden.Data
 import           Warden.Fold
 
 prop_tok_count_state :: FieldCount -> RowCount -> Property
-prop_tok_count_state i n = forAll (vectorOf (getRowCount n) $ tokenizedRow i) $ \rows ->
+prop_tok_count_state i n = forAll (vectorOf (unRowCount n) $ tokenizedRow i) $ \rows ->
   let st = runIdentity . countFields $ each rows in
-         ((st ^. totalRows) === fromIntegral (getRowCount n))
+         ((st ^. totalRows) === fromIntegral (unRowCount n))
     .&&. ((st ^. badRows) === 0)
     .&&. ((st ^. numFields) === [i])
     .&&. ((V.length <$> (st ^. fieldCounts)) === Just (unFieldCount i))

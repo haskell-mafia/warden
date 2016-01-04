@@ -48,9 +48,6 @@ instance Arbitrary Separator where
 newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
-newtype RowCount = RowCount { getRowCount :: Int }
-  deriving (Eq, Show, Ord)
-
 instance Arbitrary RowCount where
   arbitrary = RowCount <$> choose (1, 100)
 

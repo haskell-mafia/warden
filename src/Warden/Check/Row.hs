@@ -49,11 +49,11 @@ checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
 checkNumFields [_] = CheckPassed
 checkNumFields xs  = CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch xs]
 
-checkTotalRows :: Integer -> CheckStatus
-checkTotalRows n
+checkTotalRows :: RowCount -> CheckStatus
+checkTotalRows (RowCount n)
   | n <= 0 = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
   | otherwise = CheckPassed
 
-checkBadRows :: Integer -> CheckStatus
-checkBadRows 0 = CheckPassed
+checkBadRows :: RowCount -> CheckStatus
+checkBadRows (RowCount 0) = CheckPassed
 checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]

@@ -8,6 +8,7 @@ module Warden.Data.SeparatedValues (
   , FieldLooks(..)
   , ParsedField(..)
   , Row(..)
+  , RowCount(..)
   , SVParseState(..)
   , Separator(..)
 
@@ -63,6 +64,11 @@ data FieldLooks = LooksEmpty
                 | LooksBroken   -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord)
 
+newtype RowCount =
+  RowCount {
+    unRowCount :: Int
+  } deriving (Eq, Show, Num)
+
 -- | We keep track of the number of unique values we get in each field; if
 --   it's greater than a certain percentage of the total number of records
 --   it's probably freeform, otherwise it's probably categorical. We
@@ -73,8 +79,8 @@ data TextCount = TextCount     (Map Text Integer)
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRows     :: Integer
-  , _totalRows   :: Integer
+  { _badRows     :: RowCount
+  , _totalRows   :: RowCount
   , _numFields   :: [FieldCount]
   , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
@@ -108,13 +114,13 @@ updateSVParseState st row =
   . (fieldCounts %~ (updateFieldCounts row))
   $ st
  where
-  countGood (SVFields _)   = 1
-  countGood (RowFailure _) = 0
-  countGood SVEOF          = 0
+  countGood (SVFields _)   = RowCount 1
+  countGood (RowFailure _) = RowCount 0
+  countGood SVEOF          = RowCount 0
 
-  countBad (SVFields _)    = 0
-  countBad (RowFailure _)  = 1
-  countBad SVEOF           = 0
+  countBad (SVFields _)    = RowCount 0
+  countBad (RowFailure _)  = RowCount 1
+  countBad SVEOF           = RowCount 0
 
   updateNumFields (SVFields v) ns =
     let n = FieldCount $ V.length v in

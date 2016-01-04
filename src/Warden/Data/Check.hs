@@ -124,7 +124,7 @@ data Insanity =
 data RowFailure =
     FieldCountMismatch [FieldCount]
   | ZeroRows
-  | HasBadRows Integer
+  | HasBadRows RowCount
   deriving (Eq, Show)
 
 renderFailure :: Failure -> Text
