@@ -28,7 +28,9 @@ import           System.FilePath (joinPath, (</>))
 
 import           Test.Delorean.Arbitrary ()
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
-import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof)
+import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
+
+import           Text.Printf (printf)
 
 import           Warden.Data
 import           Warden.Sampling.Reservoir
@@ -214,3 +216,62 @@ newtype NPlus =
 
 instance Arbitrary NPlus where
   arbitrary = NPlus <$> choose (1, 10000)
+
+newtype InvalidDirTree =
+  InvalidDirTree {
+    unInvalidDirTree :: DirTree
+  } deriving (Eq, Show)
+
+instance Arbitrary InvalidDirTree where
+  arbitrary = InvalidDirTree <$> sized arbitrary'
+    where
+      arbitrary' :: Int -> Gen DirTree
+      arbitrary' 0 = DirTree <$> arbitrary <*> (pure []) <*> arbitrary
+      arbitrary' n = do
+        (NPlus m) <- arbitrary
+        ds <- replicateM m (arbitrary' $ max (n - m) 0)
+        fs <- arbitrary
+        lbl <- arbitrary
+        pure $ DirTree lbl ds fs
+
+newtype ValidDirTree =
+  ValidDirTree {
+    unValidDirTree :: DirTree
+  } deriving (Eq, Show)
+
+data ViewLevel =
+    YearLevel
+  | MonthLevel
+  | DayLevel1
+  | DayLevel2
+  deriving (Eq, Show)
+
+dayLabel :: Gen DirName
+dayLabel = do
+  n <- choose (1, 31)
+  pure . DirName $ "day=" <> (printf "%02d" (n :: Int))
+
+monthLabel :: Gen DirName
+monthLabel = do
+  n <- choose (1, 12)
+  pure . DirName $ "month=" <> (printf "%02d" (n :: Int))
+
+yearLabel :: Gen DirName
+yearLabel = do
+  n <- choose (1000, 9999)
+  pure . DirName $ "year=" <> (show (n :: Int))
+
+instance Arbitrary ValidDirTree where
+  arbitrary = fmap ValidDirTree $ DirTree <$> arbitrary <*> (listOf1 (arbitrary' YearLevel)) <*> (pure [])
+    where
+      arbitrary' :: ViewLevel -> Gen DirTree
+      arbitrary' DayLevel2 =
+        DirTree <$> arbitrary <*> (pure []) <*> (listOf1 arbitrary)
+      arbitrary' DayLevel1 = oneof [
+          DirTree <$> dayLabel <*> (pure []) <*> (listOf1 arbitrary)
+        , DirTree <$> dayLabel <*> (listOf1 (arbitrary' DayLevel2)) <*> (pure [])
+        ]
+      arbitrary' MonthLevel =
+        DirTree <$> monthLabel <*> (listOf1 (arbitrary' DayLevel1)) <*> (pure [])
+      arbitrary' YearLevel =
+        DirTree <$> yearLabel <*> (listOf1 (arbitrary' MonthLevel)) <*> (pure [])
