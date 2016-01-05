@@ -6,8 +6,10 @@
 [build.dist]
   HADDOCK="true"
   BENCH = "true"
+  PUBLISH = "warden"
 
 [build.branches]
   BENCH = "true"
+  PUBLISH_BRANCHES = "warden"
 
 
