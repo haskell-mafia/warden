@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import           Data.Char (ord)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -20,7 +21,7 @@ import           X.Control.Monad.Trans.Either (EitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative
 
-data Command = Check View
+data Command = Check CheckParams
   deriving (Eq, Show)
 
 main :: IO ()
@@ -37,16 +38,31 @@ main = do
       exitSuccess
 
 run :: Command -> EitherT WardenError IO [Text]
-run (Check v) = (NE.toList . join . fmap renderCheckResult) <$> check v
+run (Check ps) = (NE.toList . join . fmap renderCheckResult) <$> check ps
 
 wardenP :: Parser Command
 wardenP = subparser $
      command' "check" "Run checks over a view." checkP
 
 checkP :: Parser Command
-checkP = Check <$> viewP
+checkP = Check <$> (CheckParams <$> viewP <*> separatorP)
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
      metavar "VIEW"
   <> help "Path to local copy of view.")
+
+separatorP :: Parser Separator
+separatorP = option (eitherReader separator) $
+     long "separator"
+  <> short 's'
+  <> metavar "SEPARATOR"
+  <> value (Separator . fromIntegral $ ord '|')
+  <> help "Field separator for view (e.g., pipe or comma). Defaults to '|'."
+  where
+    separator x = maybe (Left $ "Invalid separator " <> x) Right $ valid' x
+    valid' [x] = if ord x >= 32 && ord x < 128
+      then Just . Separator . fromIntegral $ ord x
+      else Nothing
+    valid' _   = Nothing
+      

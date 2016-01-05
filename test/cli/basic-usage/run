@@ -21,3 +21,5 @@ WARDEN="$WARDEN --dry-run"
 $WARDEN check .
 
 $WARDEN check /not/a/real/view
+
+$WARDEN check -s ',' /not/a/real/view

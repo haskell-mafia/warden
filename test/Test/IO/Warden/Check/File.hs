@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Test.IO.Warden.Check where
+module Test.IO.Warden.Check.File where
 
 import           Control.Monad.IO.Class (liftIO)
 

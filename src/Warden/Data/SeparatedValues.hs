@@ -1,12 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Warden.Data.SeparatedValues (
-    Row(..)
-  , SVParseState(..)
-  , ParsedField(..)
+    FieldCount(..)
   , FieldLooks(..)
+  , ParsedField(..)
+  , Row(..)
+  , RowCount(..)
+  , SVParseState(..)
   , Separator(..)
 
   , field
@@ -26,15 +29,20 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
-import           Data.Map.Strict            (Map)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import qualified Data.Map.Strict            as M
-import           Data.Vector                (Vector)
-import qualified Data.Vector                as V
+import           Data.Map.Strict (Map)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+import           Data.Vector (Vector)
+import qualified Data.Vector as V
 import           GHC.Word
 
 import           P
+
+newtype FieldCount =
+  FieldCount {
+    unFieldCount :: Int
+  } deriving (Eq, Show, Num)
 
 newtype Separator = Separator { unSeparator :: Word8 }
   deriving (Eq, Show)
@@ -56,6 +64,11 @@ data FieldLooks = LooksEmpty
                 | LooksBroken   -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord)
 
+newtype RowCount =
+  RowCount {
+    unRowCount :: Int
+  } deriving (Eq, Show, Num)
+
 -- | We keep track of the number of unique values we get in each field; if
 --   it's greater than a certain percentage of the total number of records
 --   it's probably freeform, otherwise it's probably categorical. We
@@ -66,9 +79,9 @@ data TextCount = TextCount     (Map Text Integer)
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRows     :: Integer
-  , _totalRows   :: Integer
-  , _numFields   :: [Int]
+  { _badRows     :: RowCount
+  , _totalRows   :: RowCount
+  , _numFields   :: [FieldCount]
   , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
@@ -101,18 +114,20 @@ updateSVParseState st row =
   . (fieldCounts %~ (updateFieldCounts row))
   $ st
  where
-  countGood (SVFields _)   = 1
-  countGood (RowFailure _) = 0
-  countGood SVEOF          = 0
+  countGood (SVFields _)   = RowCount 1
+  countGood (RowFailure _) = RowCount 0
+  countGood SVEOF          = RowCount 0
 
-  countBad (SVFields _)    = 0
-  countBad (RowFailure _)  = 1
-  countBad SVEOF           = 0
+  countBad (SVFields _)    = RowCount 0
+  countBad (RowFailure _)  = RowCount 1
+  countBad SVEOF           = RowCount 0
 
-  updateNumFields (SVFields v) ns
-    | not (elem (V.length v) ns) = (V.length v) : ns
-    | otherwise                  = ns
-  updateNumFields _ ns           = ns
+  updateNumFields (SVFields v) ns =
+    let n = FieldCount $ V.length v in
+    if not (elem n ns)
+      then n : ns 
+      else ns
+  updateNumFields _ ns = ns
 
   updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
     V.replicate (V.length v) (M.empty, TextCount M.empty)

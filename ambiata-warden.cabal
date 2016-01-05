@@ -47,17 +47,18 @@ library
   exposed-modules:
                        BuildInfo_ambiata_warden
                        Warden
-                       Warden.Check
                        Warden.Check.File
+                       Warden.Check.Row
                        Warden.Commands
                        Warden.Data
+                       Warden.Data.Check
                        Warden.Data.Numeric
                        Warden.Data.SeparatedValues
                        Warden.Data.View
                        Warden.Error
                        Warden.Fold
-                       Warden.IO
                        Warden.Numeric
+                       Warden.Rows
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric

@@ -2,19 +2,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Test.IO.Warden.IO where
+module Test.IO.Warden.Rows where
 
-import           Control.Monad.Trans.Either
+
 import qualified Data.ByteString.Lazy       as BL
 import           Data.Csv
 import qualified Data.Text                  as T
 import qualified Data.Vector                as V
+
 import           Disorder.Core.IO
+
 import           P
 import qualified Pipes.Prelude              as PP
+
 import           System.FilePath
 import           System.IO
 import           System.IO.Temp
+
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances  ()
 
@@ -22,15 +26,17 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.IO
+import           Warden.Rows
+
+import           X.Control.Monad.Trans.Either
 
 prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
-prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \svrs ->
+prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) -> do
@@ -41,12 +47,12 @@ prop_valid_svrows s i n = forAll (vectorOf (getRowCount n) $ validSVRow s i) $ \
   opts = defaultEncodeOptions { encDelimiter = unSeparator s }
 
 prop_invalid_svrows :: Separator -> RowCount -> Property
-prop_invalid_svrows s n = forAll (vectorOf (getRowCount n) (invalidSVRow s)) $ \svrs ->
+prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \svrs ->
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right (SVEOF:rs) ->
@@ -62,7 +68,7 @@ prop_invalid_svdoc s = forAll (invalidSVDocument s) $ \doc ->
     let fp = tmp </> "sv"
     BL.writeFile fp doc
     res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVRows s h
+      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     pure $ True === isLeft res
 
 return []
