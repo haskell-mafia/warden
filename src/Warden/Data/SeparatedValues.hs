@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -35,9 +36,12 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import           Data.Vector (Vector)
 import qualified Data.Vector as V
+
 import           GHC.Word
 
 import           P
+
+import           Prelude (($!))
 
 newtype FieldCount =
   FieldCount {
@@ -49,8 +53,8 @@ newtype Separator = Separator { unSeparator :: Word8 }
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
-data Row = SVFields (Vector Text)
-           | RowFailure Text
+data Row = SVFields !(Vector Text)
+           | RowFailure !Text
            | SVEOF
   deriving (Eq, Show)
 
@@ -74,22 +78,22 @@ newtype RowCount =
 --   it's probably freeform, otherwise it's probably categorical. We
 --   make the distinction here so we don't have to drag around every
 --   freeform record in memory.
-data TextCount = TextCount     (Map Text Integer)
+data TextCount = TextCount     !(Map Text Integer)
                | LooksFreeform
   deriving (Eq, Show)
 
 data SVParseState = SVParseState
-  { _badRows     :: RowCount
-  , _totalRows   :: RowCount
-  , _numFields   :: [FieldCount]
+  { _badRows     :: !RowCount
+  , _totalRows   :: !RowCount
+  , _numFields   :: ![FieldCount]
   , _fieldCounts :: Maybe (Vector (Map FieldLooks Integer, TextCount))
   } deriving (Eq, Show)
 
 makeLenses ''SVParseState
 
-data ParsedField = IntegralField Integer
-                 | RealField Double
-                 | TextField Text
+data ParsedField = IntegralField !Integer
+                 | RealField !Double
+                 | TextField !Text
   deriving (Eq, Show)
 
 renderParsedField :: ParsedField
@@ -105,14 +109,14 @@ initialSVParseState = SVParseState 0 0 [] Nothing
 updateSVParseState :: SVParseState
                    -> Row
                    -> SVParseState
-updateSVParseState st row =
+updateSVParseState !st row =
   let good = countGood row
       bad  = countBad row  in
     (totalRows %~ ((good + bad) +))
   . (badRows %~ (bad +))
   . (numFields %~ (updateNumFields row))
   . (fieldCounts %~ (updateFieldCounts row))
-  $ st
+  $! st
  where
   countGood (SVFields _)   = RowCount 1
   countGood (RowFailure _) = RowCount 0
@@ -122,19 +126,19 @@ updateSVParseState st row =
   countBad (RowFailure _)  = RowCount 1
   countBad SVEOF           = RowCount 0
 
-  updateNumFields (SVFields v) ns =
+  updateNumFields (SVFields !v) !ns =
     let n = FieldCount $ V.length v in
     if not (elem n ns)
       then n : ns 
       else ns
-  updateNumFields _ ns = ns
+  updateNumFields _ !ns = ns
 
-  updateFieldCounts (SVFields v) Nothing   = Just $ V.zipWith updateFieldCount v $
+  updateFieldCounts (SVFields !v) Nothing   = Just $ V.zipWith updateFieldCount v $
     V.replicate (V.length v) (M.empty, TextCount M.empty)
-  updateFieldCounts (SVFields v) (Just fc) = Just $ V.zipWith updateFieldCount v fc
-  updateFieldCounts _ fc                   = fc
+  updateFieldCounts (SVFields !v) (Just !fc) = Just $ V.zipWith updateFieldCount v fc
+  updateFieldCounts _ !fc                   = fc
 
-  updateFieldCount t fc = bimap (updateFieldLooks t) (updateTextCount t) fc
+  updateFieldCount !t !fc = bimap (updateFieldLooks t) (updateTextCount t) fc
 
 field :: Parser ParsedField
 field = choice
@@ -147,7 +151,7 @@ updateFieldLooks :: Text
                  -> Map FieldLooks Integer
                  -> Map FieldLooks Integer
 updateFieldLooks "" m = M.insertWith (+) LooksEmpty 1 m
-updateFieldLooks t m  =
+updateFieldLooks !t !m  =
   let looksLike = case parseOnly field t of
                     Left _                  -> LooksBroken   -- Not valid UTF-8.
                     Right (IntegralField _) -> LooksIntegral
@@ -159,11 +163,11 @@ updateTextCount :: Text
                 -> TextCount
                 -> TextCount
 updateTextCount _ LooksFreeform = LooksFreeform
-updateTextCount t (TextCount tc) = case M.lookup t tc of
-  Nothing -> TextCount $ M.insert t 1 tc
+updateTextCount !t (TextCount !tc) = case M.lookup t tc of
+  Nothing -> TextCount $! M.insert t 1 tc
   Just n  -> if n > freeformTextThreshold
                then LooksFreeform
-               else TextCount $ M.insert t (n+1) tc
+               else TextCount $! M.insert t (n+1) tc
 
 -- | Number of occurrences of a value before we conclude that it's
 --   not likely to be an enumerated field. May need to make this
