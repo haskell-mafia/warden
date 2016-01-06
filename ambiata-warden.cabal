@@ -29,6 +29,7 @@ library
                      , lens
                      , pipes                           == 4.1.*
                      , pipes-bytestring                == 2.1.*
+                     , pipes-csv                       == 1.4.*
                      , semigroups                      >= 0.16 && < 0.19
                      , statistics                      == 0.13.2.*
                      , text                            == 1.2.*

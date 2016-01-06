@@ -39,12 +39,11 @@ prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \s
       runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
-      Right (SVEOF:rs) -> do
+      Right rs -> do
         let expected = reverse $ (SVFields . V.fromList . getValidSVRow) <$> svrs
         pure $ expected === rs
-      Right x -> fail $ "impossible result from decoding: " <> show x
  where
-  opts = defaultEncodeOptions { encDelimiter = unSeparator s }
+   opts = defaultEncodeOptions { encDelimiter = unSeparator s }
 
 prop_invalid_svrows :: Separator -> RowCount -> Property
 prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \svrs ->
@@ -55,21 +54,11 @@ prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \s
       runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
-      Right (SVEOF:rs) ->
+      Right rs ->
         pure $ [] === filter (not . rowFailed) rs
-      Right x -> fail $ "impossible result from decoding: " <> show x
  where
   rowFailed (RowFailure _) = True
   rowFailed _              = False
-
-prop_invalid_svdoc :: Separator -> Property
-prop_invalid_svdoc s = forAll (invalidSVDocument s) $ \doc ->
-  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
-    let fp = tmp </> "sv"
-    BL.writeFile fp doc
-    res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
-    pure $ True === isLeft res
 
 return []
 tests :: IO Bool

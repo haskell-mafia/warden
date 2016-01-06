@@ -15,8 +15,7 @@ import qualified Data.Text as T
 import           Warden.Data.View
 
 data WardenError =
-    LoadError Text
-  | WardenNotImplementedError
+    WardenNotImplementedError
   | WardenTraversalError TraversalError
   deriving (Eq, Show)
 
@@ -30,7 +29,6 @@ renderWardenError :: WardenError
                   -> Text
 renderWardenError = ("warden: " <>) . render'
   where
-    render' (LoadError e) = "error loading dataset: " <> e
     render' WardenNotImplementedError = "implement me!"
     render' (WardenTraversalError te) = renderTraversalError te
 
