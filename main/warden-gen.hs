@@ -16,7 +16,7 @@ import           System.FilePath ((</>))
 import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile)
 
 import           Test.IO.Warden
-import           Test.QuickCheck (generate, arbitrary, suchThat, elements)
+import           Test.QuickCheck (generate, arbitrary, suchThat, elements, resize)
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -43,7 +43,8 @@ main = do
 
 generateView :: RecordCount -> IO ()
 generateView (RecordCount n) = do
-  dt <- generate . fmap unValidDirTree $ arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
+  dt <- generate . resize 5 . fmap unValidDirTree $
+          arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
   tok <- generate $ elements muppets
   fieldCount <- generate arbitrary
   let viewRoot = "./warden-gen-" <> T.unpack tok
