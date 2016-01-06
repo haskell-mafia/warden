@@ -1,10 +1,21 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import qualified Data.Text as T
+
+import           Disorder.Corpus (muppets)
+
 import           P
 
 import           System.Exit
-import           System.IO (IO, print, putStrLn)
+import           System.FilePath ((</>))
+import           System.IO (IO, print)
+
+import           Test.IO.Warden
+import           Test.QuickCheck (generate, arbitrary, suchThat, elements)
+import           Test.Warden.Arbitrary
+
+import           Warden.Data
 
 import           X.Options.Applicative
 
@@ -23,13 +34,18 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun _ -> do
-      putStrLn "implement me!"
-      exitFailure
+    RunCommand RealRun (Generate c) -> do
+      generateView c
+
+generateView :: RecordCount -> IO ()
+generateView (RecordCount _) = do
+  dt <- generate . fmap unValidDirTree $ arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
+  tok <- generate $ elements muppets
+  writeView ("./warden-gen" </> T.unpack tok) dt
 
 wardenGenP :: Parser Command
 wardenGenP = subparser $
-     command' "gen" "Generate a view for testing/benchmarking." generateP
+  command' "gen" "Generate a view for testing/benchmarking." generateP
 
 generateP :: Parser Command
 generateP = Generate <$> recordCountP
