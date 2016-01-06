@@ -27,7 +27,11 @@ newtype RecordCount =
   RecordCount Int
   deriving (Eq, Show)
 
-data Command = Generate RecordCount
+newtype GenSize =
+  GenSize Int
+  deriving (Eq, Show)
+
+data Command = Generate RecordCount GenSize
   deriving (Eq, Show)
 
 main :: IO ()
@@ -38,12 +42,12 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun (Generate c) -> do
-      generateView c
+    RunCommand RealRun (Generate c s) -> do
+      generateView c s
 
-generateView :: RecordCount -> IO ()
-generateView (RecordCount n) = do
-  dt <- generate . resize 5 . fmap unValidDirTree $
+generateView :: RecordCount -> GenSize -> IO ()
+generateView (RecordCount n) (GenSize s) = do
+  dt <- generate . resize s . fmap unValidDirTree $
           arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
   tok <- generate $ elements muppets
   fieldCount <- generate arbitrary
@@ -72,7 +76,7 @@ wardenGenP = subparser $
   command' "gen" "Generate a view for testing/benchmarking." generateP
 
 generateP :: Parser Command
-generateP = Generate <$> recordCountP
+generateP = Generate <$> recordCountP <*> genSizeP
 
 recordCountP :: Parser RecordCount
 recordCountP = RecordCount <$> (option auto $
@@ -81,3 +85,12 @@ recordCountP = RecordCount <$> (option auto $
   <> metavar "COUNT"
   <> value 1000000
   <> help "Number of records to generate (default 10^6).")
+
+genSizeP :: Parser GenSize
+genSizeP = GenSize <$> (option auto $
+     long "gen-size"
+  <> short 's'
+  <> metavar "SIZE"
+  <> value 4
+  <> help "Generator size parameter, default 4.")
+
