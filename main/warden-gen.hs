@@ -1,6 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import qualified Data.ByteString.Lazy as BL
+import           Data.Char (ord)
+import           Data.Csv (EncodeOptions(..), defaultEncodeOptions, encodeWith)
+import           Data.List (nub)
 import qualified Data.Text as T
 
 import           Disorder.Corpus (muppets)
@@ -9,7 +13,7 @@ import           P
 
 import           System.Exit
 import           System.FilePath ((</>))
-import           System.IO (IO, print)
+import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile)
 
 import           Test.IO.Warden
 import           Test.QuickCheck (generate, arbitrary, suchThat, elements)
@@ -38,10 +42,29 @@ main = do
       generateView c
 
 generateView :: RecordCount -> IO ()
-generateView (RecordCount _) = do
+generateView (RecordCount n) = do
   dt <- generate . fmap unValidDirTree $ arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
   tok <- generate $ elements muppets
-  writeView ("./warden-gen" </> T.unpack tok) dt
+  fieldCount <- generate arbitrary
+  let viewRoot = "./warden-gen-" <> T.unpack tok
+  let dfs = nub . fmap (viewRoot </>) $ directoryFiles dt
+  let fileLines = n `div` (length dfs)
+  writeView viewRoot dt
+  mapM_ (writeViewFile fileLines fieldCount) dfs
+
+writeViewFile :: Int -> FieldCount -> FilePath -> IO ()
+writeViewFile c fc fp = do
+  fh <- openFile fp WriteMode
+  replicateM_ c (writeRow fh)
+  hClose fh
+  where
+    sep = Separator . fromIntegral $ ord '|'
+
+    writeRow h = do
+      r <- generate $ validSVRow sep fc
+      BL.hPutStr h $ encodeWith opts [r]
+
+    opts = defaultEncodeOptions { encDelimiter = unSeparator sep }
 
 wardenGenP :: Parser Command
 wardenGenP = subparser $
