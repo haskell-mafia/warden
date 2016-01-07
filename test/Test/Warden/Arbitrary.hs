@@ -54,7 +54,7 @@ instance Arbitrary RowCount where
   arbitrary = RowCount <$> choose (1, 100)
 
 instance Arbitrary FieldCount where
-  arbitrary = FieldCount <$> choose (2, 10)
+  arbitrary = fmap FieldCount $ arbitrary `suchThat` (>= 2)
 
 -- Bytes which can break the row-statelessness of the parser.
 affectsRowState :: Word8 -> Bool
