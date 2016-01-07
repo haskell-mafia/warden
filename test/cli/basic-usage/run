@@ -5,7 +5,7 @@
 banner Display Version
 #---------------------
 
-$WARDEN -v
+$WARDEN -v | grep -q warden
 
 $WARDEN --version
 
