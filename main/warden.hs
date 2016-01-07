@@ -3,21 +3,19 @@
 
 import           Data.Char (ord)
 import qualified Data.List.NonEmpty as NE
-import           Data.Text (Text)
 import qualified Data.Text.IO as T
 
 import           Options.Applicative
 
 import           P
 
-import           System.Exit
+import           System.Exit (exitSuccess, exitFailure)
 import           System.IO (IO, print)
 
 import           Warden.Commands
 import           Warden.Data
 import           Warden.Error
 
-import           X.Control.Monad.Trans.Either (EitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative
 
@@ -32,13 +30,12 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun c -> do
-      r <- orDie renderWardenError $ run c
-      mapM_ T.putStrLn r
-      exitSuccess
-
-run :: Command -> EitherT WardenError IO [Text]
-run (Check ps) = (NE.toList . join . fmap renderCheckResult) <$> check ps
+    RunCommand RealRun (Check ps) -> do
+      r <- orDie renderWardenError $ check ps
+      mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
+      if checkHasFailures r
+        then exitFailure
+        else exitSuccess
 
 wardenP :: Parser Command
 wardenP = subparser $

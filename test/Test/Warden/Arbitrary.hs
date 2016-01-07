@@ -63,19 +63,6 @@ affectsRowState w = elem w $ special
   special :: [Word8]
   special = (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\\']
 
--- Get an invalid xSV document by sticking a quote in an inconvenient place.
-invalidSVDocument :: Separator -> Gen ByteString
-invalidSVDocument (Separator s) = (BL.pack . concat) <$> do
-  w1 <- fieldWords
-  w2 <- fieldWords
-  pure [w1, [fromIntegral (ord '"')], w2]
- where
-  fieldWords :: Gen [Word8]
-  fieldWords = (listOf1 (elements alphaWords)) `suchThat` (not . (elem s))
-
-  alphaWords :: [Word8]
-  alphaWords = [65..91] <> [97..123]
-
 invalidSVRow :: Separator -> Gen ByteString
 invalidSVRow (Separator s) = BL.intercalate (BL.pack [s]) <$> listOf1 invalidSVField
 
