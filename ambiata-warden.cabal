@@ -57,7 +57,6 @@ library
                        Warden.Data.SeparatedValues
                        Warden.Data.View
                        Warden.Error
-                       Warden.Fold
                        Warden.Numeric
                        Warden.Rows
                        Warden.Sampling.Reservoir

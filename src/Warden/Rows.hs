@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Rows (
     readSVHandle
@@ -40,7 +41,7 @@ readSVHandle (Separator sep) h =
   where
     opts = defaultDecodeOptions { decDelimiter = sep }
 
-    toRow (Right r) = SVFields r
-    toRow (Left e)  = RowFailure $ T.pack e
+    toRow (Right !r) = SVFields r
+    toRow (Left !e)  = RowFailure $ T.pack e
 
     
