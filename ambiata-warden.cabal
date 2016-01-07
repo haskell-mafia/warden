@@ -65,7 +65,7 @@ library
                        Warden.View
 
 executable             warden
-    ghc-options:       -Wall -threaded -O2
+    ghc-options:       -Wall -threaded -O2 -with-rtsopts=-N
     main-is:           main/warden.hs
     build-depends:     base
                      , ambiata-p
