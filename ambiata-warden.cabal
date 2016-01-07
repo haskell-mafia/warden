@@ -78,7 +78,7 @@ executable             warden
                      , text
 
 executable             warden-gen
-    ghc-options:       -Wall -threaded -O2
+    ghc-options:       -Wall -threaded -O2 -with-rtsopts=-N
     main-is:           warden-gen.hs
     hs-source-dirs:    main
                      , test
@@ -94,6 +94,7 @@ executable             warden-gen
                      , ambiata-warden
                      , ambiata-x-eithert
                      , ambiata-x-optparse
+                     , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*

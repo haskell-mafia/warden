@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import           Control.Concurrent.Async (mapConcurrently)
+
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char (ord)
 import           Data.Csv (EncodeOptions(..), defaultEncodeOptions, encodeWith)
@@ -55,7 +57,7 @@ generateView (RecordCount n) (GenSize s) = do
   let dfs = nub . fmap (viewRoot </>) $ directoryFiles dt
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
-  mapM_ (writeViewFile fileLines fieldCount) dfs
+  void $ mapConcurrently (writeViewFile fileLines fieldCount) dfs
 
 writeViewFile :: Int -> FieldCount -> FilePath -> IO ()
 writeViewFile c fc fp = do
