@@ -11,7 +11,9 @@ module Warden.Data.Check (
   , RowFailure(..)
   , RowCheck(..)
   , WardenCheck(..)
-  , checkFailed
+  , checkHasFailures
+  , checkStatusFailed
+  , isCheckFailure
   , renderFailure
   , renderCheckResult
   , renderCheckStatus
@@ -58,6 +60,13 @@ data CheckResult =
   | RowCheckResult CheckDescription CheckStatus
   deriving (Eq, Show)
 
+isCheckFailure :: CheckResult -> Bool
+isCheckFailure (FileCheckResult _ _ s) = checkStatusFailed s
+isCheckFailure (RowCheckResult _ s)    = checkStatusFailed s
+
+checkHasFailures :: NonEmpty CheckResult -> Bool
+checkHasFailures rs = any isCheckFailure $ NE.toList rs
+
 data Verbosity =
     Verbose
   | Quiet
@@ -85,9 +94,9 @@ renderCheckResult (RowCheckResult cd st) =
 data CheckStatus = CheckPassed | CheckFailed (NonEmpty Failure)
   deriving (Eq, Show)
 
-checkFailed :: CheckStatus -> Bool
-checkFailed CheckPassed = False
-checkFailed (CheckFailed _) = True
+checkStatusFailed :: CheckStatus -> Bool
+checkStatusFailed CheckPassed = False
+checkStatusFailed (CheckFailed _) = True
 
 renderCheckStatus :: CheckStatus -> NonEmpty Text
 renderCheckStatus CheckPassed =
