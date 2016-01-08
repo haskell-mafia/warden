@@ -15,7 +15,7 @@ import           P
 
 import           System.Exit
 import           System.FilePath ((</>))
-import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile)
+import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile, putStrLn)
 
 import           Test.IO.Warden
 import           Test.QuickCheck (generate, arbitrary, suchThat, elements, resize)
@@ -63,6 +63,9 @@ generateView (RecordCount n) (GenSize s) ll = do
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
   void $ mapConcurrently (writeViewFile fileLines fieldCount ll) dfs
+  putStrLn $ viewRoot </> (viewBase dt)
+  where
+    viewBase (DirTree b _ _) = unDirName b
 
     lineParam = longLinesParam ll
 
