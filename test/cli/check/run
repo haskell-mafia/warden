@@ -1,0 +1,17 @@
+#!/bin/sh -eu
+
+. $(dirname $0)/../core/setup.sh
+
+banner Check small valid view
+#---------------------
+
+ROOT="$(pwd)/warden-cli-test-check"
+mkdir -p ${ROOT}
+trap "rm -rf ${ROOT}" EXIT
+
+(
+  set -eux
+  cd $ROOT
+  VIEW=$(../${WARDEN_GEN} gen -s 2 -c 10000)
+  ../${WARDEN} check  "${VIEW}"
+)
