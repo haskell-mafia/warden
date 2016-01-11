@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Warden.Data.View(
@@ -21,6 +22,7 @@ module Warden.Data.View(
   , renderViewFile
 ) where
 
+import           Data.Attoparsec.Text (IResult(..), parse)
 import           Data.List (stripPrefix)
 import           Data.String (IsString)
 import qualified Data.Text as T
@@ -32,8 +34,6 @@ import           System.FilePath (joinPath, splitDirectories, (</>))
 import           System.IO (FilePath)
 
 import           P
-
-import           X.Data.Attoparsec.Text (startsWith)
 
 newtype View =
   View {
@@ -62,8 +62,15 @@ renderNonViewFile = T.pack . unNonViewFile
 isViewFile :: View -> FilePath -> Bool
 isViewFile v fp = maybe
   False
-  (startsWith datePartitionParser)
+  valid'
   (T.pack <$> removeViewPrefix v fp)
+  where
+    -- Starts with a date partition and has a filename component at the end.
+    valid' f = finalize $ parse datePartitionParser f
+
+    finalize (Partial c)   = finalize $ c ""
+    finalize (Done rest _) = not $ T.null rest
+    finalize _             = False
 
 removeViewPrefix :: View -> FilePath -> Maybe FilePath
 removeViewPrefix (View v) fp =

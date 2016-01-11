@@ -12,8 +12,8 @@ module Warden.Data.Marker (
   , viewToMarker
   ) where
 
-import           Data.Attoparsec.Text (Parser, parse)
-import           Data.Attoparsec.Text (string, maybeResult, satisfy)
+import           Data.Attoparsec.Text (IResult(..), Parser, parse)
+import           Data.Attoparsec.Text (string, satisfy, manyTill)
 import           Data.Char (ord)
 import qualified Data.Text as T
 
@@ -49,12 +49,17 @@ markerToFile :: View -> FilePath -> Maybe ViewFile
 markerToFile v fp
   | not (isViewFile v fp) = Nothing
   | otherwise             = do
-      fn <- maybeResult . parse fileMarker $ T.pack fp
+      fn <- finalize . parse fileMarker . T.pack $ takeFileName fp
       pure . ViewFile $ replaceFileName fp fn
   where
     fileMarker :: Parser FilePath
     fileMarker =
-      string "_" *> some filePathChar <* string (T.pack markerSuffix)
+      string "_" *> manyTill filePathChar (string (T.pack markerSuffix))
+
+    finalize (Partial c)  = finalize $ c ""
+    finalize (Done "" "") = Nothing
+    finalize (Done "" r)  = Just r
+    finalize _            = Nothing
 
 viewToMarker :: View -> FilePath
 viewToMarker (View v) =

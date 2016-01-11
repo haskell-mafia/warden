@@ -192,7 +192,7 @@ instance Arbitrary ValidViewFile where
   arbitrary = do
     v <- arbitrary
     d <- arbitrary
-    fp <- (joinPath . fmap T.unpack) <$> listOf (elements viruses)
+    fp <- (joinPath . fmap T.unpack) <$> listOf1 (elements viruses)
     let vf = ViewFile $ (unView v) </> (T.unpack $ dateAsPartition d) </> fp
     pure $ ValidViewFile v vf
 
