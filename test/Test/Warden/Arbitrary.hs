@@ -54,7 +54,7 @@ instance Arbitrary RowCount where
   arbitrary = RowCount <$> choose (1, 100)
 
 instance Arbitrary FieldCount where
-  arbitrary = FieldCount <$> choose (2, 10)
+  arbitrary = fmap FieldCount $ arbitrary `suchThat` (>= 2)
 
 -- Bytes which can break the row-statelessness of the parser.
 affectsRowState :: Word8 -> Bool
@@ -192,7 +192,7 @@ instance Arbitrary ValidViewFile where
   arbitrary = do
     v <- arbitrary
     d <- arbitrary
-    fp <- (joinPath . fmap T.unpack) <$> listOf (elements viruses)
+    fp <- (joinPath . fmap T.unpack) <$> listOf1 (elements viruses)
     let vf = ViewFile $ (unView v) </> (T.unpack $ dateAsPartition d) </> fp
     pure $ ValidViewFile v vf
 

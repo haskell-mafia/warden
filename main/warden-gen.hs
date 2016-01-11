@@ -15,7 +15,7 @@ import           P
 
 import           System.Exit
 import           System.FilePath ((</>))
-import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile)
+import           System.IO (IOMode(..), IO, FilePath, print, hClose, openFile, putStrLn)
 
 import           Test.IO.Warden
 import           Test.QuickCheck (generate, arbitrary, suchThat, elements, resize)
@@ -33,7 +33,12 @@ newtype GenSize =
   GenSize Int
   deriving (Eq, Show)
 
-data Command = Generate RecordCount GenSize
+data LongLines =
+    LongLines
+  | NoLongLines
+  deriving (Eq, Show)
+
+data Command = Generate RecordCount GenSize LongLines
   deriving (Eq, Show)
 
 main :: IO ()
@@ -44,41 +49,54 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun (Generate c s) -> do
-      generateView c s
+    RunCommand RealRun (Generate c s ll) -> do
+      generateView c s ll
 
-generateView :: RecordCount -> GenSize -> IO ()
-generateView (RecordCount n) (GenSize s) = do
+generateView :: RecordCount -> GenSize -> LongLines -> IO ()
+generateView (RecordCount n) (GenSize s) ll = do
   dt <- generate . resize s . fmap unValidDirTree $
           arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
   tok <- generate $ elements muppets
-  fieldCount <- generate arbitrary
+  fieldCount <- generate . resize lineParam $ arbitrary
   let viewRoot = "./warden-gen-" <> T.unpack tok
   let dfs = nub . fmap (viewRoot </>) $ directoryFiles dt
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
-  void $ mapConcurrently (writeViewFile fileLines fieldCount) dfs
+  void $ mapConcurrently (writeViewFile fileLines fieldCount ll) dfs
+  putStrLn $ viewRoot </> (viewBase dt)
+  where
+    viewBase (DirTree b _ _) = unDirName b
 
-writeViewFile :: Int -> FieldCount -> FilePath -> IO ()
-writeViewFile c fc fp = do
+    lineParam = longLinesParam ll
+
+writeViewFile :: Int -> FieldCount -> LongLines -> FilePath -> IO ()
+writeViewFile c fc ll fp = do
   fh <- openFile fp WriteMode
   replicateM_ c (writeRow fh)
   hClose fh
   where
     sep = Separator . fromIntegral $ ord '|'
 
-    writeRow h = do
-      r <- generate $ validSVRow sep fc
+    writeRow h =
+      let size' = longLinesParam ll in do
+      r <- generate . resize size' $ validSVRow sep fc
       BL.hPutStr h $ encodeWith opts [r]
 
     opts = defaultEncodeOptions { encDelimiter = unSeparator sep }
+
+longLinesParam :: LongLines -> Int
+longLinesParam LongLines   = 100000
+longLinesParam NoLongLines = 20
 
 wardenGenP :: Parser Command
 wardenGenP = subparser $
   command' "gen" "Generate a view for testing/benchmarking." generateP
 
 generateP :: Parser Command
-generateP = Generate <$> recordCountP <*> genSizeP
+generateP = Generate
+  <$> recordCountP
+  <*> genSizeP
+  <*> longLinesP
 
 recordCountP :: Parser RecordCount
 recordCountP = RecordCount <$> (option auto $
@@ -96,3 +114,8 @@ genSizeP = GenSize <$> (option auto $
   <> value 4
   <> help "Generator size parameter, default 4.")
 
+longLinesP :: Parser LongLines
+longLinesP = flag NoLongLines LongLines $
+     long "long-lines"
+  <> short 'l'
+  <> help "Generate very long lines."

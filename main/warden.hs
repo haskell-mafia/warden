@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import           BuildInfo_ambiata_warden
+
 import           Data.Char (ord)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
@@ -10,7 +12,7 @@ import           Options.Applicative
 import           P
 
 import           System.Exit (exitSuccess, exitFailure)
-import           System.IO (IO, print)
+import           System.IO (IO, print, putStrLn)
 
 import           Warden.Commands
 import           Warden.Data
@@ -26,6 +28,7 @@ main :: IO ()
 main = do
   dispatch (safeCommand wardenP) >>= \case
     VersionCommand -> do
+      putStrLn ("warden: " <> buildInfoVersion)
       exitSuccess
     RunCommand DryRun c -> do
       print c

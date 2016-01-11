@@ -14,6 +14,7 @@ library
   build-depends:
                        base                            >= 3          && < 5
                      , aeson                           == 0.8.*
+                     , ambiata-delorean
                      , ambiata-lane
                      , ambiata-p
                      , ambiata-x-attoparsec
@@ -53,6 +54,7 @@ library
                        Warden.Commands
                        Warden.Data
                        Warden.Data.Check
+                       Warden.Data.Marker
                        Warden.Data.Numeric
                        Warden.Data.SeparatedValues
                        Warden.Data.View

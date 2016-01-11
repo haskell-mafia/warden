@@ -10,6 +10,7 @@ module Warden.Data (
 import           P
 
 import           Warden.Data.Check as X
+import           Warden.Data.Marker as X
 import           Warden.Data.Numeric as X
 import           Warden.Data.SeparatedValues as X
 import           Warden.Data.View as X
