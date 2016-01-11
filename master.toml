@@ -12,4 +12,6 @@
   BENCH = "true"
   PUBLISH_BRANCHES = "warden"
 
-
+[build.profiling]
+  PROFILING = "true"
+  PUBLISH_PROFILING = "warden"
