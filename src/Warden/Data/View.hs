@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.View(
     DirTree(..)
@@ -22,11 +23,15 @@ module Warden.Data.View(
   , renderViewFile
 ) where
 
+import           Control.DeepSeq (NFData)
+
 import           Data.Attoparsec.Text (IResult(..), parse)
 import           Data.List (stripPrefix)
 import           Data.String (IsString)
 import qualified Data.Text as T
 import           Data.Text (Text)
+
+import           GHC.Generics (Generic)
 
 import           Lane.Data (datePartitionParser)
 
@@ -46,7 +51,9 @@ renderView = T.pack . unView
 newtype ViewFile =
   ViewFile {
     unViewFile :: FilePath
-  } deriving (Eq, Show, Ord)
+  } deriving (Eq, Show, Ord, Generic)
+
+instance NFData ViewFile
 
 renderViewFile :: ViewFile -> Text
 renderViewFile = T.pack . unViewFile

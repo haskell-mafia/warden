@@ -8,6 +8,8 @@ import           System.IO (IO, print, putStrLn)
 
 import           Test.IO.Warden
 
+import           Warden.Data
+
 import           X.Options.Applicative
 
 data LongLines =
@@ -28,7 +30,7 @@ main = do
       exitSuccess
     RunCommand RealRun (Generate c s ll) -> do
       vp <- generateView c s $ longLinesParam ll
-      putStrLn vp
+      putStrLn $ unView vp
 
 longLinesParam :: LongLines -> LineSize
 longLinesParam LongLines   = LineSize 100000

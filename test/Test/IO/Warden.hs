@@ -81,7 +81,7 @@ newtype GenSize =
   GenSize Int
   deriving (Eq, Show)
 
-generateView :: RecordCount -> GenSize -> LineSize -> IO FilePath
+generateView :: RecordCount -> GenSize -> LineSize -> IO View
 generateView (RecordCount n) (GenSize s) ll = do
   dt <- generate . resize s . fmap unValidDirTree $
           arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
@@ -92,7 +92,7 @@ generateView (RecordCount n) (GenSize s) ll = do
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
   void $ mapConcurrently (writeViewFile fileLines fieldCount ll) dfs
-  pure $ viewRoot </> (viewBase dt)
+  pure . View $ viewRoot </> (viewBase dt)
   where
     viewBase (DirTree b _ _) = unDirName b
 
