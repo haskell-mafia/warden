@@ -172,6 +172,7 @@ test-suite test-io
                      , ambiata-p
                      , ambiata-warden
                      , ambiata-x-eithert
+                     , async                           == 2.0.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
                      , directory
