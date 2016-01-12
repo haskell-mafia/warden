@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE BangPatterns #-}
 
-module Warden.Rows (
+module Warden.Row (
     readSVHandle
   , readSVView
   , readView

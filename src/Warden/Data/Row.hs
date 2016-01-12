@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Warden.Data.SeparatedValues (
+module Warden.Data.Row (
     FieldCount(..)
   , LineBound(..)
   , ParsedField(..)

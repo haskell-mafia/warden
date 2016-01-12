@@ -32,7 +32,7 @@ import           P
 
 import           System.IO
 
-import           Warden.Data.SeparatedValues
+import           Warden.Data.Row
 import           Warden.Data.View
 import           Warden.Error
 

@@ -24,7 +24,7 @@ import           System.IO (IO)
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.Rows
+import           Warden.Row
 
 import           X.Control.Monad.Trans.Either (EitherT)
 

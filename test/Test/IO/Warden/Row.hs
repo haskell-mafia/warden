@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Test.IO.Warden.Rows where
+module Test.IO.Warden.Row where
 
 
 import qualified Data.ByteString.Lazy       as BL
@@ -26,7 +26,7 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.Rows
+import           Warden.Row
 
 import           X.Control.Monad.Trans.Either
 

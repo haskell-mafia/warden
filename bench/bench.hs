@@ -27,7 +27,7 @@ import           System.IO.Temp (withTempDirectory)
 import           Test.IO.Warden
 
 import           Warden.Data
-import           Warden.Rows
+import           Warden.Row
 import           Warden.View
 
 import           X.Control.Monad.Trans.Either (mapEitherT)

@@ -61,11 +61,11 @@ library
                        Warden.Data.Check
                        Warden.Data.Marker
                        Warden.Data.Numeric
-                       Warden.Data.SeparatedValues
+                       Warden.Data.Row
                        Warden.Data.View
                        Warden.Error
                        Warden.Numeric
-                       Warden.Rows
+                       Warden.Row
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Numeric

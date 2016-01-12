@@ -26,7 +26,7 @@ import           System.IO (FilePath)
 import           P
 
 import           Warden.Data.Check
-import           Warden.Data.SeparatedValues
+import           Warden.Data.Row
 import           Warden.Data.View
 
 data FileMarker =
