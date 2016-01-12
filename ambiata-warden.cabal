@@ -18,6 +18,7 @@ library
                      , ambiata-lane
                      , ambiata-p
                      , ambiata-x-attoparsec
+                     , ambiata-x-conduit
                      , ambiata-x-eithert
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*

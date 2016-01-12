@@ -15,7 +15,6 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.ByteString (ByteString)
 import           Data.Conduit (Source, Conduit, (=$=), await, yield)
-import qualified Data.Conduit.Binary as CB
 import           Data.Csv ()
 import           Data.Csv (DecodeOptions(..), HasHeader(..))
 import           Data.Csv (defaultDecodeOptions)
@@ -38,7 +37,8 @@ import           System.IO
 import           Warden.Data
 import           Warden.Error
 
-import           X.Control.Monad.Trans.Either
+import           X.Control.Monad.Trans.Either (EitherT, left)
+import           X.Data.Conduit.Binary (slurp)
 
 readSVView :: Separator
            -> NonEmpty ViewFile
@@ -63,7 +63,7 @@ readViewFile :: Separator
              -> ViewFile
              -> Source (EitherT WardenError (ResourceT IO)) Row
 readViewFile (Separator sep) (LineBound _lb) (ViewFile fp) =
-  CB.sourceFile fp =$= decodeRows (decodeWith opts NoHeader)
+  slurp fp 0 Nothing =$= decodeRows (decodeWith opts NoHeader)
   where
     decodeRows :: Parser (Vector Text) -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
     decodeRows (Fail _ e) =
