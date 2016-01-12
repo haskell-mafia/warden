@@ -17,10 +17,6 @@ import           Data.List.NonEmpty (NonEmpty)
 
 import           P
 
-import           Pipes
-import qualified Pipes.ByteString as PB
-import qualified Pipes.Prelude as PP
-
 import           System.IO
 import           System.IO.Temp (withTempDirectory)
 
@@ -45,14 +41,6 @@ prepareView root = do
   vp <- generateView root (RecordCount 1000) (GenSize 1) (LineSize 100)
   unsafeWarden $ traverseView vp
 
-benchPipesDecode :: NonEmpty ViewFile -> IO ()
-benchPipesDecode vfs = do
-  bitbucket <- openFile "/dev/null" WriteMode
-  unsafeWarden . runEffect $
-        readSVView (Separator . fromIntegral $ ord '|') vfs
-    >-> PP.map (BS.pack . show)
-    >-> PB.toHandle bitbucket
-
 benchConduitDecode :: NonEmpty ViewFile -> IO ()
 benchConduitDecode vfs = do
   bitbucket <- openFile "/dev/null" WriteMode
@@ -67,7 +55,6 @@ main = do
     wardenBench [
         env (prepareView root) $ \ ~(vfs) ->
           bgroup "parsing" $ [
-              bench "decode/pipes-csv/1000" $ nfIO (benchPipesDecode vfs)
-            , bench "decode/conduit+cassava/1000" $ nfIO (benchConduitDecode vfs)
+              bench "decode/conduit+cassava/1000" $ nfIO (benchConduitDecode vfs)
             ]
         ]
