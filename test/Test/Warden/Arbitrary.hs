@@ -18,6 +18,7 @@ import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
 import           Data.Word
 
+import           Disorder.Core (utf8BS)
 import           Disorder.Corpus
 
 import           Lane.Data (dateAsPartition)
@@ -73,13 +74,13 @@ invalidSVField = BL.pack <$> (listOf arbitrary) `suchThat` isInvalidText
 
 validSVField :: Separator
              -> Gen Text
-validSVField (Separator s) = (decodeUtf8 . BS.pack) <$>
-  (listOf arbitrary) `suchThat` isValid
- where
-  isValid bs =
-       isRight (decodeUtf8' (BS.pack bs))
-    && all (/= s) bs
-    && not (any affectsRowState bs)
+validSVField (Separator s) = decodeUtf8 <$>
+  utf8BS `suchThat` isValid
+  where
+    isValid bs =
+         let bs' = BS.unpack bs in
+         all (/= s) bs'
+      && not (any affectsRowState bs')
 
 validSVRow :: Separator -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
