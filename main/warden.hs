@@ -45,7 +45,7 @@ wardenP = subparser $
      command' "check" "Run checks over a view." checkP
 
 checkP :: Parser Command
-checkP = Check <$> (CheckParams <$> viewP <*> separatorP)
+checkP = Check <$> (CheckParams <$> viewP <*> separatorP <*> lineBoundP)
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
@@ -60,9 +60,16 @@ separatorP = option (eitherReader separator) $
   <> value (Separator . fromIntegral $ ord '|')
   <> help "Field separator for view (e.g., pipe or comma). Defaults to '|'."
   where
-    separator x = maybe (Left $ "Invalid separator " <> x) Right $ valid' x
+    separator x = maybeToRight ("Invalid separator " <> x) $ valid' x
     valid' [x] = if ord x >= 32 && ord x < 128
       then Just . Separator . fromIntegral $ ord x
       else Nothing
     valid' _   = Nothing
       
+lineBoundP :: Parser LineBound
+lineBoundP = LineBound <$> (option auto $
+     long "max-line-length"
+  <> short 'b'
+  <> metavar "LINE_LENGTH"
+  <> value 65536
+  <> help "Maximum line length. Defaults to 65536.")

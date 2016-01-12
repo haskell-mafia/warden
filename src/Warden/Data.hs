@@ -16,5 +16,5 @@ import           Warden.Data.SeparatedValues as X
 import           Warden.Data.View as X
 
 data CheckParams =
-  CheckParams View Separator
+  CheckParams View Separator LineBound
   deriving (Eq, Show)

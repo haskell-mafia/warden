@@ -6,6 +6,7 @@
 
 module Warden.Data.SeparatedValues (
     FieldCount(..)
+  , LineBound(..)
   , ParsedField(..)
   , Row(..)
   , RowCount(..)
@@ -111,3 +112,8 @@ field = choice
   , RealField     <$> double <* endOfInput
   , TextField     <$> takeText
   ]
+
+newtype LineBound =
+  LineBound {
+    unLineBound :: Int
+  } deriving (Eq, Show)
