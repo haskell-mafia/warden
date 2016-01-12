@@ -81,13 +81,13 @@ newtype GenSize =
   GenSize Int
   deriving (Eq, Show)
 
-generateView :: RecordCount -> GenSize -> LineSize -> IO View
-generateView (RecordCount n) (GenSize s) ll = do
+generateView :: FilePath -> RecordCount -> GenSize -> LineSize -> IO View
+generateView root (RecordCount n) (GenSize s) ll = do
   dt <- generate . resize s . fmap unValidDirTree $
           arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
   tok <- generate $ elements muppets
   fieldCount <- generate . resize (unLineSize ll) $ arbitrary
-  let viewRoot = "./warden-gen-" <> T.unpack tok
+  let viewRoot = root </> ("warden-gen-" <> T.unpack tok)
   let dfs = nub . fmap (viewRoot </>) $ directoryFiles dt
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
