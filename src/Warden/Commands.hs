@@ -5,6 +5,8 @@ module Warden.Commands(
   check
 ) where
 
+import           Control.Monad.Trans.Resource (runResourceT)
+
 import           Data.List.NonEmpty (NonEmpty, (<|))
 
 import           P
@@ -18,13 +20,13 @@ import           Warden.Data
 import           Warden.Error
 import           Warden.View
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, mapEitherT)
 
 -- FIXME: do something more useful with check results
 check :: CheckParams -> EitherT WardenError IO (NonEmpty CheckResult)
-check (CheckParams v s _lb) = do
+check (CheckParams v s lb) = do
   vfs <- traverseView v
   frs <- fmap join $ traverse (forM File.fileChecks) $ File.runFileCheck <$> vfs
-  rr <- Row.runRowCheck s vfs Row.rowCountsCheck
+  rr <- mapEitherT runResourceT $ Row.runRowCheck s lb vfs Row.rowCountsCheck
   pure $ rr <| frs
 

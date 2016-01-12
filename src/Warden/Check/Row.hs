@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Warden.Check.Row (
     rowCountsCheck
@@ -7,14 +8,17 @@ module Warden.Check.Row (
   , runRowCheck
   ) where
 
-import           Control.Foldl (Fold(..), generalize, impurely)
+import           Control.Foldl (Fold(..), FoldM(..), generalize)
 import           Control.Lens ((^.))
+import           Control.Monad.Trans.Class (lift)
+import           Control.Monad.Trans.Resource (ResourceT)
 
+import           Data.Conduit (Consumer, ($$))
+import qualified Data.Conduit.List as CL
 import qualified Data.List.NonEmpty as NE
 import           Data.List.NonEmpty (NonEmpty)
 
 import           P
-import qualified Pipes.Prelude as PP
 
 import           System.IO (IO)
 
@@ -24,9 +28,13 @@ import           Warden.Rows
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-runRowCheck :: Separator -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError IO CheckResult
-runRowCheck s vfs (RowCheck desc chk) = do
-  r <- impurely PP.foldM chk (readSVView s vfs)
+sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
+sinkFoldM (FoldM f init extract) =
+  lift init >>= CL.foldM f >>= lift . extract
+
+runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck s lb vfs (RowCheck desc chk) = do
+  r <- readView s lb vfs $$ sinkFoldM chk 
   pure $ RowCheckResult desc r
 
 rowCountsCheck :: RowCheck
