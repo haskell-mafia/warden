@@ -199,7 +199,7 @@ benchmark bench
 
   main-is:             bench.hs
 
-  ghc-options:         -Wall -threaded -O2
+  ghc-options:         -Wall -threaded -O2 -with-rtsopts=-N
 
   hs-source-dirs:
                        test, bench
