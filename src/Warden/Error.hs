@@ -3,6 +3,7 @@
 
 module Warden.Error (
     WardenError(..)
+  , LoadError(..)
   , TraversalError(..)
   , renderWardenError
 ) where
@@ -15,9 +16,19 @@ import qualified Data.Text as T
 import           Warden.Data.View
 
 data WardenError =
-    WardenNotImplementedError
+    WardenLoadError LoadError
+  | WardenNotImplementedError
   | WardenTraversalError TraversalError
   deriving (Eq, Show)
+
+data LoadError =
+    RowDecodeFailed Text
+  deriving (Eq, Show)
+
+renderLoadError :: LoadError -> Text
+renderLoadError = ("error loading view: " <>) . render'
+  where
+    render' (RowDecodeFailed e) = "failed to decode row data: " <> e
 
 data TraversalError =
     MaxDepthExceeded
@@ -29,6 +40,7 @@ renderWardenError :: WardenError
                   -> Text
 renderWardenError = ("warden: " <>) . render'
   where
+    render' (WardenLoadError le) = renderLoadError le
     render' WardenNotImplementedError = "implement me!"
     render' (WardenTraversalError te) = renderTraversalError te
 
