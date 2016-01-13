@@ -33,7 +33,7 @@ main = do
       putStrLn $ unView vp
 
 longLinesParam :: LongLines -> LineSize
-longLinesParam LongLines   = LineSize 100000
+longLinesParam LongLines   = LineSize 10000
 longLinesParam NoLongLines = LineSize 20
 
 wardenGenP :: Parser Command
