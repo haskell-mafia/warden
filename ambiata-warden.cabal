@@ -20,6 +20,7 @@ library
                      , ambiata-x-attoparsec
                      , ambiata-x-conduit
                      , ambiata-x-eithert
+                     , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -31,7 +32,8 @@ library
                      , either                          == 4.3.*
                      , filepath                        == 1.3.*
                      , foldl                           == 1.1.*
-                     , lens
+                     , lens                            == 4.9.*
+                     , lifted-async                    == 0.5.*
                      , resourcet                       == 1.1.*
                      , semigroups                      >= 0.16 && < 0.19
                      , statistics                      == 0.13.2.*

@@ -20,12 +20,14 @@ module Warden.Data.Row (
   , numFields
   , initialSVParseState
   , updateSVParseState
+  , resolveSVParseState
 ) where
 
 import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.List (union)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Vector (Vector)
@@ -64,6 +66,15 @@ data SVParseState = SVParseState
   } deriving (Eq, Show)
 
 makeLenses ''SVParseState
+
+resolveSVParseState :: [SVParseState] -> SVParseState
+resolveSVParseState = foldr update initialSVParseState
+  where
+    update s !acc =
+        (badRows %~ ((s ^. badRows) +))
+      . (totalRows %~ ((s ^. totalRows) +))
+      . (numFields %~ ((s ^. numFields) `union`))
+      $! acc
 
 data ParsedField = IntegralField !Integer
                  | RealField !Double
@@ -105,6 +116,7 @@ updateSVParseState !st row =
       then n : ns 
       else ns
   updateNumFields _ !ns = ns
+{-# INLINE updateSVParseState #-}
 
 field :: Parser ParsedField
 field = choice

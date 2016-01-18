@@ -38,9 +38,7 @@ readView :: Separator
          -> NonEmpty ViewFile
          -> Source (EitherT WardenError (ResourceT IO)) Row
 readView sep lb vfs =
-  sequence_ $ read' <$> vfs
-  where
-    read' = readViewFile sep lb
+  sequence_ $ (readViewFile sep lb) <$> vfs
 
 -- FIXME: actually enforce LineBound
 readViewFile :: Separator

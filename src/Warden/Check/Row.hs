@@ -3,11 +3,11 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Warden.Check.Row (
-    rowCountsCheck
+    runRowCheck
   , rowParseC
-  , runRowCheck
   ) where
 
+import           Control.Concurrent.Async.Lifted (mapConcurrently)
 import           Control.Foldl (Fold(..), FoldM(..), generalize)
 import           Control.Lens ((^.))
 import           Control.Monad.Trans.Class (lift)
@@ -33,24 +33,33 @@ sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
 runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck s lb vfs (RowCheck desc chk) = do
-  r <- readView s lb vfs $$ sinkFoldM chk 
-  pure $ RowCheckResult desc r
+runRowCheck s lb vfs (RowCheck d chk) = do
+  r <- chk s lb vfs
+  pure $ RowCheckResult d r
 
-rowCountsCheck :: RowCheck
-rowCountsCheck = 
-  RowCheck (CheckDescription "xSV field counts") (generalize rowParseC)
+rowParseC :: RowCheck
+rowParseC =
+  RowCheck (CheckDescription "xSV field counts") parseCheck
+           
 
--- FIXME: do something with final state
-rowParseC :: Fold Row CheckStatus
-rowParseC = finalize <$> (Fold updateSVParseState initialSVParseState id)
-  where
-    -- FIXME: field counts
-    finalize sv = resolveCheckStatus . NE.fromList $ [
-        checkNumFields (sv ^. numFields)
-      , checkTotalRows (sv ^. totalRows)
-      , checkBadRows (sv ^. badRows)
-      ]
+parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
+parseCheck s lb vfs =
+  fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
+    mapConcurrently (parseViewFile s lb) vfs
+
+parseViewFile :: Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) SVParseState
+parseViewFile s lb vf = do
+  readViewFile s lb vf $$ sinkFoldM (generalize parseViewFile')
+
+parseViewFile' :: Fold Row SVParseState
+parseViewFile' = Fold updateSVParseState initialSVParseState id
+
+finalizeSVParseState :: SVParseState -> CheckStatus
+finalizeSVParseState sv = resolveCheckStatus . NE.fromList $ [
+    checkNumFields (sv ^. numFields)
+  , checkTotalRows (sv ^. totalRows)
+  , checkBadRows (sv ^. badRows)
+  ]
 
 checkNumFields :: [FieldCount] -> CheckStatus
 checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]

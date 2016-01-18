@@ -22,11 +22,10 @@ import           Warden.View
 
 import           X.Control.Monad.Trans.Either (EitherT, mapEitherT)
 
--- FIXME: do something more useful with check results
 check :: CheckParams -> EitherT WardenError IO (NonEmpty CheckResult)
 check (CheckParams v s lb) = do
   vfs <- traverseView v
   frs <- fmap join $ traverse (forM File.fileChecks) $ File.runFileCheck <$> vfs
-  rr <- mapEitherT runResourceT $ Row.runRowCheck s lb vfs Row.rowCountsCheck
+  rr <- mapEitherT runResourceT $ Row.runRowCheck s lb vfs Row.rowParseC
   pure $ rr <| frs
 

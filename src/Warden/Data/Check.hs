@@ -20,7 +20,6 @@ module Warden.Data.Check (
   , resolveCheckStatus
   ) where
 
-import           Control.Foldl (FoldM)
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
@@ -54,7 +53,7 @@ data FileCheck =
     FileCheck CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
 
 data RowCheck =
-    RowCheck CheckDescription (FoldM (EitherT WardenError (ResourceT IO)) Row CheckStatus)
+    RowCheck CheckDescription (Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult CheckDescription ViewFile CheckStatus
