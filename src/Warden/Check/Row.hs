@@ -1,48 +1,65 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Warden.Check.Row (
-    rowCountsCheck
+    runRowCheck
   , rowParseC
-  , runRowCheck
   ) where
 
-import           Control.Foldl (Fold(..), generalize, impurely)
+import           Control.Concurrent.Async.Lifted (mapConcurrently)
+import           Control.Foldl (Fold(..), FoldM(..), generalize)
 import           Control.Lens ((^.))
+import           Control.Monad.Trans.Class (lift)
+import           Control.Monad.Trans.Resource (ResourceT)
 
+import           Data.Conduit (Consumer, ($$))
+import qualified Data.Conduit.List as CL
 import qualified Data.List.NonEmpty as NE
 import           Data.List.NonEmpty (NonEmpty)
 
 import           P
-import qualified Pipes.Prelude as PP
 
 import           System.IO (IO)
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.Rows
+import           Warden.Row
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-runRowCheck :: Separator -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError IO CheckResult
-runRowCheck s vfs (RowCheck desc chk) = do
-  r <- impurely PP.foldM chk (readSVView s vfs)
-  pure $ RowCheckResult desc r
+sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
+sinkFoldM (FoldM f init extract) =
+  lift init >>= CL.foldM f >>= lift . extract
 
-rowCountsCheck :: RowCheck
-rowCountsCheck = 
-  RowCheck (CheckDescription "xSV field counts") (generalize rowParseC)
+runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck s lb vfs (RowCheck d chk) = do
+  r <- chk s lb vfs
+  pure $ RowCheckResult d r
 
--- FIXME: do something with final state
-rowParseC :: Fold Row CheckStatus
-rowParseC = finalize <$> (Fold updateSVParseState initialSVParseState id)
-  where
-    -- FIXME: field counts
-    finalize sv = resolveCheckStatus . NE.fromList $ [
-        checkNumFields (sv ^. numFields)
-      , checkTotalRows (sv ^. totalRows)
-      , checkBadRows (sv ^. badRows)
-      ]
+rowParseC :: RowCheck
+rowParseC =
+  RowCheck (CheckDescription "xSV field counts") parseCheck
+           
+
+parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
+parseCheck s lb vfs =
+  fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
+    mapConcurrently (parseViewFile s lb) vfs
+
+parseViewFile :: Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) SVParseState
+parseViewFile s lb vf = do
+  readViewFile s lb vf $$ sinkFoldM (generalize parseViewFile')
+
+parseViewFile' :: Fold Row SVParseState
+parseViewFile' = Fold updateSVParseState initialSVParseState id
+
+finalizeSVParseState :: SVParseState -> CheckStatus
+finalizeSVParseState sv = resolveCheckStatus . NE.fromList $ [
+    checkNumFields (sv ^. numFields)
+  , checkTotalRows (sv ^. totalRows)
+  , checkBadRows (sv ^. badRows)
+  ]
 
 checkNumFields :: [FieldCount] -> CheckStatus
 checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]

@@ -2,10 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Test.IO.Warden.Rows where
+module Test.IO.Warden.Row where
 
+import           Control.Monad.Trans.Resource (runResourceT)
 
 import qualified Data.ByteString.Lazy       as BL
+import           Data.Conduit (($$))
+import qualified Data.Conduit.List as CL
 import           Data.Csv
 import qualified Data.Text                  as T
 import qualified Data.Vector                as V
@@ -13,7 +16,6 @@ import qualified Data.Vector                as V
 import           Disorder.Core.IO
 
 import           P
-import qualified Pipes.Prelude              as PP
 
 import           System.FilePath
 import           System.IO
@@ -26,7 +28,7 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.Rows
+import           Warden.Row
 
 import           X.Control.Monad.Trans.Either
 
@@ -35,8 +37,7 @@ prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \s
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "valid_sv"
     BL.writeFile fp $ encodeWith opts svrs
-    res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) (ViewFile fp) $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
@@ -50,8 +51,7 @@ prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \s
   testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
     let fp = tmp </> "sv"
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
-    res <- withFile fp ReadMode $ \h -> do
-      runEitherT $ PP.fold (flip (:)) [] id $ readSVHandle s h
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) (ViewFile fp) $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs ->
