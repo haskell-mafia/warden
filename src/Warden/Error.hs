@@ -21,21 +21,6 @@ data WardenError =
   | WardenTraversalError TraversalError
   deriving (Eq, Show)
 
-data LoadError =
-    RowDecodeFailed Text
-  deriving (Eq, Show)
-
-renderLoadError :: LoadError -> Text
-renderLoadError = ("error loading view: " <>) . render'
-  where
-    render' (RowDecodeFailed e) = "failed to decode row data: " <> e
-
-data TraversalError =
-    MaxDepthExceeded
-  | EmptyView
-  | NonViewFiles [NonViewFile]
-  deriving (Eq, Show)
-
 renderWardenError :: WardenError
                   -> Text
 renderWardenError = ("warden: " <>) . render'
@@ -43,6 +28,26 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenLoadError le) = renderLoadError le
     render' WardenNotImplementedError = "implement me!"
     render' (WardenTraversalError te) = renderTraversalError te
+
+data LoadError =
+    RowDecodeFailed ViewFile Text
+  deriving (Eq, Show)
+
+renderLoadError :: LoadError -> Text
+renderLoadError = ("error loading view: " <>) . render'
+  where
+    render' (RowDecodeFailed vf e) = T.concat [
+        "failed to decode row data in "
+      , renderViewFile vf
+      , " : "
+      , e
+      ]
+
+data TraversalError =
+    MaxDepthExceeded
+  | EmptyView
+  | NonViewFiles [NonViewFile]
+  deriving (Eq, Show)
 
 renderTraversalError :: TraversalError -> Text
 renderTraversalError = ("traversal error: " <>) . render'
