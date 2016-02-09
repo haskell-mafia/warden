@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Marker (
     FileMarker(..)
@@ -31,9 +32,9 @@ import           Warden.Data.View
 
 data FileMarker =
   FileMarker {
-    fmViewFile :: ViewFile
-  , fmTimestamp :: DateTime
-  , fmCheckResults :: [CheckResult]
+    fmViewFile :: !ViewFile
+  , fmTimestamp :: !DateTime
+  , fmCheckResults :: ![CheckResult]
   } deriving (Eq, Show)
 
 markerSuffix :: FilePath
@@ -85,13 +86,13 @@ filePathChar = satisfy (not . bad)
 
 data ViewMarker =
   ViewMarker {
-    vmView :: View
-  , vmTimestamp :: DateTime
-  , vmCheckResults :: [CheckResult]
-  , vmMetadata :: ViewMetadata
+    vmView :: !View
+  , vmTimestamp :: !DateTime
+  , vmCheckResults :: ![CheckResult]
+  , vmMetadata :: !ViewMetadata
   } deriving (Eq, Show)
 
 data ViewMetadata =
   ViewMetadata {
-    viewCounts :: SVParseState
+    viewCounts :: !SVParseState
   } deriving (Eq, Show)
