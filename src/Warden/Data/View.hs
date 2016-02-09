@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.View(
     DirTree(..)
@@ -87,7 +88,7 @@ removeViewPrefix (View v) fp =
 
     fp' = splitDirectories fp
 
-data DirTree = DirTree DirName [DirTree] [FileName]
+data DirTree = DirTree !DirName ![DirTree] ![FileName]
   deriving (Eq, Show)
 
 newtype DirName =
@@ -115,15 +116,15 @@ joinFile ds f = (joinDir ds) </> f
 directoryDirs :: DirTree -> [FilePath]
 directoryDirs = go []
   where
-    go preds (DirTree root [] _) =
+    go !preds !(DirTree !root [] _) =
       pure $ joinDir (reverse (root : preds))
-    go preds (DirTree root branches _) =
+    go !preds !(DirTree root branches _) =
       concatMap (go (root : preds)) branches
 
 directoryFiles :: DirTree -> [FilePath]
 directoryFiles = go []
   where
-    go preds (DirTree root branches leaves) =
+    go !preds !(DirTree root branches leaves) =
       let xs = (joinFile (reverse (root : preds)) . unFileName) <$> leaves
           ys = concatMap (go (root : preds)) branches in
       xs <> ys
