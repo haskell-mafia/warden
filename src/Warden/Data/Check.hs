@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Check (
     CheckDescription(..)
@@ -56,8 +57,8 @@ data RowCheck =
     RowCheck CheckDescription (Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
-    FileCheckResult CheckDescription ViewFile CheckStatus
-  | RowCheckResult CheckDescription CheckStatus
+    FileCheckResult !CheckDescription !ViewFile !CheckStatus
+  | RowCheckResult !CheckDescription !CheckStatus
   deriving (Eq, Show)
 
 isCheckFailure :: CheckResult -> Bool
@@ -91,7 +92,7 @@ renderCheckResult (RowCheckResult cd st) =
       , renderCheckDescription cd
       ]
 
-data CheckStatus = CheckPassed | CheckFailed (NonEmpty Failure)
+data CheckStatus = CheckPassed | CheckFailed !(NonEmpty Failure)
   deriving (Eq, Show)
 
 checkStatusFailed :: CheckStatus -> Bool
@@ -121,8 +122,8 @@ instance Ord CheckStatus where
   compare (CheckFailed _) (CheckFailed _) = EQ
 
 data Failure =
-    SanityCheckFailure Insanity
-  | RowCheckFailure RowFailure
+    SanityCheckFailure !Insanity
+  | RowCheckFailure !RowFailure
   deriving (Eq, Show)
 
 data Insanity =
@@ -131,9 +132,9 @@ data Insanity =
   deriving (Eq, Show)
 
 data RowFailure =
-    FieldCountMismatch [FieldCount]
+    FieldCountMismatch ![FieldCount]
   | ZeroRows
-  | HasBadRows RowCount
+  | HasBadRows !RowCount
   deriving (Eq, Show)
 
 renderFailure :: Failure -> Text

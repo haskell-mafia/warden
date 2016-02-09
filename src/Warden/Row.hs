@@ -45,19 +45,19 @@ readViewFile :: Separator
              -> LineBound
              -> ViewFile
              -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewFile (Separator sep) (LineBound _lb) (ViewFile fp) =
-  slurp fp 0 Nothing =$= decodeRows (decodeWith opts NoHeader)
+readViewFile (Separator sep) (LineBound _lb) vf@(ViewFile fp) =
+  slurp fp 0 Nothing =$= decodeRows vf (decodeWith opts NoHeader)
   where
     opts = defaultDecodeOptions { decDelimiter = sep }
 
-decodeRows :: Parser (Vector Text) -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeRows (Fail _ e) =
-  lift . left . WardenLoadError . RowDecodeFailed $ T.pack e
-decodeRows (Many rs cont) = do
+decodeRows :: ViewFile -> Parser (Vector Text) -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
+decodeRows vf (Fail _ e) =
+  lift . left . WardenLoadError . RowDecodeFailed vf $ T.pack e
+decodeRows vf (Many rs cont) = do
   mapM_ yield $ toRow <$> rs
   more <- await
-  maybe (pure ()) (decodeRows . cont) more
-decodeRows (Done rs) =
+  maybe (pure ()) (decodeRows vf . cont) more
+decodeRows _ (Done rs) =
   mapM_ yield $ toRow <$> rs
 
 toRow :: Either String (Vector Text) -> Row

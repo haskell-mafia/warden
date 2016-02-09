@@ -1,7 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Numeric (
     Minimum(..)
@@ -76,11 +77,11 @@ instance FromJSON StdDev where
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
-data NumericSummary = NumericSummary Minimum
-                                     Maximum
-                                     Mean
-                                     StdDev
-                                     Median
+data NumericSummary = NumericSummary !Minimum
+                                     !Maximum
+                                     !Mean
+                                     !StdDev
+                                     !Median
   deriving (Eq, Show)
 
 instance ToJSON NumericSummary where
