@@ -5,6 +5,7 @@ module Warden.Error (
     WardenError(..)
   , LoadError(..)
   , TraversalError(..)
+  , MarkerError(..)
   , renderWardenError
 ) where
 
@@ -19,6 +20,7 @@ data WardenError =
     WardenLoadError LoadError
   | WardenNotImplementedError
   | WardenTraversalError TraversalError
+  | WardenMarkerError MarkerError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -28,6 +30,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenLoadError le) = renderLoadError le
     render' WardenNotImplementedError = "implement me!"
     render' (WardenTraversalError te) = renderTraversalError te
+    render' (WardenMarkerError me) = renderMarkerError me
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -57,3 +60,12 @@ renderTraversalError = ("traversal error: " <>) . render'
     render' (NonViewFiles fs) =
          "extra files which don't seem to be part of a view: "
       <> (T.intercalate ", " $ renderNonViewFile <$> fs)
+
+data MarkerError =
+    MarkerDecodeError Text
+  deriving (Eq, Show)
+
+renderMarkerError :: MarkerError -> Text
+renderMarkerError = ("marker error: " <>) . render'
+  where
+    render' (MarkerDecodeError t) = "failed to decode marker: " <> t

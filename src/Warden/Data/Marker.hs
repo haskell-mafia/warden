@@ -11,6 +11,7 @@ module Warden.Data.Marker (
   , MarkerVersion(..)
   , ViewMarker(..)
   , ViewMetadata(..)
+  , currentMarkerVersion
   , filePathChar
   , fileToMarker
   , markerToFile
@@ -39,6 +40,9 @@ import           Warden.Data.View
 data MarkerVersion =
     V1
   deriving (Eq, Show, Ord, Bounded, Enum)
+
+currentMarkerVersion :: MarkerVersion
+currentMarkerVersion = maxBound
 
 data CheckResultType =
     FileResult

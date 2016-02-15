@@ -35,6 +35,11 @@ withTestFile a = do
   d <- getWorkingDirectory
   withTempFile d "warden-test-" (\f h -> a (ViewFile f) h)
 
+withTestView :: (View -> IO a) -> IO a
+withTestView a = do
+  d <- getWorkingDirectory
+  withTempDirectory d "warden-test-" (\f -> a (View f))
+
 testWarden :: Testable a => EitherT WardenError IO a -> Property
 testWarden = testIO . unsafeWarden
 
