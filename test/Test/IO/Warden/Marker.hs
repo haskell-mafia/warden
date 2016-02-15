@@ -4,10 +4,13 @@
 
 module Test.IO.Warden.Marker where
 
-import           Disorder.Core.IO
+import           Control.Monad.IO.Class (liftIO)
+
+import           Disorder.Core.IO (testIO)
 
 import           P
 
+import           System.Directory (removeFile)
 import           System.IO
 
 import           Test.QuickCheck
@@ -19,12 +22,14 @@ import           Test.Warden.Arbitrary ()
 import           Warden.Data
 import           Warden.Marker
 
+import           X.Control.Monad.Trans.Either (bracketEitherT')
+
 prop_writeFileMarker :: FileMarker -> Property
 prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ do
   let fm' = fm { fmViewFile = vf }
-  writeFileMarker fm'
-  let fp = fileToMarker $ fmViewFile fm'
-  fm'' <- readFileMarker fp
+  fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fileToMarker $ fmViewFile fm'))
+                         (\fp -> liftIO $ removeFile fp)
+                         (\fp -> readFileMarker fp)
   pure $ fm'' === fm'
 
 prop_writeViewMarker :: ViewMarker -> Property
