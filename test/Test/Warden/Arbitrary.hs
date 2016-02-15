@@ -197,6 +197,11 @@ instance Arbitrary ValidViewFile where
     let vf = ViewFile $ (unView v) </> (T.unpack $ dateAsPartition d) </> fp
     pure $ ValidViewFile v vf
 
+instance Arbitrary ViewFile where
+  arbitrary = do
+    (ValidViewFile _ vf) <- arbitrary
+    pure vf
+
 newtype NPlus =
   NPlus {
     unNPlus :: Int
@@ -263,3 +268,32 @@ instance Arbitrary ValidDirTree where
         DirTree <$> monthLabel <*> (listOf1 (arbitrary' DayLevel1)) <*> (pure [])
       arbitrary' YearLevel =
         DirTree <$> yearLabel <*> (listOf1 (arbitrary' MonthLevel)) <*> (pure [])
+
+instance Arbitrary CheckDescription where
+  arbitrary = CheckDescription <$> elements southpark
+
+instance Arbitrary MarkerVersion where
+  arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary CheckResultType where
+  arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary MarkerFailure where
+  arbitrary = MarkerFailure <$> elements muppets
+
+instance Arbitrary MarkerStatus where
+  arbitrary = oneof [
+      pure MarkerPass
+    , MarkerFail <$> arbitrary
+    ]
+
+instance Arbitrary CheckResultSummary where
+  arbitrary = CheckResultSummary <$> arbitrary
+                                 <*> arbitrary
+                                 <*> arbitrary
+
+instance Arbitrary FileMarker where
+  arbitrary = FileMarker <$> arbitrary
+                         <*> arbitrary
+                         <*> arbitrary
+                         <*> arbitrary

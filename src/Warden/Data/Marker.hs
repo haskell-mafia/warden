@@ -8,6 +8,7 @@ module Warden.Data.Marker (
   , FileMarker(..)
   , MarkerFailure(..)
   , MarkerStatus(..)
+  , MarkerVersion(..)
   , ViewMarker(..)
   , ViewMetadata(..)
   , filePathChar
@@ -35,10 +36,14 @@ import           Warden.Data.Check
 import           Warden.Data.Row
 import           Warden.Data.View
 
+data MarkerVersion =
+    V1
+  deriving (Eq, Show, Ord, Bounded, Enum)
+
 data CheckResultType =
     FileResult
   | RowResult
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord, Bounded, Enum)
 
 newtype MarkerFailure =
   MarkerFailure {
@@ -59,7 +64,8 @@ data CheckResultSummary =
 
 data FileMarker =
   FileMarker {
-    fmViewFile :: !ViewFile
+    fmVersion :: !MarkerVersion
+  , fmViewFile :: !ViewFile
   , fmTimestamp :: !DateTime
   , fmCheckResults :: ![CheckResultSummary]
   } deriving (Eq, Show)
@@ -113,7 +119,8 @@ filePathChar = satisfy (not . bad)
 
 data ViewMarker =
   ViewMarker {
-    vmView :: !View
+    vmVersion :: !MarkerVersion
+  , vmView :: !View
   , vmTimestamp :: !DateTime
   , vmCheckResults :: ![CheckResultSummary]
   , vmMetadata :: !ViewMetadata

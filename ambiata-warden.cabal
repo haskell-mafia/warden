@@ -67,7 +67,10 @@ library
                        Warden.Row
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
+                       Warden.Serial.Json.Check
+                       Warden.Serial.Json.Marker
                        Warden.Serial.Json.Numeric
+                       Warden.Serial.Json.View
                        Warden.View
 
 executable             warden
