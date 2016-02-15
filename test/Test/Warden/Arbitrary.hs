@@ -297,3 +297,18 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
+
+instance Arbitrary SVParseState where
+  arbitrary = SVParseState <$> arbitrary
+                           <*> arbitrary
+                           <*> arbitrary
+
+instance Arbitrary ViewMetadata where
+  arbitrary = ViewMetadata <$> arbitrary
+
+instance Arbitrary ViewMarker where
+  arbitrary = ViewMarker <$> arbitrary
+                         <*> arbitrary
+                         <*> arbitrary
+                         <*> arbitrary
+                         <*> arbitrary

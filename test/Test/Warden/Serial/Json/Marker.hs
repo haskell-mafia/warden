@@ -20,6 +20,9 @@ import           Warden.Serial.Json.Marker
 prop_FileMarker :: FileMarker -> Property
 prop_FileMarker = tripping fromFileMarker (parseEither toFileMarker)
 
+prop_ViewMarker :: ViewMarker -> Property
+prop_ViewMarker = tripping fromViewMarker (parseEither toViewMarker)
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 100 } )

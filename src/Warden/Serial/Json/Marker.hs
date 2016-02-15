@@ -4,6 +4,8 @@
 module Warden.Serial.Json.Marker(
     fromFileMarker
   , toFileMarker
+  , fromViewMarker
+  , toViewMarker
   ) where
 
 import           Data.Aeson ((.:), (.=), object)
@@ -17,6 +19,7 @@ import           P
 
 import           Warden.Data
 import           Warden.Serial.Json.Check
+import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.View
 
 fromMarkerVersion :: MarkerVersion -> Value
@@ -105,3 +108,33 @@ toFileMarker (Object o) = do
   pure $ FileMarker v vf ts crs
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
+fromViewMetadata :: ViewMetadata -> Value
+fromViewMetadata (ViewMetadata vc) = object [
+    "counts" .= fromSVParseState vc
+  ]
+
+toViewMetadata :: Value -> Parser ViewMetadata
+toViewMetadata (Object o) = do
+  vc <- toSVParseState =<< (o .: "counts")
+  pure $ ViewMetadata vc
+toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
+
+fromViewMarker :: ViewMarker -> Value
+fromViewMarker (ViewMarker ve vi ts crs vm) = object [
+    "version" .= fromMarkerVersion ve
+  , "view" .= fromView vi
+  , "timestamp" .= fromDateTime ts
+  , "results" .= (fromCheckResultSummary <$> crs)
+  , "metadata" .= fromViewMetadata vm
+  ]
+
+toViewMarker :: Value -> Parser ViewMarker
+toViewMarker (Object o) = do
+  ve <- toMarkerVersion =<< (o .: "version")
+  vi <- toView =<< (o .: "view")
+  ts <- toDateTime =<< (o .: "timestamp")
+  crs <- mapM toCheckResultSummary =<< (o .: "results")
+  vm <- toViewMetadata =<< (o .: "metadata")
+  pure $ ViewMarker ve vi ts crs vm
+toViewMarker x          = typeMismatch "Warden.Data.Marker.ViewMarker" x
+  

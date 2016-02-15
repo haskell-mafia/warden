@@ -70,6 +70,7 @@ library
                        Warden.Serial.Json.Check
                        Warden.Serial.Json.Marker
                        Warden.Serial.Json.Numeric
+                       Warden.Serial.Json.Row
                        Warden.Serial.Json.View
                        Warden.View
 
