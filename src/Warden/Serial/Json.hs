@@ -1,5 +1,9 @@
 module Warden.Serial.Json(
-    module Warden.Serial.Json.Numeric
+    module X
 ) where
 
-import           Warden.Serial.Json.Numeric
+import           Warden.Serial.Json.Check as X
+import           Warden.Serial.Json.Marker as X
+import           Warden.Serial.Json.Numeric as X
+import           Warden.Serial.Json.Row as X
+import           Warden.Serial.Json.View as X

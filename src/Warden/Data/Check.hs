@@ -51,10 +51,10 @@ renderCheckDescription :: CheckDescription -> Text
 renderCheckDescription = unCheckDescription
 
 data FileCheck =
-    FileCheck CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
+    FileCheck !CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
 
 data RowCheck =
-    RowCheck CheckDescription (Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
+    RowCheck !CheckDescription (Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus
