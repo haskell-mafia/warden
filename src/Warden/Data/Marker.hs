@@ -3,7 +3,11 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Marker (
-    FileMarker(..)
+    CheckResultSummary(..)
+  , CheckResultType(..)
+  , FileMarker(..)
+  , MarkerFailure(..)
+  , MarkerStatus(..)
   , ViewMarker(..)
   , ViewMetadata(..)
   , filePathChar
@@ -16,6 +20,7 @@ module Warden.Data.Marker (
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill)
 import           Data.Char (ord)
+import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           Delorean.Local.DateTime (DateTime)
@@ -30,11 +35,33 @@ import           Warden.Data.Check
 import           Warden.Data.Row
 import           Warden.Data.View
 
+data CheckResultType =
+    FileResult
+  | RowResult
+  deriving (Eq, Show)
+
+newtype MarkerFailure =
+  MarkerFailure {
+    unMarkerFailure :: Text
+  } deriving (Eq, Show)
+
+data MarkerStatus =
+    MarkerPass
+  | MarkerFail !MarkerFailure
+  deriving (Eq, Show)
+
+data CheckResultSummary =
+  CheckResultSummary {
+      summaryStatus :: !MarkerStatus
+    , summaryDescription :: !CheckDescription
+    , summaryResultType :: !CheckResultType
+  } deriving (Eq, Show)
+
 data FileMarker =
   FileMarker {
     fmViewFile :: !ViewFile
   , fmTimestamp :: !DateTime
-  , fmCheckResults :: ![CheckResult]
+  , fmCheckResults :: ![CheckResultSummary]
   } deriving (Eq, Show)
 
 markerSuffix :: FilePath
@@ -88,7 +115,7 @@ data ViewMarker =
   ViewMarker {
     vmView :: !View
   , vmTimestamp :: !DateTime
-  , vmCheckResults :: ![CheckResult]
+  , vmCheckResults :: ![CheckResultSummary]
   , vmMetadata :: !ViewMetadata
   } deriving (Eq, Show)
 
