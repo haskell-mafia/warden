@@ -2,8 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Marker(
-    readFileMarker
+    fileMarkerExists
+  , readFileMarker
+  , readFileMarker'
   , readViewMarker
+  , readViewMarker'
+  , viewMarkerExists
   , writeFileMarker
   , writeViewMarker
   , utcNow
@@ -22,6 +26,7 @@ import           Delorean.Local.DateTime (DateTime, local)
 
 import           P
 
+import           System.Directory (doesFileExist)
 import           System.IO (IO, FilePath)
 
 import           Warden.Data
@@ -48,17 +53,31 @@ readJson fp = do
   eitherTFromMaybe (WardenMarkerError $ MarkerDecodeError "invalid json") $
     pure $ decode' bs
 
-readFileMarker :: FilePath -> EitherT WardenError (ResourceT IO) FileMarker
-readFileMarker fp = do
+readFileMarker :: ViewFile -> EitherT WardenError (ResourceT IO) FileMarker
+readFileMarker = readFileMarker' . fileToMarker
+
+readFileMarker' :: FilePath -> EitherT WardenError (ResourceT IO) FileMarker
+readFileMarker' fp = do
   js <- readJson fp
   firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
     parseEither toFileMarker js
 
-readViewMarker :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
-readViewMarker fp = do
+readViewMarker :: View -> EitherT WardenError (ResourceT IO) ViewMarker
+readViewMarker = readViewMarker' . viewToMarker
+
+readViewMarker' :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
+readViewMarker' fp = do
   js <- readJson fp
   firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
     parseEither toViewMarker js
+
+viewMarkerExists :: View -> IO Bool
+viewMarkerExists =
+  doesFileExist . viewToMarker
+
+fileMarkerExists :: ViewFile -> IO Bool
+fileMarkerExists =
+  doesFileExist . fileToMarker
 
 utcNow :: IO DateTime
 utcNow = local utcTZ

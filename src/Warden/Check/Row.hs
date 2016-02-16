@@ -27,7 +27,7 @@ import           Warden.Error
 import           Warden.Marker
 import           Warden.Row
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, left)
 
 sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
@@ -36,6 +36,13 @@ sinkFoldM (FoldM f init extract) =
 runRowCheck :: Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
 runRowCheck s v lb vfs =
   let desc = CheckDescription "row parsing/field counts" in do
+  -- There should only be one view check, so exit early if we've already done
+  -- it.
+  existsP <- liftIO $ viewMarkerExists v
+  when existsP $ do
+    -- Fail with a more informative error if it's invalid.
+    void $ readViewMarker v
+    left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
   (r, md) <- parseCheck s lb vfs
   now <- liftIO utcNow
   writeViewMarker $ mkViewMarker v desc now md r

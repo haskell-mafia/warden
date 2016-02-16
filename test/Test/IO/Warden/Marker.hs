@@ -30,7 +30,7 @@ prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ mapEit
   let fm' = fm { fmViewFile = vf }
   fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fileToMarker $ fmViewFile fm'))
                          (\fp -> liftIO $ removeFile fp)
-                         (\fp -> readFileMarker fp)
+                         (\fp -> readFileMarker' fp)
   pure $ fm'' === fm'
 
 prop_writeViewMarker :: ViewMarker -> Property
