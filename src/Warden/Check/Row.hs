@@ -4,7 +4,6 @@
 
 module Warden.Check.Row (
     runRowCheck
-  , rowParseC
   ) where
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
@@ -32,17 +31,13 @@ sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck s lb vfs (RowCheck d chk) = do
-  r <- chk s lb vfs
-  pure $ RowCheckResult d r
+runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck s lb vfs =
+  let desc = CheckDescription "row parsing/field counts" in do
+  (r, _md) <- parseCheck s lb vfs
+  pure $ RowCheckResult desc r
 
-rowParseC :: RowCheck
-rowParseC =
-  RowCheck (CheckDescription "xSV field counts") parseCheck
-           
-
-parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
+parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck s lb vfs =
   fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
     mapConcurrently (parseViewFile s lb) vfs
@@ -54,12 +49,13 @@ parseViewFile s lb vf = do
 parseViewFile' :: Fold Row SVParseState
 parseViewFile' = Fold updateSVParseState initialSVParseState id
 
-finalizeSVParseState :: SVParseState -> CheckStatus
-finalizeSVParseState sv = resolveCheckStatus . NE.fromList $ [
-    checkNumFields (sv ^. numFields)
-  , checkTotalRows (sv ^. totalRows)
-  , checkBadRows (sv ^. badRows)
-  ]
+finalizeSVParseState :: SVParseState -> (CheckStatus, ViewMetadata)
+finalizeSVParseState sv = let st = resolveCheckStatus . NE.fromList $ [
+                                  checkNumFields (sv ^. numFields)
+                                , checkTotalRows (sv ^. totalRows)
+                                , checkBadRows (sv ^. badRows)
+                                ] in
+  (st, ViewMetadata sv)
 
 checkNumFields :: [FieldCount] -> CheckStatus
 checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
