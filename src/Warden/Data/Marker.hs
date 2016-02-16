@@ -22,6 +22,7 @@ module Warden.Data.Marker (
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill)
 import           Data.Char (ord)
+import           Data.List.NonEmpty (NonEmpty)
 import           Data.Text (Text)
 import qualified Data.Text as T
 
@@ -51,7 +52,7 @@ data CheckResultType =
 
 newtype MarkerFailure =
   MarkerFailure {
-    unMarkerFailure :: Text
+    unMarkerFailure :: NonEmpty Text
   } deriving (Eq, Show)
 
 data MarkerStatus =
@@ -65,6 +66,18 @@ data CheckResultSummary =
     , summaryDescription :: !CheckDescription
     , summaryResultType :: !CheckResultType
   } deriving (Eq, Show)
+
+summarizeFailures :: NonEmpty Failure -> MarkerFailure
+summarizeFailures fs = MarkerFailure $ renderFailure <$> fs
+
+summarizeStatus :: CheckStatus -> MarkerStatus
+summarizeStatus CheckPassed = MarkerPass
+summarizeStatus (CheckFailed fs) = MarkerFail $ summarizeFailures fs
+
+summarizeResult :: CheckResultType -> CheckDescription -> CheckStatus -> CheckResultSummary
+summarizeResult typ dsc st =
+  let sst = summarizeStatus st in
+  CheckResultSummary sst dsc typ
 
 data FileMarker =
   FileMarker {

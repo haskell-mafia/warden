@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Warden.Serial.Json.Marker(
     fromFileMarker
@@ -8,8 +9,11 @@ module Warden.Serial.Json.Marker(
   , toViewMarker
   ) where
 
-import           Data.Aeson ((.:), (.=), object)
+import           Data.Aeson (ToJSON, FromJSON)
+import           Data.Aeson ((.:), (.=), object, toJSON, parseJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
 import qualified Data.Text as T
 
@@ -21,6 +25,16 @@ import           Warden.Data
 import           Warden.Serial.Json.Check
 import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.View
+
+fromNonEmpty :: ToJSON a => NonEmpty a -> Value
+fromNonEmpty = toJSON . NE.toList
+
+toNonEmpty :: FromJSON a => Value -> Parser (NonEmpty a)
+toNonEmpty (Array xs) = do
+  parseJSON (Array xs) >>= \case
+    [] -> fail "non-empty list cannot be empty"
+    xs' -> pure $ NE.fromList xs'
+toNonEmpty x          = typeMismatch "Data.List.NonEmpty.NonEmpty" x
 
 fromMarkerVersion :: MarkerVersion -> Value
 fromMarkerVersion V1 = String "v1"
@@ -50,10 +64,10 @@ toCheckResultType (String r) = case r of
 toCheckResultType x          = typeMismatch "Warden.Data.Marker.CheckResultType" x
 
 fromMarkerFailure :: MarkerFailure -> Value
-fromMarkerFailure (MarkerFailure f) = String f
+fromMarkerFailure (MarkerFailure fs) = fromNonEmpty fs
 
 toMarkerFailure :: Value -> Parser MarkerFailure
-toMarkerFailure (String s) = pure $ MarkerFailure s
+toMarkerFailure (Array fs) = MarkerFailure <$> toNonEmpty (Array fs)
 toMarkerFailure x          = typeMismatch "Warden.Data.Marker.MarkerFailure" x
 
 fromMarkerStatus :: MarkerStatus -> Value
