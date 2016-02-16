@@ -28,9 +28,9 @@ import           X.Control.Monad.Trans.Either (bracketEitherT', mapEitherT)
 prop_writeFileMarker :: FileMarker -> Property
 prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ mapEitherT runResourceT $ do
   let fm' = fm { fmViewFile = vf }
-  fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fileToMarker $ fmViewFile fm'))
-                         (\fp -> liftIO $ removeFile fp)
-                         (\fp -> readFileMarker' fp)
+  fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fmViewFile fm'))
+                         (\vf' -> liftIO . removeFile $ fileToMarker vf')
+                         (\vf' -> readFileMarker vf')
   pure $ fm'' === fm'
 
 prop_writeViewMarker :: ViewMarker -> Property

@@ -4,9 +4,7 @@
 module Warden.Marker(
     fileMarkerExists
   , readFileMarker
-  , readFileMarker'
   , readViewMarker
-  , readViewMarker'
   , viewMarkerExists
   , writeFileMarker
   , writeViewMarker
