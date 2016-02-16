@@ -8,6 +8,7 @@ module Warden.Check.Row (
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
 import           Control.Foldl (Fold(..), FoldM(..), generalize)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Lens ((^.))
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Resource (ResourceT)
@@ -23,6 +24,7 @@ import           System.IO (IO)
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Marker
 import           Warden.Row
 
 import           X.Control.Monad.Trans.Either (EitherT)
@@ -31,10 +33,12 @@ sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck s lb vfs =
+runRowCheck :: Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck s v lb vfs =
   let desc = CheckDescription "row parsing/field counts" in do
-  (r, _md) <- parseCheck s lb vfs
+  (r, md) <- parseCheck s lb vfs
+  now <- liftIO utcNow
+  writeViewMarker $ mkViewMarker v desc now md r
   pure $ RowCheckResult desc r
 
 parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)

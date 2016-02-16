@@ -16,6 +16,7 @@ module Warden.Data.Marker (
   , fileToMarker
   , markerToFile
   , markerToView
+  , mkViewMarker
   , viewToMarker
   ) where
 
@@ -142,6 +143,11 @@ data ViewMarker =
   , vmCheckResults :: ![CheckResultSummary]
   , vmMetadata :: !ViewMetadata
   } deriving (Eq, Show)
+
+mkViewMarker :: View -> CheckDescription -> DateTime -> ViewMetadata -> CheckStatus -> ViewMarker
+mkViewMarker v dsc dt vm cs =
+  let crs = [summarizeResult RowResult dsc cs] in
+  ViewMarker currentMarkerVersion v dt crs vm
 
 data ViewMetadata =
   ViewMetadata {

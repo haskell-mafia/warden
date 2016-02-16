@@ -5,6 +5,7 @@
 module Test.IO.Warden.Marker where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Disorder.Core.IO (testIO)
 
@@ -22,10 +23,10 @@ import           Test.Warden.Arbitrary ()
 import           Warden.Data
 import           Warden.Marker
 
-import           X.Control.Monad.Trans.Either (bracketEitherT')
+import           X.Control.Monad.Trans.Either (bracketEitherT', mapEitherT)
 
 prop_writeFileMarker :: FileMarker -> Property
-prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ do
+prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ mapEitherT runResourceT $ do
   let fm' = fm { fmViewFile = vf }
   fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fileToMarker $ fmViewFile fm'))
                          (\fp -> liftIO $ removeFile fp)
@@ -33,11 +34,10 @@ prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ do
   pure $ fm'' === fm'
 
 prop_writeViewMarker :: ViewMarker -> Property
-prop_writeViewMarker vm = testIO $ withTestView $ \v -> unsafeWarden $ do
+prop_writeViewMarker vm = testIO $ withTestView $ \v -> unsafeWarden $ mapEitherT runResourceT $ do
   let vm' = vm { vmView = v }
   writeViewMarker vm'
-  let fp = viewToMarker $ vmView vm'
-  vm'' <- readViewMarker fp
+  vm'' <- readViewMarker $ vmView vm'
   pure $ vm'' === vm'
 
 return []

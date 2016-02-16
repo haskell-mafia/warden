@@ -6,14 +6,19 @@ module Warden.Marker(
   , readViewMarker
   , writeFileMarker
   , writeViewMarker
+  , utcNow
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.Aeson (encode, decode')
 import           Data.Aeson.Types (Value, parseEither)
 import           Data.ByteString.Lazy (writeFile, readFile)
 import qualified Data.Text as T
+import           Data.Time.Zones (utcTZ)
+
+import           Delorean.Local.DateTime (DateTime, local)
 
 import           P
 
@@ -25,32 +30,35 @@ import           Warden.Serial.Json.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, firstEitherT, hoistEither, eitherTFromMaybe)
 
-writeFileMarker :: FileMarker -> EitherT WardenError IO ()
+writeFileMarker :: FileMarker -> EitherT WardenError (ResourceT IO) ()
 writeFileMarker fm =
   let markf = fileToMarker $ fmViewFile fm
       markJson = encode $ fromFileMarker fm in
   liftIO $ writeFile markf markJson
 
-writeViewMarker :: ViewMarker -> EitherT WardenError IO ()
+writeViewMarker :: ViewMarker -> EitherT WardenError (ResourceT IO) ()
 writeViewMarker vm =
   let markf = viewToMarker $ vmView vm
       markJson = encode $ fromViewMarker vm in
   liftIO $ writeFile markf markJson
 
-readJson :: FilePath -> EitherT WardenError IO Value
+readJson :: FilePath -> EitherT WardenError (ResourceT IO) Value
 readJson fp = do
   bs <- liftIO $ readFile fp
   eitherTFromMaybe (WardenMarkerError $ MarkerDecodeError "invalid json") $
     pure $ decode' bs
 
-readFileMarker :: FilePath -> EitherT WardenError IO FileMarker
+readFileMarker :: FilePath -> EitherT WardenError (ResourceT IO) FileMarker
 readFileMarker fp = do
   js <- readJson fp
   firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
     parseEither toFileMarker js
 
-readViewMarker :: FilePath -> EitherT WardenError IO ViewMarker
+readViewMarker :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
 readViewMarker fp = do
   js <- readJson fp
   firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
     parseEither toViewMarker js
+
+utcNow :: IO DateTime
+utcNow = local utcTZ
