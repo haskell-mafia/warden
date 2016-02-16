@@ -10,8 +10,6 @@ module Warden.Data.Check (
   , FileCheck(..)
   , Insanity(..)
   , RowFailure(..)
-  , RowCheck(..)
-  , WardenCheck(..)
   , checkHasFailures
   , checkStatusFailed
   , isCheckFailure
@@ -20,8 +18,6 @@ module Warden.Data.Check (
   , renderCheckStatus
   , resolveCheckStatus
   ) where
-
-import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -38,10 +34,6 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-data WardenCheck =
-    WardenFileCheck FileCheck
-  | WardenRowCheck RowCheck
-
 newtype CheckDescription =
   CheckDescription {
     unCheckDescription :: Text
@@ -52,9 +44,6 @@ renderCheckDescription = unCheckDescription
 
 data FileCheck =
     FileCheck !CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
-
-data RowCheck =
-    RowCheck !CheckDescription (Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus
