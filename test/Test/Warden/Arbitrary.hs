@@ -279,7 +279,7 @@ instance Arbitrary CheckResultType where
   arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary MarkerFailure where
-  arbitrary = MarkerFailure <$> elements muppets
+  arbitrary = (MarkerFailure . NE.fromList) <$> (listOf1 $ elements muppets)
 
 instance Arbitrary MarkerStatus where
   arbitrary = oneof [

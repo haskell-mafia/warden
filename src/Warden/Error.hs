@@ -14,6 +14,8 @@ import           P
 import           Data.Text (Text)
 import qualified Data.Text as T
 
+import           System.IO (FilePath)
+
 import           Warden.Data.View
 
 data WardenError =
@@ -63,9 +65,18 @@ renderTraversalError = ("traversal error: " <>) . render'
 
 data MarkerError =
     MarkerDecodeError Text
+  | ViewMarkerExistsError View FilePath
   deriving (Eq, Show)
 
 renderMarkerError :: MarkerError -> Text
 renderMarkerError = ("marker error: " <>) . render'
   where
-    render' (MarkerDecodeError t) = "failed to decode marker: " <> t
+    render' (MarkerDecodeError t) =
+      "failed to decode marker: " <> t
+    render' (ViewMarkerExistsError v mf) = T.concat [
+        "marker already exists for view "
+      , renderView v
+      , " - remove "
+      , T.pack mf
+      , " if you'd like to run the view checks again"
+      ]

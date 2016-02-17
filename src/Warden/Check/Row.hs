@@ -4,11 +4,11 @@
 
 module Warden.Check.Row (
     runRowCheck
-  , rowParseC
   ) where
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
 import           Control.Foldl (Fold(..), FoldM(..), generalize)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Lens ((^.))
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Resource (ResourceT)
@@ -24,25 +24,31 @@ import           System.IO (IO)
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Marker
 import           Warden.Row
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, left)
 
 sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: Separator -> LineBound -> NonEmpty ViewFile -> RowCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck s lb vfs (RowCheck d chk) = do
-  r <- chk s lb vfs
-  pure $ RowCheckResult d r
+runRowCheck :: Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck s v lb vfs =
+  let desc = CheckDescription "row parsing/field counts" in do
+  -- There should only be one view check, so exit early if we've already done
+  -- it.
+  existsP <- liftIO $ viewMarkerExists v
+  when existsP $ do
+    -- Fail with a more informative error if it's invalid.
+    void $ readViewMarker v
+    left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
+  (r, md) <- parseCheck s lb vfs
+  now <- liftIO utcNow
+  writeViewMarker $ mkViewMarker v desc now md r
+  pure $ RowCheckResult desc r
 
-rowParseC :: RowCheck
-rowParseC =
-  RowCheck (CheckDescription "xSV field counts") parseCheck
-           
-
-parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
+parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck s lb vfs =
   fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
     mapConcurrently (parseViewFile s lb) vfs
@@ -54,12 +60,13 @@ parseViewFile s lb vf = do
 parseViewFile' :: Fold Row SVParseState
 parseViewFile' = Fold updateSVParseState initialSVParseState id
 
-finalizeSVParseState :: SVParseState -> CheckStatus
-finalizeSVParseState sv = resolveCheckStatus . NE.fromList $ [
-    checkNumFields (sv ^. numFields)
-  , checkTotalRows (sv ^. totalRows)
-  , checkBadRows (sv ^. badRows)
-  ]
+finalizeSVParseState :: SVParseState -> (CheckStatus, ViewMetadata)
+finalizeSVParseState sv = let st = resolveCheckStatus . NE.fromList $ [
+                                  checkNumFields (sv ^. numFields)
+                                , checkTotalRows (sv ^. totalRows)
+                                , checkBadRows (sv ^. badRows)
+                                ] in
+  (st, ViewMetadata sv)
 
 checkNumFields :: [FieldCount] -> CheckStatus
 checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]

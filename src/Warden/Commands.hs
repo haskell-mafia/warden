@@ -26,6 +26,6 @@ check :: CheckParams -> EitherT WardenError IO (NonEmpty CheckResult)
 check (CheckParams v s lb) = do
   vfs <- traverseView v
   frs <- fmap join $ traverse (forM File.fileChecks) $ File.runFileCheck <$> vfs
-  rr <- mapEitherT runResourceT $ Row.runRowCheck s lb vfs Row.rowParseC
+  rr <- mapEitherT runResourceT $ Row.runRowCheck s v lb vfs
   pure $ rr <| frs
 
