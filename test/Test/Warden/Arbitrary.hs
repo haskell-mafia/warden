@@ -270,7 +270,7 @@ instance Arbitrary ValidDirTree where
         DirTree <$> yearLabel <*> (listOf1 (arbitrary' MonthLevel)) <*> (pure [])
 
 instance Arbitrary CheckDescription where
-  arbitrary = CheckDescription <$> elements southpark
+  arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary MarkerVersion where
   arbitrary = elements [minBound..maxBound]

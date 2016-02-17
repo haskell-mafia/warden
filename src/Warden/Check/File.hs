@@ -33,7 +33,7 @@ runFileCheck f (FileCheck desc chk) = do
 
 fileChecks :: NonEmpty FileCheck
 fileChecks = NE.fromList [
-    FileCheck (CheckDescription "basic sanity checks") sanity
+    FileCheck FileSanityChecks sanity
   ]
 
 sanity :: ViewFile -> EitherT WardenError IO CheckStatus
