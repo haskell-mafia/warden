@@ -64,15 +64,15 @@ renderTraversalError = ("traversal error: " <>) . render'
       <> (T.intercalate ", " $ renderNonViewFile <$> fs)
 
 data MarkerError =
-    MarkerDecodeError Text
+    MarkerDecodeError FilePath Text
   | ViewMarkerExistsError View FilePath
   deriving (Eq, Show)
 
 renderMarkerError :: MarkerError -> Text
 renderMarkerError = ("marker error: " <>) . render'
   where
-    render' (MarkerDecodeError t) =
-      "failed to decode marker: " <> t
+    render' (MarkerDecodeError fp t) =
+      "failed to decode marker at " <> T.pack fp <> ": " <> t
     render' (ViewMarkerExistsError v mf) = T.concat [
         "marker already exists for view "
       , renderView v
