@@ -4,6 +4,8 @@
 
 module Test.IO.Warden.View.Unit where
 
+import           Control.Monad.Trans.Resource (runResourceT)
+
 import           Data.List (sort)
 import           Data.List.NonEmpty (NonEmpty(..))
 
@@ -20,7 +22,7 @@ import           Warden.Data
 import           Warden.Error
 import           Warden.View
 
-import           X.Control.Monad.Trans.Either (runEitherT)
+import           X.Control.Monad.Trans.Either (runEitherT, mapEitherT)
 
 prop_traverseDirectory :: Property
 prop_traverseDirectory = testWarden $ do
@@ -51,22 +53,22 @@ prop_traverseView' = testWarden $ do
 
 prop_traverseView_empty :: Property
 prop_traverseView_empty = testIO $ do
-  r <- runEitherT $ traverseView (View "test/data/empty-view")
+  r <- runEitherT . mapEitherT runResourceT $ traverseView (View "test/data/empty-view")
   pure $ r === (Left $ WardenTraversalError EmptyView)
 
 prop_traverseView_bad :: Property
 prop_traverseView_bad = testIO $ do
-  r <- runEitherT $ traverseView (View "test/data/view")
+  r <- runEitherT . mapEitherT runResourceT $ traverseView (View "test/data/view")
   pure $ r === (Left . WardenTraversalError $ NonViewFiles [NonViewFile {unNonViewFile = "test/data/view/year=2015/month=01/bad"}])
 
 prop_traverseView_deep :: Property
 prop_traverseView_deep = testIO $ do
-  r <- runEitherT $ traverseView (View "test/data/deep-view")
+  r <- runEitherT . mapEitherT runResourceT $ traverseView (View "test/data/deep-view")
   pure $ r === (Left $ WardenTraversalError MaxDepthExceeded)
 
 prop_traverseView_good :: Property
 prop_traverseView_good = testIO $ do
-  r <- runEitherT $ traverseView (View "test/data/good-view")
+  r <- runEitherT . mapEitherT runResourceT $ traverseView (View "test/data/good-view")
   pure $ r === (Right $ ViewFile "test/data/good-view/year=2015/month=04/day=04/bar" :| [])
 
 return []

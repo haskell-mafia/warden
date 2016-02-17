@@ -3,6 +3,8 @@
 
 import           BuildInfo_ambiata_warden
 
+import           Control.Monad.Trans.Resource (runResourceT)
+
 import           Data.Char (ord)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
@@ -18,6 +20,7 @@ import           Warden.Commands
 import           Warden.Data
 import           Warden.Error
 
+import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative
 
@@ -34,7 +37,7 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun (Check ps) -> do
-      r <- orDie renderWardenError $ check ps
+      r <- orDie renderWardenError . mapEitherT runResourceT $ check ps
       mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
       if checkHasFailures r
         then exitFailure

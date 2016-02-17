@@ -3,6 +3,7 @@
 module Test.IO.Warden where
 
 import           Control.Concurrent.Async (mapConcurrently)
+import           Control.Monad.Trans.Resource (ResourceT, runResourceT)
 
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char (ord)
@@ -40,11 +41,11 @@ withTestView a = do
   d <- getWorkingDirectory
   withTempDirectory d "warden-test-" (\f -> a (View f))
 
-testWarden :: Testable a => EitherT WardenError IO a -> Property
+testWarden :: Testable a => EitherT WardenError (ResourceT IO) a -> Property
 testWarden = testIO . unsafeWarden
 
-unsafeWarden :: EitherT WardenError IO a -> IO a
-unsafeWarden tst = orDie =<< (runEitherT tst)
+unsafeWarden :: EitherT WardenError (ResourceT IO) a -> IO a
+unsafeWarden tst = orDie =<< (runEitherT $ mapEitherT runResourceT tst)
   where
     orDie (Right a) = pure a
     orDie (Left e) = fail . T.unpack $ renderWardenError e

@@ -10,6 +10,7 @@ module Warden.Check.File (
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|))
 import qualified Data.List.NonEmpty as NE
@@ -26,7 +27,7 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError IO CheckResult
+runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
 runFileCheck f (FileCheck desc chk) = do
   r <- chk f
   pure $ FileCheckResult desc f r
@@ -36,7 +37,7 @@ fileChecks = NE.fromList [
     FileCheck FileSanityChecks sanity
   ]
 
-sanity :: ViewFile -> EitherT WardenError IO CheckStatus
+sanity :: ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
 sanity (ViewFile fn) = do
   st <- liftIO $ getSymbolicLinkStatus fn
   pure . resolveCheckStatus $ typeC st <| pure (sizeC st)

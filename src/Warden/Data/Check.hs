@@ -21,6 +21,8 @@ module Warden.Data.Check (
   , resolveCheckStatus
   ) where
 
+import           Control.Monad.Trans.Resource (ResourceT)
+
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
@@ -51,7 +53,7 @@ parseCheckDescription "view-row-counts"    = Just ViewRowCounts
 parseCheckDescription _                    = Nothing
 
 data FileCheck =
-    FileCheck !CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
+    FileCheck !CheckDescription (ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus
