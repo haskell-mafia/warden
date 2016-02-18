@@ -17,6 +17,7 @@ module Warden.Data.Marker (
   , fileToMarker
   , markerToFile
   , markerToView
+  , mkFileMarker
   , mkViewMarker
   , viewToMarker
   ) where
@@ -103,6 +104,11 @@ combineFileMarker a b
           nvf = fmViewFile a
           nrs = nub $ fmCheckResults a <> fmCheckResults b in
       Right $ FileMarker nv nvf nt nrs
+
+mkFileMarker :: ViewFile -> CheckDescription -> DateTime -> CheckStatus -> FileMarker
+mkFileMarker v dsc dt cs =
+  let crs = [summarizeResult FileResult dsc cs] in
+  FileMarker currentMarkerVersion v dt crs
 
 markerSuffix :: FilePath
 markerSuffix = ".warden"

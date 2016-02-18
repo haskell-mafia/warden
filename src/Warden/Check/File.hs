@@ -24,13 +24,27 @@ import           System.Posix.Files (FileStatus)
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Marker
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
 
 runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
 runFileCheck f (FileCheck desc chk) = do
   r <- chk f
+  buildFileMarker f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r
+
+buildFileMarker :: ViewFile -> CheckDescription -> CheckStatus -> EitherT WardenError (ResourceT IO) FileMarker
+buildFileMarker vf cd cs = do
+  t <- liftIO utcNow
+  let mark = mkFileMarker vf cd t cs
+  existsP <- liftIO $ fileMarkerExists vf
+  if existsP
+    then do
+      old <- readFileMarker vf
+      hoistEither $ combineFileMarker mark old
+    else
+      pure mark
 
 fileChecks :: NonEmpty FileCheck
 fileChecks = NE.fromList [
