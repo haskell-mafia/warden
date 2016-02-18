@@ -49,18 +49,23 @@ runRowCheck verb s v lb vfs = do
     , renderView v
     , "."
     ]
-  (r, md) <- parseCheck s lb vfs
+  (r, md) <- parseCheck verb s lb vfs
   now <- liftIO utcNow
   writeViewMarker $ mkViewMarker v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
 
-parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
-parseCheck s lb vfs =
+parseCheck :: Verbosity -> Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
+parseCheck verb s lb vfs =
   fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
-    mapConcurrently (parseViewFile s lb) vfs
+    mapConcurrently (parseViewFile verb s lb) vfs
 
-parseViewFile :: Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile s lb vf = do
+parseViewFile :: Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) SVParseState
+parseViewFile verb s lb vf = do
+  liftIO . debugPrintLn verb $ T.concat [
+      "Parsing view file "
+    , renderViewFile vf
+    , "."
+    ]
   readViewFile s lb vf $$ sinkFoldM (generalize parseViewFile')
 
 parseViewFile' :: Fold Row SVParseState
