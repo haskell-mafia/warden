@@ -37,8 +37,6 @@ import           GHC.Word
 
 import           P
 
-import           Prelude (($!))
-
 newtype FieldCount =
   FieldCount {
     unFieldCount :: Int

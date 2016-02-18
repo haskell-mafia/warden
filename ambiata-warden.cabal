@@ -97,7 +97,7 @@ executable             warden-gen
     hs-source-dirs:    main
                      , test
     build-depends:     base
-                     , QuickCheck                      == 2.7.*
+                     , QuickCheck                      == 2.8.*
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-aeson
@@ -139,7 +139,7 @@ test-suite test
 
   build-depends:
                        base                            >= 3          && < 5
-                     , QuickCheck                      == 2.7.*
+                     , QuickCheck                      == 2.8.*
                      , aeson                           == 0.8.*
                      , ambiata-delorean
                      , ambiata-delorean-test
@@ -176,7 +176,7 @@ test-suite test-io
 
   build-depends:
                        base                            >= 3          && < 5
-                     , QuickCheck                      == 2.7.*
+                     , QuickCheck                      == 2.8.*
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-core
@@ -215,7 +215,7 @@ benchmark bench
 
   build-depends:
                        base                            >= 3          && < 5
-                     , QuickCheck                      == 2.7.*
+                     , QuickCheck                      == 2.8.*
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-core

@@ -24,8 +24,6 @@ module Warden.Data.View(
   , renderViewFile
 ) where
 
-import           Control.DeepSeq (NFData)
-
 import           Data.Attoparsec.Text (IResult(..), parse)
 import           Data.List (stripPrefix)
 import           Data.String (IsString)
