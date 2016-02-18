@@ -23,6 +23,7 @@ import           P
 
 import           System.IO (IO)
 
+import           Warden.Chunk
 import           Warden.Data
 import           Warden.Debug
 import           Warden.Error
@@ -56,17 +57,19 @@ runRowCheck verb s v lb vfs = do
 
 parseCheck :: Verbosity -> Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck verb s lb vfs =
-  fmap (finalizeSVParseState . resolveSVParseState . NE.toList) $
-    mapConcurrently (parseViewFile verb s lb) vfs
+  fmap (finalizeSVParseState . resolveSVParseState . join) $
+    mapM (parseViewFile verb s lb) (NE.toList vfs)
 
-parseViewFile :: Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) SVParseState
+parseViewFile :: Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) [SVParseState]
 parseViewFile verb s lb vf = do
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
     , renderViewFile vf
     , "."
     ]
-  readViewFile s lb vf $$ sinkFoldM (generalize parseViewFile')
+  -- FIXME: numcaps
+  cs <- liftIO . chunk (ChunkCount 8) $ unViewFile vf
+  mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize parseViewFile')) cs
 
 parseViewFile' :: Fold Row SVParseState
 parseViewFile' = Fold updateSVParseState initialSVParseState id

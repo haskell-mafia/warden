@@ -41,6 +41,7 @@ calculateOffsets h size (ChunkCount count') = do
 nextLine :: Handle -> IO ()
 nextLine h = do
   unlessM (hIsEOF h) $ do
-    c <- hGetChar h
-    unless (c == '\n') $
+    -- FIXME: this will probably break with some weird unicode characters
+    c <- hGet h 1
+    unless (c == "\n") $
       nextLine h
