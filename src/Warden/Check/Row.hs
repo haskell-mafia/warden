@@ -36,8 +36,8 @@ sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: Verbosity -> Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck verb s v lb vfs = do
+runRowCheck :: NumCPUs -> Verbosity -> Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck caps verb s v lb vfs = do
   -- There should only be one view check, so exit early if we've already done
   -- it.
   existsP <- liftIO $ viewMarkerExists v
@@ -50,25 +50,24 @@ runRowCheck verb s v lb vfs = do
     , renderView v
     , "."
     ]
-  (r, md) <- parseCheck verb s lb vfs
+  (r, md) <- parseCheck caps verb s lb vfs
   now <- liftIO utcNow
   writeViewMarker $ mkViewMarker v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
 
-parseCheck :: Verbosity -> Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
-parseCheck verb s lb vfs =
+parseCheck :: NumCPUs -> Verbosity -> Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
+parseCheck caps verb s lb vfs =
   fmap (finalizeSVParseState . resolveSVParseState . join) $
-    mapM (parseViewFile verb s lb) (NE.toList vfs)
+    mapM (parseViewFile caps verb s lb) (NE.toList vfs)
 
-parseViewFile :: Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) [SVParseState]
-parseViewFile verb s lb vf = do
+parseViewFile :: NumCPUs -> Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) [SVParseState]
+parseViewFile caps verb s lb vf = do
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
     , renderViewFile vf
     , "."
     ]
-  -- FIXME: numcaps
-  cs <- liftIO . chunk (ChunkCount 8) $ unViewFile vf
+  cs <- liftIO . chunk (ChunkCount $ unNumCPUs caps) $ unViewFile vf
   mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize parseViewFile')) cs
 
 parseViewFile' :: Fold Row SVParseState

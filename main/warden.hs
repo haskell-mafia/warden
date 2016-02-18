@@ -3,6 +3,7 @@
 
 import           BuildInfo_ambiata_warden
 
+import           Control.Concurrent (getNumCapabilities)
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.Char (ord)
@@ -37,7 +38,8 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun (Check ps) -> do
-      r <- orDie renderWardenError . mapEitherT runResourceT $ check ps
+      caps <- NumCPUs <$> getNumCapabilities
+      r <- orDie renderWardenError . mapEitherT runResourceT $ check caps ps
       mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
       if checkHasFailures r
         then exitFailure

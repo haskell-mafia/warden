@@ -24,7 +24,7 @@ newtype ChunkOffset =
 
 newtype ChunkCount =
   ChunkCount {
-    unChunkCount :: Integer
+    unChunkCount :: Int
   } deriving (Eq, Show, Ord, Num)
 
 data Chunk = Chunk !ChunkOffset !ChunkSize
