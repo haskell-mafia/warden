@@ -60,8 +60,8 @@ newtype RowCount =
   } deriving (Eq, Show, Num)
 
 data SVParseState = SVParseState
-  { _badRows     :: !RowCount
-  , _totalRows   :: !RowCount
+  { _badRows     :: {-# UNPACK #-} !RowCount
+  , _totalRows   :: {-# UNPACK #-} !RowCount
   , _numFields   :: ![FieldCount]
   } deriving (Eq, Show)
 
