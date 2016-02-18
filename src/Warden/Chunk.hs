@@ -5,12 +5,13 @@ module Warden.Chunk(
   chunk
 ) where
 
+import           Data.ByteString.Char8 (hGet)
 import           Data.List (zip)
 
 import           P
 
 import           System.IO (IO, IOMode (..), SeekMode (..), FilePath, Handle)
-import           System.IO (withFile, hFileSize, hTell, hIsEOF, hSeek, hGetChar)
+import           System.IO (withFile, hFileSize, hTell, hIsEOF, hSeek)
 
 import           Warden.Data.Chunk
 
