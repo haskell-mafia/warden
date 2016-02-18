@@ -22,4 +22,4 @@ $WARDEN check .
 
 $WARDEN check /not/a/real/view
 
-$WARDEN check -b 1000 -s ',' /not/a/real/view
+$WARDEN check -v -b 1000 -s ',' /not/a/real/view

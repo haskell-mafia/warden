@@ -63,6 +63,7 @@ library
                        Warden.Data.Numeric
                        Warden.Data.Row
                        Warden.Data.View
+                       Warden.Debug
                        Warden.Error
                        Warden.Marker
                        Warden.Numeric

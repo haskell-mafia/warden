@@ -14,6 +14,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|))
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Text as T
 
 import           P
 
@@ -23,13 +24,21 @@ import           System.Posix.Files (isRegularFile, getSymbolicLinkStatus, fileS
 import           System.Posix.Files (FileStatus)
 
 import           Warden.Data
+import           Warden.Debug
 import           Warden.Error
 import           Warden.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
 
-runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runFileCheck f (FileCheck desc chk) = do
+runFileCheck :: Verbosity -> ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
+runFileCheck verb f (FileCheck desc chk) = do
+  liftIO . debugPrintLn verb $ T.concat [
+      "Running file check "
+    , renderCheckDescription desc
+    , " on view file "
+    , renderViewFile f
+    , "."
+    ]
   r <- chk f
   buildFileMarker f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r

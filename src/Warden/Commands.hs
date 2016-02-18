@@ -23,9 +23,9 @@ import           Warden.View
 import           X.Control.Monad.Trans.Either (EitherT)
 
 check :: CheckParams -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-check (CheckParams v s lb) = do
+check (CheckParams v s lb verb) = do
   vfs <- traverseView v
-  frs <- fmap join $ traverse (forM File.fileChecks) $ File.runFileCheck <$> vfs
-  rr <- Row.runRowCheck s v lb vfs
+  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck verb) <$> vfs
+  rr <- Row.runRowCheck verb s v lb vfs
   pure $ rr <| frs
 

@@ -48,7 +48,10 @@ wardenP = subparser $
      command' "check" "Run checks over a view." checkP
 
 checkP :: Parser Command
-checkP = Check <$> (CheckParams <$> viewP <*> separatorP <*> lineBoundP)
+checkP = fmap Check $ CheckParams <$> viewP
+                                  <*> separatorP
+                                  <*> lineBoundP
+                                  <*> verbosityP
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
@@ -76,3 +79,10 @@ lineBoundP = LineBound <$> (option auto $
   <> metavar "LINE_LENGTH"
   <> value 65536
   <> help "Maximum line length. Defaults to 65536.")
+
+verbosityP :: Parser Verbosity
+verbosityP =
+  flag Quiet Verbose $
+       long "verbose"
+    <> short 'v'
+    <> help "Verbose output."

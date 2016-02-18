@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data (
     CheckParams(..)
@@ -16,5 +17,5 @@ import           Warden.Data.Row as X
 import           Warden.Data.View as X
 
 data CheckParams =
-  CheckParams View Separator LineBound
+  CheckParams !View !Separator !LineBound !Verbosity
   deriving (Eq, Show)
