@@ -48,7 +48,7 @@ writeViewMarker vm =
 readJson :: FilePath -> EitherT WardenError (ResourceT IO) Value
 readJson fp = do
   bs <- liftIO $ readFile fp
-  eitherTFromMaybe (WardenMarkerError $ MarkerDecodeError "invalid json") $
+  eitherTFromMaybe (WardenMarkerError $ MarkerDecodeError fp "invalid json") $
     pure $ decode' bs
 
 readFileMarker :: ViewFile -> EitherT WardenError (ResourceT IO) FileMarker
@@ -57,7 +57,7 @@ readFileMarker = readFileMarker' . fileToMarker
 readFileMarker' :: FilePath -> EitherT WardenError (ResourceT IO) FileMarker
 readFileMarker' fp = do
   js <- readJson fp
-  firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
+  firstEitherT (WardenMarkerError . MarkerDecodeError fp . T.pack) . hoistEither $
     parseEither toFileMarker js
 
 readViewMarker :: View -> EitherT WardenError (ResourceT IO) ViewMarker
@@ -66,7 +66,7 @@ readViewMarker = readViewMarker' . viewToMarker
 readViewMarker' :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
 readViewMarker' fp = do
   js <- readJson fp
-  firstEitherT (WardenMarkerError . MarkerDecodeError . T.pack) . hoistEither $
+  firstEitherT (WardenMarkerError . MarkerDecodeError fp . T.pack) . hoistEither $
     parseEither toViewMarker js
 
 viewMarkerExists :: View -> IO Bool

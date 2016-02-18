@@ -11,11 +11,13 @@ module Warden.Data.Marker (
   , MarkerVersion(..)
   , ViewMarker(..)
   , ViewMetadata(..)
+  , combineFileMarker
   , currentMarkerVersion
   , filePathChar
   , fileToMarker
   , markerToFile
   , markerToView
+  , mkFileMarker
   , mkViewMarker
   , viewToMarker
   ) where
@@ -23,6 +25,7 @@ module Warden.Data.Marker (
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill)
 import           Data.Char (ord)
+import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -38,6 +41,7 @@ import           P
 import           Warden.Data.Check
 import           Warden.Data.Row
 import           Warden.Data.View
+import           Warden.Error
 
 data MarkerVersion =
     V1
@@ -87,6 +91,24 @@ data FileMarker =
   , fmTimestamp :: !DateTime
   , fmCheckResults :: ![CheckResultSummary]
   } deriving (Eq, Show)
+
+combineFileMarker :: FileMarker -> FileMarker -> Either WardenError FileMarker
+combineFileMarker a b
+  | fmViewFile a /= fmViewFile b =
+      Left . WardenMarkerError $ MarkerFileMismatchError (fmViewFile a) (fmViewFile b)
+  | fmVersion a /= fmVersion b =
+      Left . WardenMarkerError . FileMarkerVersionError $ fmViewFile a
+  | otherwise =
+      let nt = max (fmTimestamp a) (fmTimestamp b)
+          nv = fmVersion a
+          nvf = fmViewFile a
+          nrs = nub $ fmCheckResults a <> fmCheckResults b in
+      Right $ FileMarker nv nvf nt nrs
+
+mkFileMarker :: ViewFile -> CheckDescription -> DateTime -> CheckStatus -> FileMarker
+mkFileMarker v dsc dt cs =
+  let crs = [summarizeResult FileResult dsc cs] in
+  FileMarker currentMarkerVersion v dt crs
 
 markerSuffix :: FilePath
 markerSuffix = ".warden"

@@ -64,19 +64,43 @@ renderTraversalError = ("traversal error: " <>) . render'
       <> (T.intercalate ", " $ renderNonViewFile <$> fs)
 
 data MarkerError =
-    MarkerDecodeError Text
+    MarkerDecodeError FilePath Text
   | ViewMarkerExistsError View FilePath
+  | MarkerFileMismatchError ViewFile ViewFile
+  | MarkerViewMismatchError View View
+  | FileMarkerVersionError ViewFile
+  | ViewMarkerVersionError View
   deriving (Eq, Show)
 
 renderMarkerError :: MarkerError -> Text
 renderMarkerError = ("marker error: " <>) . render'
   where
-    render' (MarkerDecodeError t) =
-      "failed to decode marker: " <> t
+    render' (MarkerDecodeError fp t) =
+      "failed to decode marker at " <> T.pack fp <> ": " <> t
     render' (ViewMarkerExistsError v mf) = T.concat [
         "marker already exists for view "
       , renderView v
       , " - remove "
       , T.pack mf
       , " if you'd like to run the view checks again"
+      ]
+    render' (MarkerFileMismatchError a b) = T.concat [
+        "cannot combine markers for files "
+      , renderViewFile a
+      , " and "
+      , renderViewFile b
+      ]
+    render' (MarkerViewMismatchError a b) = T.concat [
+        "cannot combine markers for views "
+      , renderView a
+      , " and "
+      , renderView b
+      ]
+    render' (FileMarkerVersionError vf) = T.concat [
+        "incompatible versions when combining markers for view file "
+      , renderViewFile vf
+      ]
+    render' (ViewMarkerVersionError v) = T.concat [
+        "incompatible versions when combining markers for view "
+      , renderView v
       ]

@@ -10,6 +10,7 @@ module Warden.Check.File (
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|))
 import qualified Data.List.NonEmpty as NE
@@ -23,20 +24,34 @@ import           System.Posix.Files (FileStatus)
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Marker
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
 
-runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError IO CheckResult
+runFileCheck :: ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
 runFileCheck f (FileCheck desc chk) = do
   r <- chk f
+  buildFileMarker f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r
+
+buildFileMarker :: ViewFile -> CheckDescription -> CheckStatus -> EitherT WardenError (ResourceT IO) FileMarker
+buildFileMarker vf cd cs = do
+  t <- liftIO utcNow
+  let mark = mkFileMarker vf cd t cs
+  existsP <- liftIO $ fileMarkerExists vf
+  if existsP
+    then do
+      old <- readFileMarker vf
+      hoistEither $ combineFileMarker mark old
+    else
+      pure mark
 
 fileChecks :: NonEmpty FileCheck
 fileChecks = NE.fromList [
-    FileCheck (CheckDescription "basic sanity checks") sanity
+    FileCheck FileSanityChecks sanity
   ]
 
-sanity :: ViewFile -> EitherT WardenError IO CheckStatus
+sanity :: ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
 sanity (ViewFile fn) = do
   st <- liftIO $ getSymbolicLinkStatus fn
   pure . resolveCheckStatus $ typeC st <| pure (sizeC st)

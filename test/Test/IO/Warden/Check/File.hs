@@ -5,6 +5,7 @@
 module Test.IO.Warden.Check.File where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Resource (runResourceT)
 
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
@@ -30,7 +31,7 @@ prop_sanity = forAll (elements muppets) $ \cruft ->
   testIO . withTestFile $ \fn fh -> do
   T.hPutStr fh cruft
   hFlush fh
-  r <- runEitherT $ sanity fn
+  r <- runEitherT . mapEitherT runResourceT $ sanity fn
   pure $ r === Right CheckPassed
 
 prop_insanity_empty :: Property

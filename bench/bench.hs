@@ -3,8 +3,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import           Control.Monad.Trans.Resource (runResourceT)
-
 import           Criterion.Main
 import           Criterion.Types
 
@@ -26,8 +24,6 @@ import           Warden.Data
 import           Warden.Row
 import           Warden.View
 
-import           X.Control.Monad.Trans.Either (mapEitherT)
-
 wardenBench :: [Benchmark] -> IO ()
 wardenBench = defaultMainWith cfg
   where
@@ -44,7 +40,7 @@ prepareView root = do
 benchConduitDecode :: NonEmpty ViewFile -> IO ()
 benchConduitDecode vfs = do
   bitbucket <- openFile "/dev/null" WriteMode
-  unsafeWarden . mapEitherT runResourceT $
+  unsafeWarden $
         readView (Separator . fromIntegral $ ord '|') (LineBound 65536) vfs
     =$= C.map (BS.pack . show)
     $$  CB.sinkHandle bitbucket

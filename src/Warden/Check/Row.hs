@@ -34,8 +34,7 @@ sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
 runRowCheck :: Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck s v lb vfs =
-  let desc = CheckDescription "row parsing/field counts" in do
+runRowCheck s v lb vfs = do
   -- There should only be one view check, so exit early if we've already done
   -- it.
   existsP <- liftIO $ viewMarkerExists v
@@ -45,8 +44,8 @@ runRowCheck s v lb vfs =
     left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
   (r, md) <- parseCheck s lb vfs
   now <- liftIO utcNow
-  writeViewMarker $ mkViewMarker v desc now md r
-  pure $ RowCheckResult desc r
+  writeViewMarker $ mkViewMarker v ViewRowCounts now md r
+  pure $ RowCheckResult ViewRowCounts r
 
 parseCheck :: Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck s lb vfs =

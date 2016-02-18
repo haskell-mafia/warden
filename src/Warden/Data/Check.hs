@@ -13,11 +13,15 @@ module Warden.Data.Check (
   , checkHasFailures
   , checkStatusFailed
   , isCheckFailure
+  , parseCheckDescription
   , renderFailure
+  , renderCheckDescription
   , renderCheckResult
   , renderCheckStatus
   , resolveCheckStatus
   ) where
+
+import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -34,16 +38,22 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-newtype CheckDescription =
-  CheckDescription {
-    unCheckDescription :: Text
-  } deriving (Eq, Show)
+data CheckDescription =
+    FileSanityChecks
+  | ViewRowCounts
+  deriving (Eq, Show, Bounded, Enum)
 
 renderCheckDescription :: CheckDescription -> Text
-renderCheckDescription = unCheckDescription
+renderCheckDescription FileSanityChecks = "file-sanity-checks"
+renderCheckDescription ViewRowCounts = "view-row-counts"
+
+parseCheckDescription :: Text -> Maybe CheckDescription
+parseCheckDescription "file-sanity-checks" = Just FileSanityChecks
+parseCheckDescription "view-row-counts"    = Just ViewRowCounts
+parseCheckDescription _                    = Nothing
 
 data FileCheck =
-    FileCheck !CheckDescription (ViewFile -> EitherT WardenError IO CheckStatus)
+    FileCheck !CheckDescription (ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus
