@@ -28,3 +28,4 @@ newtype ChunkCount =
   } deriving (Eq, Show, Ord, Num)
 
 data Chunk = Chunk !ChunkOffset !ChunkSize
+  deriving (Eq, Show)

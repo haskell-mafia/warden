@@ -312,3 +312,6 @@ instance Arbitrary ViewMarker where
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
+
+instance Arbitrary ChunkCount where
+  arbitrary = (ChunkCount . unNPlus) <$> arbitrary
