@@ -6,6 +6,7 @@ module Test.IO.Warden.Chunk where
 
 import           Data.ByteString (hPut)
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.List.NonEmpty as NE
 
 import           Disorder.Core.IO (testIO)
@@ -35,10 +36,11 @@ prop_chunk_many :: ChunkCount -> Property
 prop_chunk_many n = forAll (choose (1024*1024, 10*1024*1024)) $ \m ->
   testIO . withTestFile $ \(ViewFile fp) h -> do
   bs <- getEntropy m
+  let nls = BSC.count '\n' bs
   hPut h bs
   hClose h
   cs <- chunk n fp
-  pure $ (NE.length cs > 1) === True
+  pure $ (NE.length cs >= 1, NE.length cs <= nls + 1) === (True, True)
 
 return []
 tests :: IO Bool

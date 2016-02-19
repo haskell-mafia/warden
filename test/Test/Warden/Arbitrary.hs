@@ -314,4 +314,4 @@ instance Arbitrary ViewMarker where
                          <*> arbitrary
 
 instance Arbitrary ChunkCount where
-  arbitrary = (ChunkCount . unNPlus) <$> arbitrary
+  arbitrary = (ChunkCount . unNPlus) <$> (arbitrary `suchThat` ((< 1000) . unNPlus))
