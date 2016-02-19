@@ -3,6 +3,7 @@
 
 import           BuildInfo_ambiata_warden
 
+import           Control.Concurrent (getNumCapabilities)
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.Char (ord)
@@ -37,7 +38,8 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun (Check ps) -> do
-      r <- orDie renderWardenError . mapEitherT runResourceT $ check ps
+      caps <- NumCPUs <$> getNumCapabilities
+      r <- orDie renderWardenError . mapEitherT runResourceT $ check caps ps
       mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
       if checkHasFailures r
         then exitFailure
@@ -48,7 +50,10 @@ wardenP = subparser $
      command' "check" "Run checks over a view." checkP
 
 checkP :: Parser Command
-checkP = Check <$> (CheckParams <$> viewP <*> separatorP <*> lineBoundP)
+checkP = fmap Check $ CheckParams <$> viewP
+                                  <*> separatorP
+                                  <*> lineBoundP
+                                  <*> verbosityP
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
@@ -76,3 +81,10 @@ lineBoundP = LineBound <$> (option auto $
   <> metavar "LINE_LENGTH"
   <> value 65536
   <> help "Maximum line length. Defaults to 65536.")
+
+verbosityP :: Parser Verbosity
+verbosityP =
+  flag Quiet Verbose $
+       long "verbose"
+    <> short 'v'
+    <> help "Verbose output."

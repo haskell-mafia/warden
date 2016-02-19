@@ -12,6 +12,6 @@ trap "rm -rf ${ROOT}" EXIT
 (
   set -eux
   cd $ROOT
-  VIEW=$(../${WARDEN_GEN} gen -s 2 -c 10000)
+  VIEW=$(../${WARDEN_GEN} gen -s 2 -c 1000)
   ../${WARDEN} check  "${VIEW}"
 )

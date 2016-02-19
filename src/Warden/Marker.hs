@@ -14,7 +14,8 @@ module Warden.Marker(
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
-import           Data.Aeson (encode, decode')
+import           Data.Aeson.Encode.Pretty (encodePretty)
+import           Data.Aeson (decode')
 import           Data.Aeson.Types (Value, parseEither)
 import           Data.ByteString.Lazy (writeFile, readFile)
 import qualified Data.Text as T
@@ -36,13 +37,13 @@ import           X.Control.Monad.Trans.Either (EitherT, firstEitherT, hoistEithe
 writeFileMarker :: FileMarker -> EitherT WardenError (ResourceT IO) ()
 writeFileMarker fm =
   let markf = fileToMarker $ fmViewFile fm
-      markJson = encode $ fromFileMarker fm in
+      markJson = encodePretty $ fromFileMarker fm in
   liftIO $ writeFile markf markJson
 
 writeViewMarker :: ViewMarker -> EitherT WardenError (ResourceT IO) ()
 writeViewMarker vm =
   let markf = viewToMarker $ vmView vm
-      markJson = encode $ fromViewMarker vm in
+      markJson = encodePretty $ fromViewMarker vm in
   liftIO $ writeFile markf markJson
 
 readJson :: FilePath -> EitherT WardenError (ResourceT IO) Value

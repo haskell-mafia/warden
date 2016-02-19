@@ -3,6 +3,7 @@
 
 module Warden.Row (
     readView
+  , readViewChunk
   , readViewFile
   ) where
 
@@ -47,6 +48,18 @@ readViewFile :: Separator
              -> Source (EitherT WardenError (ResourceT IO)) Row
 readViewFile (Separator sep) (LineBound _lb) vf@(ViewFile fp) =
   slurp fp 0 Nothing =$= decodeRows vf (decodeWith opts NoHeader)
+  where
+    opts = defaultDecodeOptions { decDelimiter = sep }
+
+-- FIXME: actually enforce LineBound
+readViewChunk :: Separator
+              -> LineBound
+              -> ViewFile
+              -> Chunk
+              -> Source (EitherT WardenError (ResourceT IO)) Row
+readViewChunk (Separator sep) (LineBound _lb) vf@(ViewFile fp) (Chunk offset size) =
+  slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
+    =$= decodeRows vf (decodeWith opts NoHeader)
   where
     opts = defaultDecodeOptions { decDelimiter = sep }
 

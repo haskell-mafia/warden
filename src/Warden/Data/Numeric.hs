@@ -2,7 +2,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Numeric (
     Minimum(..)
@@ -79,8 +78,8 @@ instance FromJSON StdDev where
 --   Will probably also end up in brandix.
 data NumericSummary = NumericSummary !Minimum
                                      !Maximum
-                                     !Mean
-                                     !StdDev
+                                     {-# UNPACK #-} !Mean
+                                     {-# UNPACK #-} !StdDev
                                      !Median
   deriving (Eq, Show)
 

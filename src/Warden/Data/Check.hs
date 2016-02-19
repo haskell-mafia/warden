@@ -1,6 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 
 module Warden.Data.Check (
     CheckDescription(..)
@@ -10,6 +9,7 @@ module Warden.Data.Check (
   , FileCheck(..)
   , Insanity(..)
   , RowFailure(..)
+  , Verbosity(..)
   , checkHasFailures
   , checkStatusFailed
   , isCheckFailure
@@ -52,6 +52,11 @@ parseCheckDescription "file-sanity-checks" = Just FileSanityChecks
 parseCheckDescription "view-row-counts"    = Just ViewRowCounts
 parseCheckDescription _                    = Nothing
 
+data Verbosity =
+    Verbose
+  | Quiet
+  deriving (Eq, Show)
+
 data FileCheck =
     FileCheck !CheckDescription (ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
@@ -66,11 +71,6 @@ isCheckFailure (RowCheckResult _ s)    = checkStatusFailed s
 
 checkHasFailures :: NonEmpty CheckResult -> Bool
 checkHasFailures rs = any isCheckFailure $ NE.toList rs
-
-data Verbosity =
-    Verbose
-  | Quiet
-  deriving (Eq, Show)
 
 -- FIXME: verbosity
 renderCheckResult :: CheckResult -> NonEmpty Text
