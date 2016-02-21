@@ -67,7 +67,7 @@ parseViewFile caps verb s lb vf = do
     , renderViewFile vf
     , "."
     ]
-  cs <- liftIO . chunk (ChunkCount $ unNumCPUs caps) $ unViewFile vf
+  cs <- liftIO . chunk (chunksForCPUs caps) $ unViewFile vf
   mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize parseViewFile')) $ NE.toList cs
 
 parseViewFile' :: Fold Row SVParseState

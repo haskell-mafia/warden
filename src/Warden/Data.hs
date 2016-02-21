@@ -4,6 +4,7 @@
 module Warden.Data (
     CheckParams(..)
   , NumCPUs(..)
+  , chunksForCPUs
 
   , module X
   ) where
@@ -21,6 +22,9 @@ newtype NumCPUs =
   NumCPUs {
     unNumCPUs :: Int
   } deriving (Eq, Show)
+
+chunksForCPUs :: NumCPUs -> ChunkCount
+chunksForCPUs = ChunkCount . unNumCPUs
 
 data CheckParams =
   CheckParams !View !Separator !LineBound !Verbosity
