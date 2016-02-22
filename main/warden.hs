@@ -25,7 +25,9 @@ import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative
 
-data Command = Check !View !CheckParams
+data Command =
+    Check !View !CheckParams
+  | SingleFileCheck !ViewFile !CheckParams
   deriving (Eq, Show)
 
 main :: IO ()
@@ -37,27 +39,49 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun (Check v ps) -> do
+    RunCommand RealRun cmd -> do
       caps <- NumCPUs <$> getNumCapabilities
-      r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
-      mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
-      if checkHasFailures r
-        then exitFailure
-        else exitSuccess
+      run caps cmd
+
+run :: NumCPUs -> Command -> IO ()
+run caps (Check v ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
+  mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
+  if checkHasFailures r
+    then exitFailure
+    else exitSuccess
+run caps (SingleFileCheck vf ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck caps vf ps
+  mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
+  if checkHasFailures r
+    then exitFailure
+    else exitSuccess
 
 wardenP :: Parser Command
 wardenP = subparser $
      command' "check" "Run checks over a view." checkP
+  <> command' "check-file" "Run checks over a single file." fileCheckP
 
 checkP :: Parser Command
-checkP = Check <$> viewP <*> (CheckParams <$> separatorP
-                                          <*> lineBoundP
-                                          <*> verbosityP)
+checkP = Check <$> viewP <*> checkParamsP
+
+fileCheckP :: Parser Command
+fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
+
+checkParamsP :: Parser CheckParams
+checkParamsP = CheckParams <$> separatorP
+                           <*> lineBoundP
+                           <*> verbosityP
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
      metavar "VIEW"
   <> help "Path to local copy of view.")
+
+viewFileP :: Parser ViewFile
+viewFileP = ViewFile <$> (strArgument $
+     metavar "VIEW-FILE"
+  <> help "Path to local view file.")
 
 separatorP :: Parser Separator
 separatorP = option (eitherReader separator) $
