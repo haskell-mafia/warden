@@ -37,8 +37,8 @@ fileCheck caps vf ps = do
   checkViewFiles caps ps view $ vf :| []
 
 checkViewFiles :: NumCPUs -> CheckParams -> View -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles caps (CheckParams s lb verb) v vfs = do
+checkViewFiles caps (CheckParams s lb verb fce) v vfs = do
   frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck verb) <$> vfs
-  rr <- Row.runRowCheck caps verb s v lb vfs
+  rr <- Row.runRowCheck caps fce verb s v lb vfs
   pure $ rr <| frs
 

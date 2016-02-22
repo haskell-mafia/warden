@@ -82,7 +82,7 @@ renderMarkerError = ("marker error: " <>) . render'
       , renderView v
       , " - remove "
       , T.pack mf
-      , " if you'd like to run the view checks again"
+      , " or run with -f if you'd like to run the view checks again"
       ]
     render' (MarkerFileMismatchError a b) = T.concat [
         "cannot combine markers for files "

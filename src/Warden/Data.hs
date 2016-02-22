@@ -3,6 +3,7 @@
 
 module Warden.Data (
     CheckParams(..)
+  , Force(..)
   , NumCPUs(..)
   , chunksForCPUs
 
@@ -26,6 +27,11 @@ newtype NumCPUs =
 chunksForCPUs :: NumCPUs -> ChunkCount
 chunksForCPUs = ChunkCount . unNumCPUs
 
+data Force =
+    Force
+  | NoForce
+  deriving (Eq, Show)
+
 data CheckParams =
-  CheckParams !Separator !LineBound !Verbosity
+  CheckParams !Separator !LineBound !Verbosity !Force
   deriving (Eq, Show)

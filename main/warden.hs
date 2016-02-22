@@ -72,6 +72,7 @@ checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
                            <*> lineBoundP
                            <*> verbosityP
+                           <*> forceP
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
@@ -111,3 +112,10 @@ verbosityP =
        long "verbose"
     <> short 'v'
     <> help "Verbose output."
+
+forceP :: Parser Force
+forceP =
+  flag NoForce Force $
+       long "force"
+    <> short 'f'
+    <> help "Overwrite existing marker files."
