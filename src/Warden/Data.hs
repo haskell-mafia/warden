@@ -27,5 +27,5 @@ chunksForCPUs :: NumCPUs -> ChunkCount
 chunksForCPUs = ChunkCount . unNumCPUs
 
 data CheckParams =
-  CheckParams !View !Separator !LineBound !Verbosity
+  CheckParams !Separator !LineBound !Verbosity
   deriving (Eq, Show)

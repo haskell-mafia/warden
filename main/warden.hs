@@ -25,7 +25,7 @@ import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative
 
-data Command = Check CheckParams
+data Command = Check !View !CheckParams
   deriving (Eq, Show)
 
 main :: IO ()
@@ -37,9 +37,9 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun (Check ps) -> do
+    RunCommand RealRun (Check v ps) -> do
       caps <- NumCPUs <$> getNumCapabilities
-      r <- orDie renderWardenError . mapEitherT runResourceT $ check caps ps
+      r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
       mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
       if checkHasFailures r
         then exitFailure
@@ -50,10 +50,9 @@ wardenP = subparser $
      command' "check" "Run checks over a view." checkP
 
 checkP :: Parser Command
-checkP = fmap Check $ CheckParams <$> viewP
-                                  <*> separatorP
-                                  <*> lineBoundP
-                                  <*> verbosityP
+checkP = Check <$> viewP <*> (CheckParams <$> separatorP
+                                          <*> lineBoundP
+                                          <*> verbosityP)
 
 viewP :: Parser View
 viewP = View <$> (strArgument $
