@@ -36,8 +36,9 @@ fileCheck caps vf ps = do
   let view = View $ takeDirectory vf'
   checkViewFiles caps ps view $ vf :| []
 
+-- FIXME: use schema
 checkViewFiles :: NumCPUs -> CheckParams -> View -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles caps (CheckParams s lb verb fce) v vfs = do
+checkViewFiles caps (CheckParams s _sch lb verb fce) v vfs = do
   frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck verb) <$> vfs
   rr <- Row.runRowCheck caps fce verb s v lb vfs
   pure $ rr <| frs

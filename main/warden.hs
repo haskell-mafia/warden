@@ -70,6 +70,7 @@ fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
 
 checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
+                           <*> schemaFileP
                            <*> lineBoundP
                            <*> verbosityP
                            <*> forceP
@@ -119,3 +120,9 @@ forceP =
        long "force"
     <> short 'f'
     <> help "Overwrite existing marker files."
+
+schemaFileP :: Parser (Maybe SchemaFile)
+schemaFileP = maybe Nothing (Just . SchemaFile) <$> (optional . strOption $
+     long "schema"
+  <> metavar "SCHEMA-FILE"
+  <> help "JSON-format schema against which to validate the dataset.")
