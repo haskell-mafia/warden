@@ -7,6 +7,7 @@ module Warden.Data.Schema (
   , Schema(..)
   , SchemaField(..)
   , SchemaFile(..)
+  , SchemaVersion(..)
   , renderSchemaFile
   ) where
 
@@ -28,7 +29,11 @@ newtype SchemaFile =
 renderSchemaFile :: SchemaFile -> Text
 renderSchemaFile = T.pack . unSchemaFile
 
-data Schema = Schema !FieldCount !(Vector SchemaField)
+data SchemaVersion =
+    SchemaV1
+  deriving (Eq, Show, Enum, Bounded)
+
+data Schema = Schema !SchemaVersion !FieldCount !(Vector SchemaField)
   deriving (Eq, Show)
 
 -- | This will contain more data in the future, e.g., summary statistics for

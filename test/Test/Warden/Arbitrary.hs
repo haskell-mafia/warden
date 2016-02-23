@@ -323,5 +323,8 @@ instance Arbitrary FieldType where
 instance Arbitrary SchemaField where
   arbitrary = SchemaField <$> arbitrary
 
+instance Arbitrary SchemaVersion where
+  arbitrary = elements [minBound..maxBound]
+
 instance Arbitrary Schema where
-  arbitrary = Schema <$> arbitrary <*> arbitrary
+  arbitrary = Schema <$> arbitrary <*> arbitrary <*> arbitrary
