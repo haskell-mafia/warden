@@ -36,12 +36,12 @@ sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: NumCPUs -> Verbosity -> Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck caps verb s v lb vfs = do
+runRowCheck :: NumCPUs -> Force -> Verbosity -> Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck caps fce verb s v lb vfs = do
   -- There should only be one view check, so exit early if we've already done
   -- it.
   existsP <- liftIO $ viewMarkerExists v
-  when existsP $ do
+  when (existsP && noForce) $ do
     -- Fail with a more informative error if it's invalid.
     void $ readViewMarker v
     left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
@@ -54,6 +54,10 @@ runRowCheck caps verb s v lb vfs = do
   now <- liftIO utcNow
   writeViewMarker $ mkViewMarker v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
+  where
+    noForce = case fce of
+      Force   -> False
+      NoForce -> True
 
 parseCheck :: NumCPUs -> Verbosity -> Separator -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps verb s lb vfs =
@@ -67,7 +71,7 @@ parseViewFile caps verb s lb vf = do
     , renderViewFile vf
     , "."
     ]
-  cs <- liftIO . chunk (ChunkCount $ unNumCPUs caps) $ unViewFile vf
+  cs <- liftIO . chunk (chunksForCPUs caps) $ unViewFile vf
   mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize parseViewFile')) $ NE.toList cs
 
 parseViewFile' :: Fold Row SVParseState

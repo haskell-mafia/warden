@@ -93,13 +93,13 @@ instance Arbitrary ParsedField where
   arbitrary = oneof [textField, integralField, realField]
 
 textField :: Gen ParsedField
-textField = TextField <$> elements southpark
+textField = ParsedText <$> elements southpark
 
 integralField :: Gen ParsedField
-integralField = IntegralField <$> (arbitrary :: Gen Integer)
+integralField = ParsedIntegral <$> (arbitrary :: Gen Integer)
 
 realField :: Gen ParsedField
-realField = RealField <$> (arbitrary :: Gen Double)
+realField = ParsedReal <$> (arbitrary :: Gen Double)
 
 --
 -- numeric instances

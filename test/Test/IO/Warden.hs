@@ -112,6 +112,9 @@ writeViewFile c fc (LineSize ll) fp = do
 
     writeRow h = do
       r <- generate . resize ll $ validSVRow sep fc
-      BL.hPutStr h $ encodeWith opts [r]
+      BL.hPutStr h $ encodeWith (wardenEncodeOpts sep) [r]
 
-    opts = defaultEncodeOptions { encDelimiter = unSeparator sep }
+wardenEncodeOpts :: Separator -> EncodeOptions
+wardenEncodeOpts sep = defaultEncodeOptions {
+    encDelimiter = unSeparator sep
+  }

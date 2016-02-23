@@ -3,7 +3,9 @@
 
 module Warden.Data (
     CheckParams(..)
+  , Force(..)
   , NumCPUs(..)
+  , chunksForCPUs
 
   , module X
   ) where
@@ -15,6 +17,7 @@ import           Warden.Data.Chunk as X
 import           Warden.Data.Marker as X
 import           Warden.Data.Numeric as X
 import           Warden.Data.Row as X
+import           Warden.Data.Schema as X
 import           Warden.Data.View as X
 
 newtype NumCPUs =
@@ -22,6 +25,14 @@ newtype NumCPUs =
     unNumCPUs :: Int
   } deriving (Eq, Show)
 
+chunksForCPUs :: NumCPUs -> ChunkCount
+chunksForCPUs = ChunkCount . unNumCPUs
+
+data Force =
+    Force
+  | NoForce
+  deriving (Eq, Show)
+
 data CheckParams =
-  CheckParams !View !Separator !LineBound !Verbosity
+  CheckParams !Separator !LineBound !Verbosity !Force
   deriving (Eq, Show)
