@@ -17,6 +17,7 @@ import           Warden.Data.Chunk as X
 import           Warden.Data.Marker as X
 import           Warden.Data.Numeric as X
 import           Warden.Data.Row as X
+import           Warden.Data.Schema as X
 import           Warden.Data.View as X
 
 newtype NumCPUs =

@@ -73,16 +73,16 @@ resolveSVParseState = foldr update initialSVParseState
       . (numFields %~ ((s ^. numFields) `union`))
       $! acc
 
-data ParsedField = IntegralField !Integer
-                 | RealField !Double
-                 | TextField !Text
+data ParsedField = ParsedIntegral !Integer
+                 | ParsedReal !Double
+                 | ParsedText !Text
   deriving (Eq, Show)
 
 renderParsedField :: ParsedField
                   -> Text
-renderParsedField (IntegralField i) = T.pack $ show i
-renderParsedField (RealField d)     = T.pack $ show d
-renderParsedField (TextField t)     = t
+renderParsedField (ParsedIntegral i) = T.pack $ show i
+renderParsedField (ParsedReal d)     = T.pack $ show d
+renderParsedField (ParsedText t)     = t
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 []
@@ -117,9 +117,9 @@ updateSVParseState !st row =
 
 field :: Parser ParsedField
 field = choice
-  [ IntegralField <$> signed decimal <* endOfInput
-  , RealField     <$> double <* endOfInput
-  , TextField     <$> takeText
+  [ ParsedIntegral <$> signed decimal <* endOfInput
+  , ParsedReal     <$> double <* endOfInput
+  , ParsedText     <$> takeText
   ]
 
 newtype LineBound =
