@@ -31,15 +31,20 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either
 
-withTestFile :: (ViewFile -> Handle -> IO a) -> IO a
+withTestFile :: (FilePath -> Handle -> IO a) -> IO a
 withTestFile a = do
   d <- getWorkingDirectory
-  withTempFile d "warden-test-" (\f h -> a (ViewFile f) h)
+  withTempFile d "warden-test-" (\f h -> a f h)
+
+withTestViewFile :: (ViewFile -> Handle -> IO a) -> IO a
+withTestViewFile a = do
+  d <- getWorkingDirectory
+  withTempFile d "warden-viewfile-test-" (\f h -> a (ViewFile f) h)
 
 withTestView :: (View -> IO a) -> IO a
 withTestView a = do
   d <- getWorkingDirectory
-  withTempDirectory d "warden-test-" (\f -> a (View f))
+  withTempDirectory d "warden-view-test-" (\f -> a (View f))
 
 testWarden :: Testable a => EitherT WardenError (ResourceT IO) a -> Property
 testWarden = testIO . unsafeWarden

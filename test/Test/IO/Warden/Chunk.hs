@@ -33,7 +33,7 @@ import           X.Data.Conduit.Binary (slurp)
 
 prop_chunk_one :: ChunkCount -> Property
 prop_chunk_one n = forAll (arbitrary `suchThat` ((< (1024*1024)) . BS.length)) $ \bs -> 
-  testIO . withTestFile $ \(ViewFile fp) h -> do
+  testIO . withTestFile $ \fp h -> do
   hPut h bs
   hClose h
   cs <- chunk n fp
@@ -41,7 +41,7 @@ prop_chunk_one n = forAll (arbitrary `suchThat` ((< (1024*1024)) . BS.length)) $
 
 prop_chunk_many :: ChunkCount -> Property
 prop_chunk_many n = forAll (choose (1024*1024, 10*1024*1024)) $ \m -> -- 1MB-10MB
-  testIO . withTestFile $ \(ViewFile fp) h -> do
+  testIO . withTestFile $ \fp h -> do
   bs <- getEntropy m
   let nls = BSC.count '\n' bs
   hPut h bs
@@ -51,7 +51,7 @@ prop_chunk_many n = forAll (choose (1024*1024, 10*1024*1024)) $ \m -> -- 1MB-10M
 
 prop_chunk :: ChunkCount -> Property
 prop_chunk n = forAll (choose (1, 10*1024*1024)) $ \m -> -- 1B-10MB
-  testIO . withTestFile $ \(ViewFile fp) h -> do
+  testIO . withTestFile $ \fp h -> do
   bs <- getEntropy m
   hPut h bs
   hClose h

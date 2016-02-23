@@ -28,19 +28,19 @@ import           X.Control.Monad.Trans.Either
 
 prop_sanity :: Property
 prop_sanity = forAll (elements muppets) $ \cruft ->
-  testIO . withTestFile $ \fn fh -> do
+  testIO . withTestViewFile $ \fn fh -> do
   T.hPutStr fh cruft
   hFlush fh
   r <- runEitherT . mapEitherT runResourceT $ sanity fn
   pure $ r === Right CheckPassed
 
 prop_insanity_empty :: Property
-prop_insanity_empty = testIO . withTestFile $ \fn _ -> unsafeWarden $ do
+prop_insanity_empty = testIO . withTestViewFile $ \fn _ -> unsafeWarden $ do
   r <- sanity fn
   pure $ (CheckFailed $ NE.fromList [SanityCheckFailure EmptyFile]) === r
 
 prop_insanity_symlink :: Property
-prop_insanity_symlink = testIO . withTestFile $ \(ViewFile fn) _ -> unsafeWarden $
+prop_insanity_symlink = testIO . withTestViewFile $ \(ViewFile fn) _ -> unsafeWarden $
   let lnk = fn <> "-symlink" in do
   liftIO $ createSymbolicLink fn lnk
   r <- sanity (ViewFile lnk)
