@@ -72,6 +72,7 @@ library
                        Warden.Marker
                        Warden.Numeric
                        Warden.Row
+                       Warden.Schema
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Check

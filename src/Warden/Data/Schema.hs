@@ -6,13 +6,27 @@ module Warden.Data.Schema (
     FieldType(..)
   , Schema(..)
   , SchemaField(..)
+  , SchemaFile(..)
+  , renderSchemaFile
   ) where
 
-import          Data.Vector (Vector)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Data.Vector (Vector)
 
-import          P
+import           P
 
-import          Warden.Data.Row
+import           System.IO (FilePath)
+
+import           Warden.Data.Row
+
+newtype SchemaFile =
+  SchemaFile {
+      unSchemaFile :: FilePath
+  } deriving (Eq, Show)
+
+renderSchemaFile :: SchemaFile -> Text
+renderSchemaFile = T.pack . unSchemaFile
 
 data Schema = Schema !FieldCount !(Vector SchemaField)
   deriving (Eq, Show)
