@@ -37,11 +37,11 @@ toNonEmpty (Array xs) = do
 toNonEmpty x          = typeMismatch "Data.List.NonEmpty.NonEmpty" x
 
 fromMarkerVersion :: MarkerVersion -> Value
-fromMarkerVersion V1 = String "v1"
+fromMarkerVersion MarkerV1 = String "v1"
 
 toMarkerVersion :: Value -> Parser MarkerVersion
 toMarkerVersion (String s) = case s of
-  "v1" -> pure V1
+  "v1" -> pure MarkerV1
   _    -> fail $ "Unknown marker version " <> (T.unpack s)
 toMarkerVersion x          = typeMismatch "Warden.Data.Marker.MarkerVersion" x
 

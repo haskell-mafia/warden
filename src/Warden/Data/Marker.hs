@@ -43,7 +43,7 @@ import           Warden.Data.View
 import           Warden.Error
 
 data MarkerVersion =
-    V1
+    MarkerV1
   deriving (Eq, Show, Ord, Bounded, Enum)
 
 currentMarkerVersion :: MarkerVersion
