@@ -7,6 +7,7 @@ import qualified Test.Warden.Data.View
 import qualified Test.Warden.Numeric
 import qualified Test.Warden.Sampling.Reservoir
 import qualified Test.Warden.Serial.Json.Marker
+import qualified Test.Warden.Serial.Json.Schema
 
 main :: IO ()
 main = disorderMain [
@@ -17,4 +18,5 @@ main = disorderMain [
   , Test.Warden.Numeric.tests
   , Test.Warden.Sampling.Reservoir.tests
   , Test.Warden.Serial.Json.Marker.tests
+  , Test.Warden.Serial.Json.Schema.tests
   ]
