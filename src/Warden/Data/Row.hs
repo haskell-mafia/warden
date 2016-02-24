@@ -6,13 +6,13 @@
 
 module Warden.Data.Row (
     FieldCount(..)
+  , FieldLooks(..)
   , LineBound(..)
   , ParsedField(..)
   , Row(..)
   , RowCount(..)
   , SVParseState(..)
   , Separator(..)
-
   , field
   , renderParsedField
   , totalRows
@@ -83,6 +83,14 @@ renderParsedField :: ParsedField
 renderParsedField (ParsedIntegral i) = T.pack $ show i
 renderParsedField (ParsedReal d)     = T.pack $ show d
 renderParsedField (ParsedText t)     = t
+
+data FieldLooks =
+    LooksEmpty
+  | LooksIntegral
+  | LooksReal
+  | LooksText
+  | LooksBroken -- ^ Not valid UTF-8.
+  deriving (Eq, Show, Ord, Enum, Bounded)
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 []
