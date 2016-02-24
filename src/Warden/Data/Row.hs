@@ -27,6 +27,7 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.Ix
 import           Data.List (union)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -41,14 +42,17 @@ newtype FieldCount =
     unFieldCount :: Int
   } deriving (Eq, Show, Num)
 
-newtype Separator = Separator { unSeparator :: Word8 }
-  deriving (Eq, Show)
+newtype Separator =
+  Separator {
+    unSeparator :: Word8
+  } deriving (Eq, Show)
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
-data Row = SVFields !(Vector Text)
-           | RowFailure !Text
-           | SVEOF
+data Row =
+    SVFields !(Vector Text)
+  | RowFailure !Text
+  | SVEOF
   deriving (Eq, Show)
 
 newtype RowCount =
@@ -73,9 +77,10 @@ resolveSVParseState = foldr update initialSVParseState
       . (numFields %~ ((s ^. numFields) `union`))
       $! acc
 
-data ParsedField = ParsedIntegral !Integer
-                 | ParsedReal !Double
-                 | ParsedText !Text
+data ParsedField =
+    ParsedIntegral !Integer
+  | ParsedReal !Double
+  | ParsedText !Text
   deriving (Eq, Show)
 
 renderParsedField :: ParsedField
@@ -90,7 +95,7 @@ data FieldLooks =
   | LooksReal
   | LooksText
   | LooksBroken -- ^ Not valid UTF-8.
-  deriving (Eq, Show, Ord, Enum, Bounded)
+  deriving (Eq, Show, Ord, Enum, Bounded, Ix)
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 []
