@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Test.Warden.Data where
+module Test.Warden.Data.Check where
 
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
