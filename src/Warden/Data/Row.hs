@@ -78,7 +78,7 @@ instance NFData Row
 newtype RowCount =
   RowCount {
     unRowCount :: Int
-  } deriving (Eq, Show, Num, Generic)
+  } deriving (Eq, Show, Ord, Num, Generic)
 
 instance NFData RowCount
 
