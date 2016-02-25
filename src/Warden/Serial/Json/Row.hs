@@ -2,8 +2,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Warden.Serial.Json.Row(
-    fromSVParseState
+    fromFieldCount
+  , toFieldCount
+  , fromSVParseState
   , toSVParseState
+
   ) where
 
 import           Data.Aeson ((.:), (.=), object, parseJSON, toJSON)

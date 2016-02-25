@@ -30,6 +30,7 @@ import           System.FilePath (joinPath, (</>))
 import           Test.Delorean.Arbitrary ()
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
+import           Test.QuickCheck.Instances ()
 
 import           Text.Printf (printf)
 
@@ -315,3 +316,15 @@ instance Arbitrary ViewMarker where
 
 instance Arbitrary ChunkCount where
   arbitrary = (ChunkCount . unNPlus) <$> (arbitrary `suchThat` ((< 1000) . unNPlus))
+
+instance Arbitrary FieldType where
+  arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary SchemaField where
+  arbitrary = SchemaField <$> arbitrary
+
+instance Arbitrary SchemaVersion where
+  arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary Schema where
+  arbitrary = Schema <$> arbitrary <*> arbitrary <*> arbitrary

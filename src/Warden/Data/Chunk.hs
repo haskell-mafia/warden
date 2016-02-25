@@ -10,7 +10,7 @@ module Warden.Data.Chunk (
   , ChunkCount(..)
   ) where
 
-import          P
+import           P
 
 newtype ChunkSize =
   ChunkSize {

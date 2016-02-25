@@ -24,4 +24,4 @@ $WARDEN check /not/a/real/view
 
 $WARDEN check -v -b 1000 -s ',' /not/a/real/view
 
-$WARDEN check-file -v -b 1000 -s , /not/a/real/view/file
+$WARDEN check-file -f -v -b 1000 -s , /not/a/real/view/file

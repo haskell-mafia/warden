@@ -4,8 +4,9 @@
 module Warden.Error (
     WardenError(..)
   , LoadError(..)
-  , TraversalError(..)
   , MarkerError(..)
+  , SchemaError(..)
+  , TraversalError(..)
   , renderWardenError
 ) where
 
@@ -16,6 +17,7 @@ import qualified Data.Text as T
 
 import           System.IO (FilePath)
 
+import           Warden.Data.Schema
 import           Warden.Data.View
 
 data WardenError =
@@ -23,6 +25,7 @@ data WardenError =
   | WardenNotImplementedError
   | WardenTraversalError TraversalError
   | WardenMarkerError MarkerError
+  | WardenSchemaError SchemaError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -33,6 +36,7 @@ renderWardenError = ("warden: " <>) . render'
     render' WardenNotImplementedError = "implement me!"
     render' (WardenTraversalError te) = renderTraversalError te
     render' (WardenMarkerError me) = renderMarkerError me
+    render' (WardenSchemaError se) = renderSchemaError se
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -104,3 +108,13 @@ renderMarkerError = ("marker error: " <>) . render'
         "incompatible versions when combining markers for view "
       , renderView v
       ]
+
+data SchemaError =
+    SchemaDecodeError SchemaFile Text
+  deriving (Eq, Show)
+
+renderSchemaError :: SchemaError -> Text
+renderSchemaError = ("schema error: " <>) . render'
+  where
+    render' (SchemaDecodeError sf t) =
+      "failed to decode schema at " <> renderSchemaFile sf <> ": " <> t

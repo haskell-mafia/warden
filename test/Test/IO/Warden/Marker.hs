@@ -25,7 +25,7 @@ import           Warden.Marker
 import           X.Control.Monad.Trans.Either (bracketEitherT')
 
 prop_writeFileMarker :: FileMarker -> Property
-prop_writeFileMarker fm = testIO $ withTestFile $ \vf _ -> unsafeWarden $ do
+prop_writeFileMarker fm = testIO $ withTestViewFile $ \vf _ -> unsafeWarden $ do
   let fm' = fm { fmViewFile = vf }
   fm'' <- bracketEitherT' (writeFileMarker fm' >> pure (fmViewFile fm'))
                          (\vf' -> liftIO . removeFile $ fileToMarker vf')
