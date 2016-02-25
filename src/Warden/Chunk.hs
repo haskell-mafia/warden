@@ -6,7 +6,7 @@ module Warden.Chunk(
 ) where
 
 import           Data.ByteString.Char8 (hGet)
-import           Data.List.NonEmpty (NonEmpty(..), (<|), zip)
+import           Data.List.NonEmpty (NonEmpty(..), zip)
 import qualified Data.List.NonEmpty as NE
 
 import           P
@@ -33,12 +33,12 @@ chunk' h size count' = do
 calculateOffsets :: Handle -> Integer -> ChunkCount -> IO (NonEmpty ChunkOffset)
 calculateOffsets h size (ChunkCount count') = do
   let rough = floor (fromIntegral size / fromIntegral count' :: Double)
-  rest <- forM (NE.fromList [1 .. (count' - 1)]) $ \n -> do
+  rest <- forM [1 .. (count' - 1)] $ \n -> do
     let start = rough * toInteger n
     hSeek h AbsoluteSeek start
     offset <- nextLine h >> hTell h
     pure $! ChunkOffset offset
-  pure $! (ChunkOffset 0 <| rest)
+  pure $! (ChunkOffset 0 :| rest)
 
 nextLine :: Handle -> IO ()
 nextLine h = do
