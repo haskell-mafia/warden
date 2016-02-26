@@ -65,6 +65,7 @@ library
                        Warden.Data.Chunk
                        Warden.Data.Marker
                        Warden.Data.Numeric
+                       Warden.Data.Param
                        Warden.Data.Row
                        Warden.Data.Schema
                        Warden.Data.View
