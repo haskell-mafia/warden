@@ -25,6 +25,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
+import           Data.Set (Set)
 import           Data.Text (Text)
 import qualified Data.Text as T
 
@@ -131,7 +132,7 @@ data Insanity =
   deriving (Eq, Show)
 
 data RowFailure =
-    FieldCountMismatch ![FieldCount]
+    FieldCountMismatch !(Set FieldCount)
   | ZeroRows
   | HasBadRows !RowCount
   deriving (Eq, Show)

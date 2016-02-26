@@ -17,6 +17,8 @@ import           Data.Conduit (Consumer, ($$))
 import qualified Data.Conduit.List as CL
 import qualified Data.List.NonEmpty as NE
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 
 import           P
@@ -94,10 +96,11 @@ finalizeSVParseState sv = let st = resolveCheckStatus . NE.fromList $ [
                                 ] in
   (st, ViewMetadata sv)
 
-checkNumFields :: [FieldCount] -> CheckStatus
-checkNumFields [] = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
-checkNumFields [_] = CheckPassed
-checkNumFields xs  = CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch xs]
+checkNumFields :: Set FieldCount -> CheckStatus
+checkNumFields s = case S.size s of
+  0 -> CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
+  1 -> CheckPassed
+  _ -> CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch s]
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)

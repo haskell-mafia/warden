@@ -11,7 +11,7 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
-import           Data.List (zip, nub)
+import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
@@ -313,13 +313,10 @@ genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
       vs <- vectorOf (length ([minBound..maxBound] :: [FieldLooks])) arbitrary
       pure $ zip [minBound..maxBound] vs
 
-genFieldCounts :: Gen [FieldCount]
-genFieldCounts = nub <$> listOf arbitrary
-
 instance Arbitrary SVParseState where
   arbitrary = SVParseState <$> arbitrary
                            <*> arbitrary
-                           <*> genFieldCounts
+                           <*> arbitrary
                            <*> oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
 
 instance Arbitrary ViewMetadata where

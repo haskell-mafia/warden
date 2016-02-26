@@ -33,7 +33,9 @@ import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
 import           Data.Ix (Ix)
-import           Data.List (union, repeat, zip)
+import           Data.List (repeat, zip)
+import           Data.Set (Set)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Vector (Vector)
@@ -47,7 +49,7 @@ import           P
 newtype FieldCount =
   FieldCount {
     unFieldCount :: Int
-  } deriving (Eq, Show, Num, Generic)
+  } deriving (Eq, Show, Ord, Num, Generic)
 
 instance NFData FieldCount
 
@@ -125,7 +127,7 @@ data FieldLookCount =
 data SVParseState = SVParseState
   { _badRows     :: {-# UNPACK #-} !RowCount
   , _totalRows   :: {-# UNPACK #-} !RowCount
-  , _numFields   :: ![FieldCount]
+  , _numFields   :: !(Set FieldCount)
   , _fieldLooks  :: !FieldLookCount
   } deriving (Eq, Show, Generic)
 
@@ -139,7 +141,7 @@ resolveSVParseState = foldr update initialSVParseState
     update s !acc =
         (badRows %~ ((s ^. badRows) +))
       . (totalRows %~ ((s ^. totalRows) +))
-      . (numFields %~ ((s ^. numFields) `union`))
+      . (numFields %~ ((s ^. numFields) `S.union`))
       . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
       $! acc
 
@@ -169,7 +171,7 @@ updateFieldLooks !t !a =
 {-# INLINE updateFieldLooks #-}
 
 initialSVParseState :: SVParseState
-initialSVParseState = SVParseState 0 0 [] NoFieldLookCount
+initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: SVParseState
@@ -194,9 +196,7 @@ updateSVParseState !st row =
 
   updateNumFields (SVFields !v) !ns =
     let n = FieldCount $ V.length v in
-    if not (elem n ns)
-      then n : ns 
-      else ns
+    S.insert n ns
   updateNumFields _ !ns = ns
 
   updateFields (SVFields !v) NoFieldLookCount =

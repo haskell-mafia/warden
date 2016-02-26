@@ -15,6 +15,7 @@ import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.Array (elems, indices, array)
 import qualified Data.Array as A
 import           Data.List (zip)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 
@@ -79,7 +80,7 @@ fromSVParseState :: SVParseState -> Value
 fromSVParseState (SVParseState br tr nfs fas) = object $ [
     "bad-rows" .= fromRowCount br
   , "total-rows" .= fromRowCount tr
-  , "field-counts" .= (fromFieldCount <$> nfs)
+  , "field-counts" .= (fmap fromFieldCount $ S.toList nfs)
   ] <> case fas of
          NoFieldLookCount ->
            []
@@ -90,7 +91,7 @@ toSVParseState :: Value -> Parser SVParseState
 toSVParseState (Object o) = do
   br <- toRowCount =<< (o .: "bad-rows")
   tr <- toRowCount =<< (o .: "total-rows")
-  nfs <- mapM toFieldCount =<< (o .: "field-counts")
+  nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
   fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldArray) =<< (o .:? "field-looks")
   pure $ SVParseState br tr nfs fas
 toSVParseState x          = typeMismatch "Warden.Data.Row.SVParseState" x
