@@ -34,5 +34,5 @@ data Force =
   deriving (Eq, Show)
 
 data CheckParams =
-  CheckParams !Separator !LineBound !Verbosity !Force
+  CheckParams !Separator !(Maybe SchemaFile) !LineBound !Verbosity !Force
   deriving (Eq, Show)

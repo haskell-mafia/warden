@@ -36,8 +36,17 @@ sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: NumCPUs -> Force -> Verbosity -> Separator -> View -> LineBound -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck caps fce verb s v lb vfs = do
+-- FIXME: use schema
+runRowCheck :: NumCPUs
+            -> Force
+            -> Verbosity
+            -> Separator
+            -> Maybe Schema
+            -> View
+            -> LineBound
+            -> NonEmpty ViewFile
+            -> EitherT WardenError (ResourceT IO) CheckResult
+runRowCheck caps fce verb s _sch v lb vfs = do
   -- There should only be one view check, so exit early if we've already done
   -- it.
   existsP <- liftIO $ viewMarkerExists v

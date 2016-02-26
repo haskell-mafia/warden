@@ -22,6 +22,7 @@ import qualified Warden.Check.Row as Row
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Schema
 import           Warden.View
 
 import           X.Control.Monad.Trans.Either (EitherT)
@@ -37,8 +38,9 @@ fileCheck caps vf ps = do
   checkViewFiles caps ps view $ vf :| []
 
 checkViewFiles :: NumCPUs -> CheckParams -> View -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles caps (CheckParams s lb verb fce) v vfs = do
+checkViewFiles caps (CheckParams s sf lb verb fce) v vfs = do
+  schema <- maybe (pure Nothing) (fmap Just . readSchema) sf
   frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck verb) <$> vfs
-  rr <- Row.runRowCheck caps fce verb s v lb vfs
+  rr <- Row.runRowCheck caps fce verb s schema v lb vfs
   pure $ rr <| frs
 
