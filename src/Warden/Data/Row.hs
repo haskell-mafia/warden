@@ -17,7 +17,9 @@ module Warden.Data.Row (
   , SVParseState(..)
   , Separator(..)
   , badRows
+  , combineFieldLooks
   , field
+  , fieldLooks
   , initialSVParseState
   , numFields
   , renderParsedField
@@ -124,8 +126,9 @@ data FieldLookCount =
   | NoFieldLookCount
   deriving (Eq, Show)
 
-data SVParseState = SVParseState
-  { _badRows     :: {-# UNPACK #-} !RowCount
+data SVParseState =
+  SVParseState {
+    _badRows     :: {-# UNPACK #-} !RowCount
   , _totalRows   :: {-# UNPACK #-} !RowCount
   , _numFields   :: !(Set FieldCount)
   , _fieldLooks  :: !FieldLookCount

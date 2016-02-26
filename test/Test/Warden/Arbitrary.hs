@@ -21,7 +21,7 @@ import           Data.Vector (Vector)
 import qualified Data.Vector          as V
 import           Data.Word
 
-import           Disorder.Core (utf8BS)
+import           Disorder.Core (utf8BS, genValidUtf8)
 import           Disorder.Corpus
 
 import           Lane.Data (dateAsPartition)
@@ -47,6 +47,16 @@ instance AEq Mean where
 instance AEq StdDev where
   (StdDev x) === (StdDev y) = x === y
   (StdDev x) ~== (StdDev y) = x ~== y
+
+newtype ValidRow =
+  ValidRow {
+    unValidRow :: Row
+  } deriving (Eq, Show)
+
+instance Arbitrary ValidRow where
+  arbitrary = fmap (ValidRow . SVFields) $ genRows
+    where
+      genRows = fmap V.fromList $ listOf1 genValidUtf8
 
 instance Arbitrary Separator where
   arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
@@ -313,11 +323,14 @@ genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
       vs <- vectorOf (length ([minBound..maxBound] :: [FieldLooks])) arbitrary
       pure $ zip [minBound..maxBound] vs
 
+instance Arbitrary FieldLookCount where
+  arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
+
 instance Arbitrary SVParseState where
   arbitrary = SVParseState <$> arbitrary
                            <*> arbitrary
                            <*> arbitrary
-                           <*> oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
+                           <*> arbitrary
 
 instance Arbitrary ViewMetadata where
   arbitrary = ViewMetadata <$> arbitrary
