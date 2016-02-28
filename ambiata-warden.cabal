@@ -21,6 +21,7 @@ library
                      , ambiata-x-attoparsec
                      , ambiata-x-conduit
                      , ambiata-x-eithert
+                     , array                           == 0.5.*
                      , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
@@ -113,6 +114,7 @@ executable             warden-gen
                      , ambiata-warden
                      , ambiata-x-eithert
                      , ambiata-x-optparse
+                     , array                           == 0.5.*
                      , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
@@ -154,6 +156,7 @@ test-suite test
                      , ambiata-lane
                      , ambiata-p
                      , ambiata-warden
+                     , array                           == 0.5.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -191,6 +194,7 @@ test-suite test-io
                      , ambiata-warden
                      , ambiata-x-conduit
                      , ambiata-x-eithert
+                     , array                           == 0.5.*
                      , async                           == 2.0.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -232,6 +236,7 @@ benchmark bench
                      , ambiata-p
                      , ambiata-warden
                      , ambiata-x-eithert
+                     , array                           == 0.5.*
                      , async                           == 2.0.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*

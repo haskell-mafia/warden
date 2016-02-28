@@ -5,20 +5,23 @@
 module Test.Warden.Arbitrary where
 
 import           Data.AEq (AEq, (===), (~==))
+import           Data.Array (Array, array)
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
+import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
+import           Data.Vector (Vector)
 import qualified Data.Vector          as V
 import           Data.Word
 
-import           Disorder.Core (utf8BS)
+import           Disorder.Core (utf8BS, genValidUtf8)
 import           Disorder.Corpus
 
 import           Lane.Data (dateAsPartition)
@@ -44,6 +47,16 @@ instance AEq Mean where
 instance AEq StdDev where
   (StdDev x) === (StdDev y) = x === y
   (StdDev x) ~== (StdDev y) = x ~== y
+
+newtype ValidRow =
+  ValidRow {
+    unValidRow :: Row
+  } deriving (Eq, Show)
+
+instance Arbitrary ValidRow where
+  arbitrary = fmap (ValidRow . SVFields) $ genRows
+    where
+      genRows = fmap V.fromList $ listOf1 genValidUtf8
 
 instance Arbitrary Separator where
   arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
@@ -299,8 +312,23 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
 
+genLooksVec :: Gen (Vector (Array FieldLooks ObservationCount))
+genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
+  where
+    genFieldLooks = do
+      pairs <- genLooksPairs
+      pure $ array (minBound, maxBound) pairs
+
+    genLooksPairs = do
+      vs <- vectorOf (length ([minBound..maxBound] :: [FieldLooks])) arbitrary
+      pure $ zip [minBound..maxBound] vs
+
+instance Arbitrary FieldLookCount where
+  arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
+
 instance Arbitrary SVParseState where
   arbitrary = SVParseState <$> arbitrary
+                           <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
 
@@ -328,3 +356,9 @@ instance Arbitrary SchemaVersion where
 
 instance Arbitrary Schema where
   arbitrary = Schema <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary ObservationCount where
+  arbitrary = (ObservationCount . fromIntegral . unNPlus) <$> arbitrary
+
+instance Arbitrary FieldLooks where
+  arbitrary = elements [minBound..maxBound]
