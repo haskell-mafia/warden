@@ -48,6 +48,11 @@ import           GHC.Generics (Generic)
 
 import           P
 
+newtype LineBound =
+  LineBound {
+    unLineBound :: Int
+  } deriving (Eq, Show)
+
 newtype FieldCount =
   FieldCount {
     unFieldCount :: Int
@@ -91,6 +96,8 @@ data FieldLooks =
   | LooksIntegral
   | LooksReal
   | LooksText
+  | LooksCategorical
+  | LooksBoolean
   | LooksBroken -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
@@ -152,6 +159,7 @@ data ParsedField =
     ParsedIntegral !Integer
   | ParsedReal !Double
   | ParsedText !Text
+  | ParsedBoolean !Bool
   deriving (Eq, Show, Generic)
 
 instance NFData ParsedField
@@ -161,6 +169,7 @@ renderParsedField :: ParsedField
 renderParsedField (ParsedIntegral i) = T.pack $ show i
 renderParsedField (ParsedReal d)     = T.pack $ show d
 renderParsedField (ParsedText t)     = t
+renderParsedField (ParsedBoolean b)  = T.pack $ show b
 
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
 updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
@@ -170,6 +179,7 @@ updateFieldLooks !t !a =
                 Right (ParsedIntegral _) -> LooksIntegral
                 Right (ParsedReal _) -> LooksReal
                 Right (ParsedText _) -> LooksText
+                Right (ParsedBoolean _) -> LooksBoolean
   in accum  (+) a [(looks, 1)]
 {-# INLINE updateFieldLooks #-}
 
@@ -210,13 +220,8 @@ updateSVParseState !st row =
   updateFields _ !a = a
 
 field :: Parser ParsedField
-field = choice
-  [ ParsedIntegral <$> signed decimal <* endOfInput
+field = choice [
+    ParsedIntegral <$> signed decimal <* endOfInput
   , ParsedReal     <$> double <* endOfInput
   , ParsedText     <$> takeText
   ]
-
-newtype LineBound =
-  LineBound {
-    unLineBound :: Int
-  } deriving (Eq, Show)
