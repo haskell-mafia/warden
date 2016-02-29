@@ -8,12 +8,17 @@ module Warden.Serial.Json.Row(
   , toSVParseState
   , toFieldArray
   , fromFieldArray
+  , toLineBound
+  , fromLineBound
+  , toSeparator
+  , fromSeparator
   ) where
 
 import           Data.Aeson ((.:), (.:?), (.=), object, parseJSON, toJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.Array (elems, indices, array)
 import qualified Data.Array as A
+import           Data.Char (chr, ord)
 import           Data.List (zip)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -22,6 +27,22 @@ import qualified Data.Vector as V
 import           P
 
 import           Warden.Data.Row
+
+fromSeparator :: Separator -> Value
+fromSeparator (Separator s) = String . T.pack . pure . chr $ fromIntegral s
+
+toSeparator :: Value -> Parser Separator
+toSeparator (String s) = case T.unpack s of
+  [s'] -> pure . Separator . fromIntegral $ ord s'
+  _ -> fail $ "invalid separator: " <> T.unpack s
+toSeparator x = typeMismatch "Warden.Data.Row.Separator" x
+
+fromLineBound :: LineBound -> Value
+fromLineBound (LineBound n) = toJSON n
+
+toLineBound :: Value -> Parser LineBound
+toLineBound (Number n) = LineBound <$> parseJSON (Number n)
+toLineBound x = typeMismatch "Warden.Data.Row.LineBound" x
 
 fromRowCount :: RowCount -> Value
 fromRowCount (RowCount n) = toJSON n

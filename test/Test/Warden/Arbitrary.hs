@@ -333,7 +333,7 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
 
 instance Arbitrary ViewMetadata where
-  arbitrary = ViewMetadata <$> arbitrary
+  arbitrary = ViewMetadata <$> arbitrary <*> arbitrary
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
@@ -362,3 +362,22 @@ instance Arbitrary ObservationCount where
 
 instance Arbitrary FieldLooks where
   arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary Force where
+  arbitrary = elements [Force, NoForce]
+
+instance Arbitrary Verbosity where
+  arbitrary = elements [Verbose, Quiet]
+
+instance Arbitrary SchemaFile where
+  arbitrary = (SchemaFile . T.unpack) <$> elements muppets
+
+instance Arbitrary LineBound where
+  arbitrary = (LineBound . unNPlus) <$> arbitrary
+
+instance Arbitrary CheckParams where
+  arbitrary = CheckParams <$> arbitrary
+                          <*> arbitrary
+                          <*> arbitrary
+                          <*> arbitrary
+                          <*> arbitrary
