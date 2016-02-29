@@ -18,7 +18,7 @@ module Warden.Data.Row (
   , Separator(..)
   , badRows
   , combineFieldLooks
-  , field
+  , fieldP
   , fieldLooks
   , initialSVParseState
   , numFields
@@ -174,7 +174,7 @@ renderParsedField (ParsedBoolean b)  = T.pack $ show b
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
 updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
-  let looks = case parseOnly field t of
+  let looks = case parseOnly fieldP t of
                 Left _ -> LooksBroken
                 Right (ParsedIntegral _) -> LooksIntegral
                 Right (ParsedReal _) -> LooksReal
@@ -219,9 +219,21 @@ updateSVParseState !st row =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
 
-field :: Parser ParsedField
-field = choice [
+fieldP :: Parser ParsedField
+fieldP = choice [
     ParsedIntegral <$> signed decimal <* endOfInput
   , ParsedReal     <$> double <* endOfInput
+  , ParsedBoolean  <$> boolP <* endOfInput
   , ParsedText     <$> takeText
   ]
+
+boolP :: Parser Bool
+boolP = choice [true, false]
+  where
+    true = do
+      void $ (asciiCI "T" <|> asciiCI "TRUE")
+      pure True
+
+    false = do
+      void $ (asciiCI "F" <|> asciiCI "FALSE")
+      pure False

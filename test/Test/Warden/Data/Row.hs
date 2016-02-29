@@ -31,7 +31,7 @@ sumFLC l = sum . join $ A.elems <$> (lookArrays l)
 
 
 prop_roundtrip_parsed_field :: ParsedField -> Property
-prop_roundtrip_parsed_field = tripping renderParsedField (parseOnly field)
+prop_roundtrip_parsed_field = tripping renderParsedField (parseOnly fieldP)
 
 prop_resolveSVParseState :: [SVParseState] -> Property
 prop_resolveSVParseState ss =
