@@ -55,12 +55,14 @@ toSchemaField x = typeMismatch "Warden.Data.Schema.SchemaField" x
 fromFieldType :: FieldType -> Value
 fromFieldType TextField = String "text-field"
 fromFieldType CategoricalField = String "categorical-field"
+fromFieldType BooleanField = String "boolean-field"
 fromFieldType IntegralField = String "integral-field"
 fromFieldType RealField = String "real-field"
 
 toFieldType :: Value -> Parser FieldType
 toFieldType (String "text-field") = pure TextField
 toFieldType (String "categorical-field") = pure CategoricalField
+toFieldType (String "boolean-field") = pure BooleanField
 toFieldType (String "integral-field") = pure IntegralField
 toFieldType (String "real-field") = pure RealField
 toFieldType (String s) = fail . T.unpack $ "invalid field type: " <> s

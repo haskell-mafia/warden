@@ -44,6 +44,7 @@ data SchemaField = SchemaField !FieldType
 data FieldType =
     TextField
   | CategoricalField
+  | BooleanField
   | IntegralField
   | RealField
   deriving (Eq, Show, Enum, Bounded)
