@@ -9,6 +9,7 @@ module Warden.Data.Check (
   , FileCheck(..)
   , Insanity(..)
   , RowFailure(..)
+  , SchemaFailure(..)
   , Verbosity(..)
   , checkHasFailures
   , checkStatusFailed
@@ -124,6 +125,7 @@ instance Ord CheckStatus where
 data Failure =
     SanityCheckFailure !Insanity
   | RowCheckFailure !RowFailure
+  | SchemaCheckFailure !SchemaFailure
   deriving (Eq, Show)
 
 data Insanity =
@@ -137,11 +139,17 @@ data RowFailure =
   | HasBadRows !RowCount
   deriving (Eq, Show)
 
+data SchemaFailure =
+    IncorrectFieldCount FieldCount !(Set FieldCount)
+  deriving (Eq, Show)
+
 renderFailure :: Failure -> Text
 renderFailure (SanityCheckFailure f) =
   "sanity check failed: " <> renderInsanity f
 renderFailure (RowCheckFailure f) =
   "row check failed: " <> renderRowFailure f
+renderFailure (SchemaCheckFailure f) =
+  "schema validation failed: " <> renderSchemaFailure f
 
 renderInsanity :: Insanity -> Text
 renderInsanity EmptyFile = "file of zero size"
@@ -155,4 +163,10 @@ renderRowFailure ZeroRows =
 renderRowFailure c =
   T.pack (show c) <> " rows failed to parse"
 
-
+renderSchemaFailure :: SchemaFailure -> Text
+renderSchemaFailure (IncorrectFieldCount c ds) = T.concat [
+    "incorrect field count: expected "
+  , T.pack (show c)
+  , ", got "
+  , T.pack (show ds)
+  ]
