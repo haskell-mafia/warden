@@ -156,30 +156,27 @@ resolveSVParseState = foldr update initialSVParseState
       $! acc
 
 data ParsedField =
-    ParsedIntegral !Integer
-  | ParsedReal !Double
-  | ParsedText !Text
-  | ParsedBoolean !Bool
+    ParsedIntegral
+  | ParsedReal
+  | ParsedText
+  | ParsedBoolean
   deriving (Eq, Show, Generic)
 
 instance NFData ParsedField
 
 renderParsedField :: ParsedField
                   -> Text
-renderParsedField (ParsedIntegral i) = T.pack $ show i
-renderParsedField (ParsedReal d)     = T.pack $ show d
-renderParsedField (ParsedText t)     = t
-renderParsedField (ParsedBoolean b)  = T.pack $ show b
+renderParsedField = T.pack . show
 
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
 updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
   let looks = case parseOnly fieldP t of
                 Left _ -> LooksBroken
-                Right (ParsedIntegral _) -> LooksIntegral
-                Right (ParsedReal _) -> LooksReal
-                Right (ParsedText _) -> LooksText
-                Right (ParsedBoolean _) -> LooksBoolean
+                Right ParsedIntegral -> LooksIntegral
+                Right ParsedReal -> LooksReal
+                Right ParsedText -> LooksText
+                Right ParsedBoolean -> LooksBoolean
   in accum  (+) a [(looks, 1)]
 {-# INLINE updateFieldLooks #-}
 
@@ -221,19 +218,11 @@ updateSVParseState !st row =
 
 fieldP :: Parser ParsedField
 fieldP = choice [
-    ParsedIntegral <$> signed decimal <* endOfInput
-  , ParsedReal     <$> double <* endOfInput
-  , ParsedBoolean  <$> boolP <* endOfInput
-  , ParsedText     <$> takeText
+    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
+  , void (double <* endOfInput) >> pure ParsedReal
+  , void (boolP <* endOfInput) >> pure ParsedBoolean
+  , void takeText >> pure ParsedText
   ]
 
-boolP :: Parser Bool
-boolP = choice [true, false]
-  where
-    true = do
-      void $ (asciiCI "T" <|> asciiCI "TRUE")
-      pure True
-
-    false = do
-      void $ (asciiCI "F" <|> asciiCI "FALSE")
-      pure False
+boolP :: Parser ()
+boolP = void (asciiCI "T" <|> asciiCI "TRUE" <|> asciiCI "F" <|> asciiCI "FALSE")
