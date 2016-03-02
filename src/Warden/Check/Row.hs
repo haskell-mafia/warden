@@ -66,12 +66,21 @@ runRowCheck caps ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
       Force   -> False
       NoForce -> True
 
-parseCheck :: NumCPUs -> CheckParams -> Maybe Schema -> NonEmpty ViewFile -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
+parseCheck :: NumCPUs
+           -> CheckParams
+           -> Maybe Schema
+           -> NonEmpty ViewFile
+           -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce) sch vfs =
   fmap (finalizeSVParseState ps sch . resolveSVParseState . join) $
     mapM (parseViewFile caps verb s lb) (NE.toList vfs)
 
-parseViewFile :: NumCPUs -> Verbosity -> Separator -> LineBound -> ViewFile -> EitherT WardenError (ResourceT IO) [SVParseState]
+parseViewFile :: NumCPUs
+              -> Verbosity
+              -> Separator
+              -> LineBound
+              -> ViewFile
+              -> EitherT WardenError (ResourceT IO) [SVParseState]
 parseViewFile caps verb s lb vf = do
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "

@@ -4,6 +4,7 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Warden.Data.Row (
     FieldCount(..)
@@ -18,7 +19,7 @@ module Warden.Data.Row (
   , Separator(..)
   , badRows
   , combineFieldLooks
-  , field
+  , fieldP
   , fieldLooks
   , initialSVParseState
   , numFields
@@ -34,6 +35,7 @@ import           Control.Lens
 import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.Char (chr, ord)
 import           Data.Ix (Ix)
 import           Data.List (repeat, zip)
 import           Data.Set (Set)
@@ -47,6 +49,11 @@ import           Data.Word (Word8)
 import           GHC.Generics (Generic)
 
 import           P
+
+newtype LineBound =
+  LineBound {
+    unLineBound :: Int
+  } deriving (Eq, Show)
 
 newtype FieldCount =
   FieldCount {
@@ -91,6 +98,8 @@ data FieldLooks =
   | LooksIntegral
   | LooksReal
   | LooksText
+  | LooksCategorical
+  | LooksBoolean
   | LooksBroken -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
@@ -149,29 +158,68 @@ resolveSVParseState = foldr update initialSVParseState
       $! acc
 
 data ParsedField =
-    ParsedIntegral !Integer
-  | ParsedReal !Double
-  | ParsedText !Text
+    ParsedIntegral
+  | ParsedReal
+  | ParsedText
+  | ParsedBoolean
   deriving (Eq, Show, Generic)
 
 instance NFData ParsedField
 
 renderParsedField :: ParsedField
                   -> Text
-renderParsedField (ParsedIntegral i) = T.pack $ show i
-renderParsedField (ParsedReal d)     = T.pack $ show d
-renderParsedField (ParsedText t)     = t
+renderParsedField = T.pack . show
+
+-- | We only care about ASCII characters here (true, false et cetera)
+-- and converting unicode to lowercase is really expensive, so just
+-- add 32 to the character if it's in the ASCII uppercase range.
+asciiToLower :: Text -> Text
+asciiToLower = T.map charToLower
+  where
+    charToLower c
+      | c >= 'A' && c <= 'Z' = chr $ ord c + 0x20
+      | otherwise            = c
+{-# INLINE asciiToLower #-}
 
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
 updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
-  let looks = case parseOnly field t of
+  let looks = case parseOnly fieldP (asciiToLower t) of
                 Left _ -> LooksBroken
-                Right (ParsedIntegral _) -> LooksIntegral
-                Right (ParsedReal _) -> LooksReal
-                Right (ParsedText _) -> LooksText
+                Right ParsedIntegral -> LooksIntegral
+                Right ParsedReal -> LooksReal
+                Right ParsedText -> LooksText
+                Right ParsedBoolean -> LooksBoolean
   in accum  (+) a [(looks, 1)]
 {-# INLINE updateFieldLooks #-}
+
+fieldP :: Parser ParsedField
+fieldP = choice [
+    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
+  , void (double <* endOfInput) >> pure ParsedReal
+  , void (boolP <* endOfInput) >> pure ParsedBoolean
+  , void takeText >> pure ParsedText
+  ]
+
+boolP :: Parser ()
+boolP = trueP <|> falseP
+{-# INLINE boolP #-}
+
+trueP :: Parser ()
+trueP = do
+  void $ char 't'
+  peekChar >>= \case
+    Nothing -> pure ()
+    Just _ -> void $ string "rue"
+{-# INLINE trueP #-}
+
+falseP :: Parser ()
+falseP = do
+  void $ char 'f'
+  peekChar >>= \case
+    Nothing -> pure ()
+    Just _ -> void $ string "alse"
+{-# INLINE falseP #-}
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
@@ -209,14 +257,3 @@ updateSVParseState !st row =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
 
-field :: Parser ParsedField
-field = choice
-  [ ParsedIntegral <$> signed decimal <* endOfInput
-  , ParsedReal     <$> double <* endOfInput
-  , ParsedText     <$> takeText
-  ]
-
-newtype LineBound =
-  LineBound {
-    unLineBound :: Int
-  } deriving (Eq, Show)

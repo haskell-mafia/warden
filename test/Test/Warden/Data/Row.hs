@@ -8,10 +8,7 @@ import           Control.Lens ((^.))
 import qualified Data.Array as A
 import qualified Data.Set as S
 
-import           Data.Attoparsec.Text (parseOnly)
 import qualified Data.Vector as V
-
-import           Disorder.Core.Tripping (tripping)
 
 import           P
 
@@ -28,10 +25,6 @@ sumFLC l = sum . join $ A.elems <$> (lookArrays l)
     lookArrays l' = case l' of
       NoFieldLookCount -> []
       FieldLookCount v -> V.toList v
-
-
-prop_roundtrip_parsed_field :: ParsedField -> Property
-prop_roundtrip_parsed_field = tripping renderParsedField (parseOnly field)
 
 prop_resolveSVParseState :: [SVParseState] -> Property
 prop_resolveSVParseState ss =

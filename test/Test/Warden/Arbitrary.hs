@@ -99,21 +99,42 @@ validSVField (Separator s) = decodeUtf8 <$>
 validSVRow :: Separator -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
 
+data TestField =
+    TestIntegral Integer
+  | TestReal Double
+  | TestText Text
+  | TestBoolean Bool
+  deriving (Eq, Show)
+
+renderTestField :: TestField -> Text
+renderTestField (TestIntegral n) = T.pack $ show n
+renderTestField (TestReal n) = T.pack $ show n
+renderTestField (TestText t) = t
+renderTestField (TestBoolean b) = T.pack $ show b
+
 tokenizedRow :: FieldCount -> Gen Row
 tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
-  liftM renderParsedField <$> (vectorOf n (arbitrary :: Gen ParsedField))
+  liftM renderTestField <$> (vectorOf n (arbitrary :: Gen TestField))
 
 instance Arbitrary ParsedField where
+  arbitrary = elements [
+      ParsedIntegral
+    , ParsedReal
+    , ParsedText
+    , ParsedBoolean
+    ]
+
+instance Arbitrary TestField where
   arbitrary = oneof [textField, integralField, realField]
 
-textField :: Gen ParsedField
-textField = ParsedText <$> elements southpark
+textField :: Gen TestField
+textField = TestText <$> elements southpark
 
-integralField :: Gen ParsedField
-integralField = ParsedIntegral <$> (arbitrary :: Gen Integer)
+integralField :: Gen TestField
+integralField = TestIntegral <$> (arbitrary :: Gen Integer)
 
-realField :: Gen ParsedField
-realField = ParsedReal <$> (arbitrary :: Gen Double)
+realField :: Gen TestField
+realField = TestReal <$> (arbitrary :: Gen Double)
 
 --
 -- numeric instances
