@@ -200,7 +200,6 @@ fieldP = choice [
   , void (boolP <* endOfInput) >> pure ParsedBoolean
   , void takeText >> pure ParsedText
   ]
-{-# INLINE fieldP #-}
 
 boolP :: Parser ()
 boolP = trueP <|> falseP
@@ -258,13 +257,3 @@ updateSVParseState !st row =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
 
-fieldP :: Parser ParsedField
-fieldP = choice [
-    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
-  , void (double <* endOfInput) >> pure ParsedReal
-  , void (boolP <* endOfInput) >> pure ParsedBoolean
-  , void takeText >> pure ParsedText
-  ]
-
-boolP :: Parser ()
-boolP = void (string "t" <|> string "true" <|> string "f" <|> string "f")
