@@ -4,6 +4,8 @@
 module Warden.Serial.Json.Schema(
     fromSchema
   , toSchema
+  , fromSchemaFile
+  , toSchemaFile
   ) where
 
 import           Data.Aeson ((.:), (.=), object)
@@ -53,14 +55,22 @@ toSchemaField x = typeMismatch "Warden.Data.Schema.SchemaField" x
 fromFieldType :: FieldType -> Value
 fromFieldType TextField = String "text-field"
 fromFieldType CategoricalField = String "categorical-field"
+fromFieldType BooleanField = String "boolean-field"
 fromFieldType IntegralField = String "integral-field"
 fromFieldType RealField = String "real-field"
 
 toFieldType :: Value -> Parser FieldType
 toFieldType (String "text-field") = pure TextField
 toFieldType (String "categorical-field") = pure CategoricalField
+toFieldType (String "boolean-field") = pure BooleanField
 toFieldType (String "integral-field") = pure IntegralField
 toFieldType (String "real-field") = pure RealField
 toFieldType (String s) = fail . T.unpack $ "invalid field type: " <> s
 toFieldType x = typeMismatch "Warden.Data.Schema.FieldType" x
 
+fromSchemaFile :: SchemaFile -> Value
+fromSchemaFile (SchemaFile f) = String $ T.pack f
+
+toSchemaFile :: Value -> Parser SchemaFile
+toSchemaFile (String s) = pure . SchemaFile $ T.unpack s
+toSchemaFile x = typeMismatch "Warden.Data.Schema.SchemaFile" x

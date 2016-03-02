@@ -24,6 +24,7 @@ import           P
 import           Warden.Data
 import           Warden.Serial.Json.Check
 import           Warden.Serial.Json.Row
+import           Warden.Serial.Json.Param
 import           Warden.Serial.Json.View
 
 fromNonEmpty :: ToJSON a => NonEmpty a -> Value
@@ -123,14 +124,16 @@ toFileMarker (Object o) = do
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
-fromViewMetadata (ViewMetadata vc) = object [
+fromViewMetadata (ViewMetadata vc ps) = object [
     "counts" .= fromSVParseState vc
+  , "check-params" .= fromCheckParams ps
   ]
 
 toViewMetadata :: Value -> Parser ViewMetadata
 toViewMetadata (Object o) = do
   vc <- toSVParseState =<< (o .: "counts")
-  pure $ ViewMetadata vc
+  ps <- toCheckParams =<< (o .: "check-params")
+  pure $ ViewMetadata vc ps
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 
 fromViewMarker :: ViewMarker -> Value

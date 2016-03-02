@@ -38,6 +38,7 @@ import           System.IO (FilePath)
 import           P
 
 import           Warden.Data.Check
+import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.View
 import           Warden.Error
@@ -172,5 +173,6 @@ mkViewMarker v dsc dt vm cs =
 
 data ViewMetadata =
   ViewMetadata {
-    viewCounts :: !SVParseState
+      vmViewCounts :: !SVParseState
+    , vmCheckParams :: !CheckParams
   } deriving (Eq, Show)

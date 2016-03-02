@@ -4,6 +4,8 @@
 module Warden.Serial.Json.Check(
     fromCheckDescription
   , toCheckDescription
+  , fromVerbosity
+  , toVerbosity
   ) where
 
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
@@ -22,3 +24,13 @@ toCheckDescription (String s) = case parseCheckDescription s of
   Just d -> pure d
   Nothing -> fail $ "invalid check: " <> T.unpack s
 toCheckDescription x          = typeMismatch "Warden.Data.Check.CheckDescription" x
+
+fromVerbosity :: Verbosity -> Value
+fromVerbosity Verbose = String "verbose"
+fromVerbosity Quiet = String "quiet"
+
+toVerbosity :: Value -> Parser Verbosity
+toVerbosity (String "verbose") = pure Verbose
+toVerbosity (String "quiet") = pure Quiet
+toVerbosity (String s) = fail $ "invalid Verbosity: " <> T.unpack s
+toVerbosity x = typeMismatch "Warden.Data.Check.Verbosity" x
