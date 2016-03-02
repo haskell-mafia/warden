@@ -4,6 +4,7 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Warden.Data.Row (
     FieldCount(..)
@@ -34,6 +35,7 @@ import           Control.Lens
 import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.Char (chr, ord)
 import           Data.Ix (Ix)
 import           Data.List (repeat, zip)
 import           Data.Set (Set)
@@ -168,10 +170,21 @@ renderParsedField :: ParsedField
                   -> Text
 renderParsedField = T.pack . show
 
+-- | We only care about ASCII characters here (true, false et cetera)
+-- and converting unicode to lowercase is really expensive, so just
+-- add 32 to the byte if it's in the ASCII uppercase range.
+asciiToLower :: Text -> Text
+asciiToLower = T.map charToLower
+  where
+    charToLower c
+      | c >= 'A' && c <= 'Z' = chr $ ord c + 0x20
+      | otherwise            = c
+{-# INLINE asciiToLower #-}
+
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
 updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
-  let looks = case parseOnly fieldP t of
+  let looks = case parseOnly fieldP (asciiToLower t) of
                 Left _ -> LooksBroken
                 Right ParsedIntegral -> LooksIntegral
                 Right ParsedReal -> LooksReal
@@ -179,6 +192,35 @@ updateFieldLooks !t !a =
                 Right ParsedBoolean -> LooksBoolean
   in accum  (+) a [(looks, 1)]
 {-# INLINE updateFieldLooks #-}
+
+fieldP :: Parser ParsedField
+fieldP = choice [
+    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
+  , void (double <* endOfInput) >> pure ParsedReal
+  , void (boolP <* endOfInput) >> pure ParsedBoolean
+  , void takeText >> pure ParsedText
+  ]
+{-# INLINE fieldP #-}
+
+boolP :: Parser ()
+boolP = trueP <|> falseP
+{-# INLINE boolP #-}
+
+trueP :: Parser ()
+trueP = do
+  void $ char 't'
+  peekChar >>= \case
+    Nothing -> pure ()
+    Just _ -> void $ string "rue"
+{-# INLINE trueP #-}
+
+falseP :: Parser ()
+falseP = do
+  void $ char 'f'
+  peekChar >>= \case
+    Nothing -> pure ()
+    Just _ -> void $ string "alse"
+{-# INLINE falseP #-}
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
@@ -225,4 +267,4 @@ fieldP = choice [
   ]
 
 boolP :: Parser ()
-boolP = void (asciiCI "T" <|> asciiCI "TRUE" <|> asciiCI "F" <|> asciiCI "FALSE")
+boolP = void (string "t" <|> string "true" <|> string "f" <|> string "f")
