@@ -172,7 +172,7 @@ renderParsedField = T.pack . show
 
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
--- add 32 to the byte if it's in the ASCII uppercase range.
+-- add 32 to the character if it's in the ASCII uppercase range.
 asciiToLower :: Text -> Text
 asciiToLower = T.map charToLower
   where
