@@ -17,12 +17,14 @@ module Warden.Data.Row (
   , RowCount(..)
   , SVParseState(..)
   , Separator(..)
+  , asciiToLower
   , badRows
   , combineFieldLooks
   , fieldP
   , fieldLooks
   , initialSVParseState
   , numFields
+  , parseField
   , renderParsedField
   , resolveSVParseState
   , totalRows
@@ -181,16 +183,19 @@ asciiToLower = T.map charToLower
       | otherwise            = c
 {-# INLINE asciiToLower #-}
 
+parseField :: Text -> FieldLooks
+parseField "" = LooksEmpty
+parseField t = case parseOnly fieldP (asciiToLower t) of
+  Left _ -> LooksBroken
+  Right ParsedIntegral -> LooksIntegral
+  Right ParsedReal -> LooksReal
+  Right ParsedText -> LooksText
+  Right ParsedBoolean -> LooksBoolean
+{-# INLINE parseField #-}
+
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
-updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
-  let looks = case parseOnly fieldP (asciiToLower t) of
-                Left _ -> LooksBroken
-                Right ParsedIntegral -> LooksIntegral
-                Right ParsedReal -> LooksReal
-                Right ParsedText -> LooksText
-                Right ParsedBoolean -> LooksBoolean
-  in accum  (+) a [(looks, 1)]
+  accum  (+) a [(parseField t, 1)]
 {-# INLINE updateFieldLooks #-}
 
 fieldP :: Parser ParsedField
@@ -200,26 +205,23 @@ fieldP = choice [
   , void (boolP <* endOfInput) >> pure ParsedBoolean
   , void takeText >> pure ParsedText
   ]
+{-# INLINE fieldP #-}
 
 boolP :: Parser ()
 boolP = trueP <|> falseP
+  where
+    trueP = do
+      void $ char 't'
+      peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "rue"
+
+    falseP = do
+      void $ char 'f'
+      peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "alse"
 {-# INLINE boolP #-}
-
-trueP :: Parser ()
-trueP = do
-  void $ char 't'
-  peekChar >>= \case
-    Nothing -> pure ()
-    Just _ -> void $ string "rue"
-{-# INLINE trueP #-}
-
-falseP :: Parser ()
-falseP = do
-  void $ char 'f'
-  peekChar >>= \case
-    Nothing -> pure ()
-    Just _ -> void $ string "alse"
-{-# INLINE falseP #-}
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
@@ -256,4 +258,3 @@ updateSVParseState !st row =
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
-

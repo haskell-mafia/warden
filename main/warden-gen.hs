@@ -17,7 +17,7 @@ data LongLines =
   | NoLongLines
   deriving (Eq, Show)
 
-data Command = Generate RecordCount GenSize LongLines
+data Command = Generate RecordCount GenSize LongLines GenType
   deriving (Eq, Show)
 
 main :: IO ()
@@ -28,8 +28,8 @@ main = do
     RunCommand DryRun c -> do
       print c
       exitSuccess
-    RunCommand RealRun (Generate c s ll) -> do
-      vp <- generateView "." c s $ longLinesParam ll
+    RunCommand RealRun (Generate c s ll gt) -> do
+      vp <- generateView gt "." c s $ longLinesParam ll
       putStrLn $ unView vp
 
 longLinesParam :: LongLines -> LineSize
@@ -45,6 +45,7 @@ generateP = Generate
   <$> recordCountP
   <*> genSizeP
   <*> longLinesP
+  <*> genTypeP
 
 recordCountP :: Parser RecordCount
 recordCountP = RecordCount <$> (option auto $
@@ -67,3 +68,9 @@ longLinesP = flag NoLongLines LongLines $
      long "long-lines"
   <> short 'l'
   <> help "Generate very long lines."
+
+genTypeP :: Parser GenType
+genTypeP = (maybe NonDeterministic Deterministic) <$> (optional . option auto $
+     long "deterministic"
+  <> short 'd'
+  <> help "Use a deterministic generator with specified seed (default is nondeterministic).")

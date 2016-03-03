@@ -23,7 +23,9 @@ import           System.IO.Temp (withTempFile, withTempDirectory)
 import           System.Posix.Directory (getWorkingDirectory)
 
 import           Test.QuickCheck (Gen, Testable, Property, forAll, arbitrary)
-import           Test.QuickCheck (generate, suchThat, elements, resize)
+import           Test.QuickCheck (suchThat, elements, generate, resize)
+import           Test.QuickCheck.Gen (Gen(..))
+import           Test.QuickCheck.Random
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -92,23 +94,35 @@ newtype GenSize =
   GenSize Int
   deriving (Eq, Show)
 
-generateView :: FilePath -> RecordCount -> GenSize -> LineSize -> IO View
-generateView root (RecordCount n) (GenSize s) ll = do
-  dt <- generate . resize s . fmap unValidDirTree $
+data GenType =
+    NonDeterministic
+  | Deterministic Int
+  deriving (Eq, Show)
+
+generate' :: GenType -> GenSize -> Gen a -> IO a
+generate' NonDeterministic (GenSize size) g =
+  generate . resize size $ g
+generate' (Deterministic seed) (GenSize size) (MkGen g) =
+  let r = mkQCGen seed in
+  pure $ g r size
+
+generateView :: GenType -> FilePath -> RecordCount -> GenSize -> LineSize -> IO View
+generateView gt root (RecordCount n) s ll = do
+  dt <- generate' gt s . fmap unValidDirTree $
           arbitrary `suchThat` ((> 0) . length . directoryFiles . unValidDirTree)
-  tok <- generate $ elements muppets
-  fieldCount <- generate . resize (unLineSize ll) $ arbitrary
+  tok <- generate' gt s $ elements muppets
+  fieldCount <- generate' gt (GenSize $ unLineSize ll) $ arbitrary
   let viewRoot = root </> ("warden-gen-" <> T.unpack tok)
   let dfs = nub . fmap (viewRoot </>) $ directoryFiles dt
   let fileLines = n `div` (length dfs)
   writeView viewRoot dt
-  void $ mapConcurrently (writeViewFile fileLines fieldCount ll) dfs
+  void $ mapConcurrently (writeViewFile gt fileLines fieldCount ll) dfs
   pure . View $ viewRoot </> (viewBase dt)
   where
     viewBase (DirTree b _ _) = unDirName b
 
-writeViewFile :: Int -> FieldCount -> LineSize -> FilePath -> IO ()
-writeViewFile c fc (LineSize ll) fp = do
+writeViewFile :: GenType -> Int -> FieldCount -> LineSize -> FilePath -> IO ()
+writeViewFile gt c fc (LineSize ll) fp = do
   fh <- openFile fp WriteMode
   replicateM_ c (writeRow fh)
   hClose fh
@@ -116,7 +130,7 @@ writeViewFile c fc (LineSize ll) fp = do
     sep = Separator . fromIntegral $ ord '|'
 
     writeRow h = do
-      r <- generate . resize ll $ validSVRow sep fc
+      r <- generate' gt (GenSize ll) $ validSVRow sep fc
       BL.hPutStr h $ encodeWith (wardenEncodeOpts sep) [r]
 
 wardenEncodeOpts :: Separator -> EncodeOptions

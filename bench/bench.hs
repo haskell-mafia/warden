@@ -12,6 +12,7 @@ import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.Binary as CB
 import qualified Data.Conduit.List as C
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Text (Text)
 
 import           P
 
@@ -19,6 +20,7 @@ import           System.IO
 import           System.IO.Temp (withTempDirectory)
 
 import           Test.IO.Warden
+import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Row
@@ -34,8 +36,12 @@ wardenBench = defaultMainWith cfg
 
 prepareView :: FilePath -> IO (NonEmpty ViewFile)
 prepareView root = do
-  vp <- generateView root (RecordCount 1000) (GenSize 1) (LineSize 100)
+  vp <- generateView (Deterministic 271828) root (RecordCount 1000) (GenSize 1) (LineSize 100)
   unsafeWarden $ traverseView vp
+
+prepareRow :: IO [Text]
+prepareRow =
+  fmap getValidSVRow $ generate' (Deterministic 314159) (GenSize 30) $ validSVRow (Separator . fromIntegral $ ord '|') (FieldCount 200)
 
 benchConduitDecode :: NonEmpty ViewFile -> IO ()
 benchConduitDecode vfs = do
@@ -45,12 +51,19 @@ benchConduitDecode vfs = do
     =$= C.map (BS.pack . show)
     $$  CB.sinkHandle bitbucket
 
+benchFieldParse :: [Text] -> [FieldLooks]
+benchFieldParse = fmap parseField
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
     wardenBench [
-        env (prepareView root) $ \ ~(vfs) ->
-          bgroup "parsing" $ [
-              bench "decode/conduit+cassava/1000" $ nfIO (benchConduitDecode vfs)
+          env (prepareView root) $ \ ~(vfs) ->
+            bgroup "decoding" $ [
+                bench "decode/conduit+cassava/1000" $ nfIO (benchConduitDecode vfs)
+            ]
+        , env prepareRow $ \ ~(rs) ->
+            bgroup "field-parsing" $ [
+                bench "parseField/200" $ nf benchFieldParse rs
             ]
         ]
