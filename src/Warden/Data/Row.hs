@@ -205,26 +205,23 @@ fieldP = choice [
   , void (boolP <* endOfInput) >> pure ParsedBoolean
   , void takeText >> pure ParsedText
   ]
+{-# INLINE fieldP #-}
 
 boolP :: Parser ()
 boolP = trueP <|> falseP
+  where
+    trueP = do
+      void $ char 't'
+      peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "rue"
+
+    falseP = do
+      void $ char 'f'
+      peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "alse"
 {-# INLINE boolP #-}
-
-trueP :: Parser ()
-trueP = do
-  void $ char 't'
-  peekChar >>= \case
-    Nothing -> pure ()
-    Just _ -> void $ string "rue"
-{-# INLINE trueP #-}
-
-falseP :: Parser ()
-falseP = do
-  void $ char 'f'
-  peekChar >>= \case
-    Nothing -> pure ()
-    Just _ -> void $ string "alse"
-{-# INLINE falseP #-}
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
@@ -261,4 +258,3 @@ updateSVParseState !st row =
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
-
