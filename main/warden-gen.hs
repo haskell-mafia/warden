@@ -29,7 +29,7 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun (Generate c s ll) -> do
-      vp <- generateView "." c s $ longLinesParam ll
+      vp <- generateView NonDeterministic "." c s $ longLinesParam ll
       putStrLn $ unView vp
 
 longLinesParam :: LongLines -> LineSize
