@@ -7,6 +7,7 @@ import           Control.Concurrent (getNumCapabilities)
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.Char (ord)
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
 
@@ -46,14 +47,16 @@ main = do
 run :: NumCPUs -> Command -> IO ()
 run caps (Check v ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
-  mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
-  if checkHasFailures r
-    then exitFailure
-    else exitSuccess
+  finishCheck (checkVerbosity ps) r
 run caps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck caps vf ps
-  mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ r
-  if checkHasFailures r
+  finishCheck (checkVerbosity ps) r
+
+finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
+finishCheck verb rs = do
+  when (verb == Verbose) $
+    mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ rs
+  if checkHasFailures rs
     then exitFailure
     else exitSuccess
 

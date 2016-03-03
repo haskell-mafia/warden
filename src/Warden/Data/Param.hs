@@ -29,5 +29,10 @@ data Force =
   deriving (Eq, Show)
 
 data CheckParams =
-  CheckParams !Separator !(Maybe SchemaFile) !LineBound !Verbosity !Force
-  deriving (Eq, Show)
+  CheckParams {
+      checkSeparator :: !Separator
+    , checkSchemaFile :: !(Maybe SchemaFile)
+    , checkLineBound :: !LineBound
+    , checkVerbosity :: !Verbosity
+    , checkForce :: !Force
+    } deriving (Eq, Show)
