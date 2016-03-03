@@ -17,12 +17,14 @@ module Warden.Data.Row (
   , RowCount(..)
   , SVParseState(..)
   , Separator(..)
+  , asciiToLower
   , badRows
   , combineFieldLooks
   , fieldP
   , fieldLooks
   , initialSVParseState
   , numFields
+  , parseField
   , renderParsedField
   , resolveSVParseState
   , totalRows
@@ -181,16 +183,19 @@ asciiToLower = T.map charToLower
       | otherwise            = c
 {-# INLINE asciiToLower #-}
 
+parseField :: Text -> FieldLooks
+parseField "" = LooksEmpty
+parseField t = case parseOnly fieldP (asciiToLower t) of
+  Left _ -> LooksBroken
+  Right ParsedIntegral -> LooksIntegral
+  Right ParsedReal -> LooksReal
+  Right ParsedText -> LooksText
+  Right ParsedBoolean -> LooksBoolean
+{-# INLINE parseField #-}
+
 updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
-updateFieldLooks "" !a = accum (+) a [(LooksEmpty, ObservationCount 1)]
 updateFieldLooks !t !a =
-  let looks = case parseOnly fieldP (asciiToLower t) of
-                Left _ -> LooksBroken
-                Right ParsedIntegral -> LooksIntegral
-                Right ParsedReal -> LooksReal
-                Right ParsedText -> LooksText
-                Right ParsedBoolean -> LooksBoolean
-  in accum  (+) a [(looks, 1)]
+  accum  (+) a [(parseField t, 1)]
 {-# INLINE updateFieldLooks #-}
 
 fieldP :: Parser ParsedField
