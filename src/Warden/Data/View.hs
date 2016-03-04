@@ -75,13 +75,6 @@ viewFilePath (ViewFile (View v) d (FilePart f)) =
 renderViewFile :: ViewFile -> Text
 renderViewFile = T.pack . viewFilePath
 
-liftM2' :: (Monad m) => (a -> b -> c) -> m a -> m b -> m c
-liftM2' f a b = do
-  !x <- a
-  !y <- b
-  return $ f x y
-{-# INLINE liftM2' #-}
-
 manyAnd' :: Parser a -> Parser b -> Parser ([a], b)
 manyAnd' p end = go
   where
