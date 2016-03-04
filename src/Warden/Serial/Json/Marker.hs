@@ -14,6 +14,7 @@ import           Data.Aeson ((.:), (.=), object, toJSON, parseJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 
@@ -135,14 +136,14 @@ fromViewMetadata :: ViewMetadata -> Value
 fromViewMetadata (ViewMetadata vc ps ds) = object [
     "counts" .= fromSVParseState vc
   , "check-params" .= fromCheckParams ps
-  , "check-dates" .= (fromDate <$> ds)
+  , "check-dates" .= (fmap fromDate $ S.toList ds)
   ]
 
 toViewMetadata :: Value -> Parser ViewMetadata
 toViewMetadata (Object o) = do
   vc <- toSVParseState =<< (o .: "counts")
   ps <- toCheckParams =<< (o .: "check-params")
-  ds <- mapM toDate =<< (o .: "check-dates")
+  ds <- fmap S.fromList $ mapM toDate =<< (o .: "check-dates")
   pure $ ViewMetadata vc ps ds
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 

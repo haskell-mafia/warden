@@ -168,4 +168,3 @@ directoryFiles = go []
       let xs = (joinFile (reverse (root : preds)) . unFileName) <$> leaves
           ys = concatMap (go (root : preds)) branches in
       xs <> ys
-

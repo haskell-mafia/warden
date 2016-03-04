@@ -26,6 +26,7 @@ import           Data.Attoparsec.Text (string, satisfy, manyTill')
 import           Data.Char (ord)
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Set (Set)
 import           Data.Text (Text)
 import qualified Data.Text as T
 
@@ -177,5 +178,5 @@ data ViewMetadata =
   ViewMetadata {
       vmViewCounts :: !SVParseState
     , vmCheckParams :: !CheckParams
-    , vmDates :: ![Date]
+    , vmDates :: !(Set Date)
   } deriving (Eq, Show)

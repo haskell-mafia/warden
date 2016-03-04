@@ -21,6 +21,8 @@ import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 
+import           Delorean.Local.Date (Date)
+
 import           P
 
 import           System.IO (IO)
@@ -72,7 +74,8 @@ parseCheck :: NumCPUs
            -> NonEmpty ViewFile
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce) sch vfs =
-  fmap (finalizeSVParseState ps sch . resolveSVParseState . join) $
+  let dates = S.fromList . NE.toList $ vfDate <$> vfs in
+  fmap (finalizeSVParseState ps sch dates . resolveSVParseState . join) $
     mapM (parseViewFile caps verb s lb) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
@@ -93,14 +96,18 @@ parseViewFile caps verb s lb vf = do
 parseViewFile' :: Fold Row SVParseState
 parseViewFile' = Fold updateSVParseState initialSVParseState id
 
-finalizeSVParseState :: CheckParams -> Maybe Schema -> SVParseState -> (CheckStatus, ViewMetadata)
-finalizeSVParseState ps sch sv =
+finalizeSVParseState :: CheckParams
+                     -> Maybe Schema
+                     -> Set Date
+                     -> SVParseState
+                     -> (CheckStatus, ViewMetadata)
+finalizeSVParseState ps sch ds sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkNumFields sch (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ] in
-  (st, ViewMetadata sv ps [])
+  (st, ViewMetadata sv ps ds)
 
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of
