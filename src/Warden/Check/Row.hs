@@ -100,7 +100,7 @@ finalizeSVParseState ps sch sv =
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ] in
-  (st, ViewMetadata sv ps)
+  (st, ViewMetadata sv ps [])
 
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of

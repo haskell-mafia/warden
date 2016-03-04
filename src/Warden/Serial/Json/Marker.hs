@@ -17,6 +17,7 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
 import qualified Data.Text as T
 
+import           Delorean.Local.Date (Date, renderDate, parseDate)
 import           Delorean.Local.DateTime (DateTime, renderDateTime, parseDateTime)
 
 import           P
@@ -45,6 +46,13 @@ toMarkerVersion (String s) = case s of
   "v1" -> pure MarkerV1
   _    -> fail $ "Unknown marker version " <> (T.unpack s)
 toMarkerVersion x          = typeMismatch "Warden.Data.Marker.MarkerVersion" x
+
+fromDate :: Date -> Value
+fromDate = String . renderDate
+
+toDate :: Value -> Parser Date
+toDate (String s) = either fail pure $ parseDate s
+toDate x = typeMismatch "Delorean.Local.Date.Date" x
 
 fromDateTime :: DateTime -> Value
 fromDateTime = String . renderDateTime
@@ -124,16 +132,18 @@ toFileMarker (Object o) = do
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
-fromViewMetadata (ViewMetadata vc ps) = object [
+fromViewMetadata (ViewMetadata vc ps ds) = object [
     "counts" .= fromSVParseState vc
   , "check-params" .= fromCheckParams ps
+  , "check-dates" .= (fromDate <$> ds)
   ]
 
 toViewMetadata :: Value -> Parser ViewMetadata
 toViewMetadata (Object o) = do
   vc <- toSVParseState =<< (o .: "counts")
   ps <- toCheckParams =<< (o .: "check-params")
-  pure $ ViewMetadata vc ps
+  ds <- mapM toDate =<< (o .: "check-dates")
+  pure $ ViewMetadata vc ps ds
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 
 fromViewMarker :: ViewMarker -> Value

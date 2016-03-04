@@ -29,6 +29,7 @@ import           Data.List.NonEmpty (NonEmpty)
 import           Data.Text (Text)
 import qualified Data.Text as T
 
+import           Delorean.Local.Date (Date)
 import           Delorean.Local.DateTime (DateTime)
 
 import           System.FilePath ((</>), takeFileName, replaceFileName)
@@ -175,4 +176,5 @@ data ViewMetadata =
   ViewMetadata {
       vmViewCounts :: !SVParseState
     , vmCheckParams :: !CheckParams
+    , vmDates :: ![Date]
   } deriving (Eq, Show)

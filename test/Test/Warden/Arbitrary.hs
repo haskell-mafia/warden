@@ -354,7 +354,9 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
 
 instance Arbitrary ViewMetadata where
-  arbitrary = ViewMetadata <$> arbitrary <*> arbitrary
+  arbitrary = ViewMetadata <$> arbitrary
+                           <*> arbitrary
+                           <*> arbitrary
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
