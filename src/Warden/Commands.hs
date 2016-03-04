@@ -33,7 +33,7 @@ check caps v ps =
 
 fileCheck :: NumCPUs -> ViewFile -> CheckParams -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
 fileCheck caps vf ps = do
-  vf' <- liftIO . makeAbsolute $ unViewFile vf
+  vf' <- liftIO . makeAbsolute $ viewFilePath vf
   let view = View $ takeDirectory vf'
   checkViewFiles caps ps view $ vf :| []
 

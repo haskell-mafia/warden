@@ -84,9 +84,13 @@ viewP = View <$> (strArgument $
   <> help "Path to local copy of view.")
 
 viewFileP :: Parser ViewFile
-viewFileP = ViewFile <$> (strArgument $
-     metavar "VIEW-FILE"
-  <> help "Path to local view file.")
+viewFileP = argument (eitherReader viewFileR) $
+      metavar "VIEW-FILE"
+   <> help "Path to local view file."
+  where
+    viewFileR fp = case viewFile fp of
+      Left _ -> Left $ "invalid view file: " <> fp
+      Right vf -> Right vf
 
 separatorP :: Parser Separator
 separatorP = option (eitherReader separator) $

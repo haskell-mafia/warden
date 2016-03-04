@@ -6,6 +6,7 @@ module Test.Warden.Data.View where
 import           Data.List (isInfixOf)
 import qualified Data.Text as T
 
+import           Disorder.Core.Tripping (tripping)
 import           Disorder.Core.UniquePair (UniquePair(..))
 import           Disorder.Corpus (muppets)
 
@@ -15,7 +16,7 @@ import           System.FilePath ((</>))
 import           System.IO (IO)
 
 import           Test.QuickCheck
-import           Test.Warden.Arbitrary
+import           Test.Warden.Arbitrary ()
 
 import           Warden.Data.View
 
@@ -36,9 +37,9 @@ prop_removeViewPrefix_neg = forAll ((,) <$> (arbitrary `suchThat` divergent) <*>
   where
     divergent (UniquePair (View v) (View w)) = head v /= head w
 
-prop_isViewFile_pos :: ValidViewFile -> Property
-prop_isViewFile_pos (ValidViewFile v (ViewFile vf)) =
-  isViewFile v vf === True
+prop_viewFile :: ViewFile -> Property
+prop_viewFile =
+  tripping viewFilePath viewFile
 
 return []
 tests :: IO Bool
