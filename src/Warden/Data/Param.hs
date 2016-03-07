@@ -9,13 +9,16 @@ module Warden.Data.Param (
   , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
+  , parseRunId
   , renderRunId
+  , runIdLength
   ) where
 
 import           P
 
 import           Data.Text (Text)
-import           Data.UUID (UUID, toText)
+
+import           Debruijn.Hex (Hex, unHex, parseHex)
 
 import           Warden.Data.Check
 import           Warden.Data.Chunk
@@ -26,11 +29,19 @@ import           Warden.Data.Schema
 -- correlate file markers with the associated view marker from the run.
 newtype RunId =
   RunId {
-    unRunId :: UUID
+    unRunId :: Hex
   } deriving (Eq, Show)
 
+runIdLength :: Int
+runIdLength = 16
+
 renderRunId :: RunId -> Text
-renderRunId = toText . unRunId
+renderRunId = unHex . unRunId
+
+parseRunId :: Text -> Maybe RunId
+parseRunId t = case parseHex runIdLength t of
+  Left _ -> Nothing
+  Right h -> pure $ RunId h
 
 newtype WardenVersion =
   WardenVersion {

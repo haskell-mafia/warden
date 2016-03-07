@@ -11,7 +11,6 @@ module Warden.Serial.Json.Param(
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
-import           Data.UUID (toText, fromText)
 
 import           P
 
@@ -57,11 +56,11 @@ toWardenVersion (String s) = pure $ WardenVersion s
 toWardenVersion x = typeMismatch "Warden.Data.Params.WardenVersion" x
 
 fromRunId :: RunId -> Value
-fromRunId = String . toText . unRunId
+fromRunId = String . renderRunId
 
 toRunId :: Value -> Parser RunId
-toRunId (String s) = case fromText s of
-  Just rid -> pure $ RunId rid
+toRunId (String s) = case parseRunId s of
+  Just rid -> pure rid
   Nothing -> fail . T.unpack $ "invalid RunId: " <> s
 toRunId x = typeMismatch "Warden.Data.Params.RunId" x
 

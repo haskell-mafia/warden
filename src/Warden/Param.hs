@@ -7,7 +7,7 @@ module Warden.Param(
 
 import           Control.Concurrent (getNumCapabilities)
 
-import           Data.UUID.V4 (nextRandom)
+import           Debruijn.Hex (keyHex)
 
 import           P
 
@@ -21,7 +21,7 @@ buildWardenParams v = WardenParams <$> getNumCPUs
                                    <*> genRunId
 
 genRunId :: IO RunId
-genRunId = RunId <$> nextRandom
+genRunId = RunId <$> keyHex runIdLength
 
 getNumCPUs :: IO NumCPUs
 getNumCPUs = NumCPUs <$> getNumCapabilities

@@ -17,10 +17,11 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
-import           Data.UUID.V5 (generateNamed, namespaceOID)
 import           Data.Vector (Vector)
 import qualified Data.Vector          as V
 import           Data.Word
+
+import           Debruijn.Hex (parseHex)
 
 import           Disorder.Core (utf8BS, genValidUtf8)
 import           Disorder.Corpus
@@ -404,10 +405,19 @@ instance Arbitrary CheckParams where
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
 
+-- FIXME: expose test generators from debruijn
 instance Arbitrary RunId where
-  arbitrary = do
-    cn <- arbitrary
-    pure . RunId $ generateNamed namespaceOID cn
+  arbitrary = fmap RunId $
+    forceParse =<< (fmap T.pack $ vectorOf runIdLength hex)
+
+    where
+      hex = elements hexes
+
+      hexes = ['a'..'f'] <> ['0'..'9']
+
+      forceParse t = case parseHex runIdLength t of
+        Left err -> fail $ T.unpack err
+        Right h -> pure h
 
 instance Arbitrary WardenParams where
   arbitrary = WardenParams <$> arbitrary
