@@ -64,7 +64,7 @@ parseCheck :: NumCPUs
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
-  fmap (finalizeSVParseState ps sch dates . resolveSVParseState . join) $
+  fmap (finalizeSVParseState ps sch dates vfs . resolveSVParseState . join) $
     mapM (parseViewFile caps verb s lb) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
@@ -88,15 +88,17 @@ parseViewFile' = Fold updateSVParseState initialSVParseState id
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema
                      -> Set Date
+                     -> NonEmpty ViewFile
                      -> SVParseState
                      -> (CheckStatus, ViewMetadata)
-finalizeSVParseState ps sch ds sv =
+finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkNumFields sch (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
-             ] in
-  (st, ViewMetadata sv ps ds)
+             ]
+      vfs' = S.fromList $ NE.toList vfs in
+  (st, ViewMetadata sv ps ds vfs')
 
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of

@@ -220,4 +220,5 @@ data ViewMetadata =
       vmViewCounts :: !SVParseState
     , vmCheckParams :: !CheckParams
     , vmDates :: !(Set Date)
+    , vmViewFiles :: !(Set ViewFile)
   } deriving (Eq, Show)

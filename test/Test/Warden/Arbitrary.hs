@@ -351,6 +351,7 @@ instance Arbitrary ViewMetadata where
   arbitrary = ViewMetadata <$> arbitrary
                            <*> arbitrary
                            <*> arbitrary
+                           <*> arbitrary
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
