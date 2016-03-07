@@ -27,33 +27,30 @@ import           Warden.View
 
 import           X.Control.Monad.Trans.Either (EitherT)
 
-check :: WardenVersion
-      -> NumCPUs
+check :: WardenParams
       -> View
       -> CheckParams
       -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-check wv caps v ps =
-  traverseView v >>= (checkViewFiles wv caps ps v)
+check wps v ps =
+  traverseView v >>= (checkViewFiles wps ps v)
 
-fileCheck :: WardenVersion
-          -> NumCPUs
+fileCheck :: WardenParams
           -> ViewFile
           -> CheckParams
           -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-fileCheck wv caps vf ps = do
+fileCheck wps vf ps = do
   vf' <- liftIO . makeAbsolute $ viewFilePath vf
   let view = View $ takeDirectory vf'
-  checkViewFiles wv caps ps view $ vf :| []
+  checkViewFiles wps ps view $ vf :| []
 
-checkViewFiles :: WardenVersion
-               -> NumCPUs
+checkViewFiles :: WardenParams
                -> CheckParams
                -> View
                -> NonEmpty ViewFile
                -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles wv caps ps@(CheckParams _s sf _lb verb _fce) v vfs = do
+checkViewFiles wps ps@(CheckParams _s sf _lb verb _fce) v vfs = do
   schema <- maybe (pure Nothing) (fmap Just . readSchema) sf
-  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wv verb) <$> vfs
-  rr <- Row.runRowCheck wv caps ps schema v vfs
+  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps verb) <$> vfs
+  rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 

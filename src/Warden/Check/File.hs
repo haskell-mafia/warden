@@ -30,12 +30,12 @@ import           Warden.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
 
-runFileCheck :: WardenVersion
+runFileCheck :: WardenParams
              -> Verbosity
              -> ViewFile
              -> FileCheck
              -> EitherT WardenError (ResourceT IO) CheckResult
-runFileCheck wv verb f (FileCheck desc chk) = do
+runFileCheck (WardenParams _caps wv _rid) verb f (FileCheck desc chk) = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running file check "
     , renderCheckDescription desc

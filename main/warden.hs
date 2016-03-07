@@ -42,16 +42,15 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun cmd -> do
-      caps <- getNumCPUs
-      let wardenV = WardenVersion $ T.pack buildInfoVersion
-      run wardenV caps cmd
+      wps <- buildWardenParams . WardenVersion $ T.pack buildInfoVersion
+      run wps cmd
 
-run :: WardenVersion -> NumCPUs -> Command -> IO ()
-run wv caps (Check v ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ check wv caps v ps
+run :: WardenParams -> Command -> IO ()
+run wps (Check v ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ check wps v ps
   finishCheck (checkVerbosity ps) r
-run wv caps (SingleFileCheck vf ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wv caps vf ps
+run wps (SingleFileCheck vf ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()

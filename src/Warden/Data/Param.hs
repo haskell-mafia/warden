@@ -6,6 +6,7 @@ module Warden.Data.Param (
   , Force(..)
   , NumCPUs(..)
   , RunId(..)
+  , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
   ) where
@@ -51,3 +52,10 @@ data CheckParams =
     , checkVerbosity :: !Verbosity
     , checkForce :: !Force
     } deriving (Eq, Show)
+
+data WardenParams =
+  WardenParams {
+      wpCaps :: NumCPUs
+    , wpWardenVersion :: WardenVersion
+    , wpRunId :: RunId
+  } deriving (Eq, Show)

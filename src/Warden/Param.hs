@@ -2,8 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Param(
-    genRunId
-  , getNumCPUs
+    buildWardenParams
   ) where
 
 import           Control.Concurrent (getNumCapabilities)
@@ -15,6 +14,11 @@ import           P
 import           System.IO (IO)
 
 import           Warden.Data.Param
+
+buildWardenParams :: WardenVersion -> IO WardenParams
+buildWardenParams v = WardenParams <$> getNumCPUs
+                                   <*> pure v
+                                   <*> genRunId
 
 genRunId :: IO RunId
 genRunId = RunId <$> nextRandom
