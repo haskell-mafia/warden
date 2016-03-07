@@ -12,6 +12,7 @@ import qualified Data.Text.IO as T
 
 import           Disorder.Core.IO (testIO)
 import           Disorder.Corpus (muppets)
+import           Disorder.Core.Property (failWith)
 
 import           P
 
@@ -28,24 +29,31 @@ import           X.Control.Monad.Trans.Either
 
 prop_sanity :: Property
 prop_sanity = forAll (elements muppets) $ \cruft ->
-  testIO . withTestViewFile $ \fn fh -> do
+  testIO . withTestViewFile $ \vf -> do
+  let fn = viewFilePath vf
+  fh <- openFile fn WriteMode
   T.hPutStr fh cruft
   hFlush fh
-  r <- runEitherT . mapEitherT runResourceT $ sanity fn
+  r <- runEitherT . mapEitherT runResourceT $ sanity vf
   pure $ r === Right CheckPassed
 
 prop_insanity_empty :: Property
-prop_insanity_empty = testIO . withTestViewFile $ \fn _ -> unsafeWarden $ do
-  r <- sanity fn
+prop_insanity_empty = testIO . withTestViewFile $ \vf -> unsafeWarden $ do
+  liftIO $ writeFile (viewFilePath vf) ""
+  r <- sanity vf
   pure $ (CheckFailed $ NE.fromList [SanityCheckFailure EmptyFile]) === r
 
 prop_insanity_symlink :: Property
-prop_insanity_symlink = testIO . withTestViewFile $ \(ViewFile fn) _ -> unsafeWarden $
-  let lnk = fn <> "-symlink" in do
+prop_insanity_symlink = testIO . withTestViewFile $ \vf -> unsafeWarden $
+  let lnk = fn <> "-symlink"
+      fn = viewFilePath vf in do
   liftIO $ createSymbolicLink fn lnk
-  r <- sanity (ViewFile lnk)
-  liftIO $ removeLink lnk
-  pure $ (CheckFailed $ NE.fromList [SanityCheckFailure IrregularFile]) === r
+  case viewFile lnk of
+    Left _ -> pure $ failWith "viewFilePath and viewFile don't appear to be inverses"
+    Right vf' -> do
+      r <- sanity vf'
+      liftIO $ removeLink lnk
+      pure $ (CheckFailed $ NE.fromList [SanityCheckFailure IrregularFile]) === r
 
 return []
 tests :: IO Bool

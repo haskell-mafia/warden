@@ -61,8 +61,8 @@ fileChecks = NE.fromList [
   ]
 
 sanity :: ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus
-sanity (ViewFile fn) = do
-  st <- liftIO $ getSymbolicLinkStatus fn
+sanity vf = do
+  st <- liftIO $ getSymbolicLinkStatus $ viewFilePath vf
   pure . resolveCheckStatus $ typeC st <| pure (sizeC st)
 
 typeC :: FileStatus -> CheckStatus

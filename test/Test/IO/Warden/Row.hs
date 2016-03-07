@@ -18,9 +18,7 @@ import           Disorder.Core.IO
 
 import           P
 
-import           System.FilePath
 import           System.IO
-import           System.IO.Temp
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances  ()
@@ -36,10 +34,10 @@ import           X.Control.Monad.Trans.Either
 
 prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
 prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \svrs ->
-  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
-    let fp = tmp </> "valid_sv"
+  testIO $ withTestViewFile $ \vf -> do
+    let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
-    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) (ViewFile fp) $$ CL.fold (flip (:)) []
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) vf $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
@@ -48,12 +46,12 @@ prop_valid_svrows s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \s
 
 prop_valid_svrows_chunked :: ChunkCount -> Separator -> FieldCount -> RowCount -> Property
 prop_valid_svrows_chunked cc s i n = forAll (vectorOf (unRowCount n) $ validSVRow s i) $ \svrs ->
-  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
-    let fp = tmp </> "valid_sv"
+  testIO $ withTestViewFile $ \vf -> do
+    let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
     cs <- chunk cc fp
     res <- runEitherT . mapEitherT runResourceT $ fmap (join . NE.toList) $ 
-      mapM (\c -> readViewChunk s (LineBound 65536) (ViewFile fp) c $$ CL.fold (flip (:)) []) cs
+      mapM (\c -> readViewChunk s (LineBound 65536) vf c $$ CL.fold (flip (:)) []) cs
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
@@ -62,10 +60,10 @@ prop_valid_svrows_chunked cc s i n = forAll (vectorOf (unRowCount n) $ validSVRo
 
 prop_invalid_svrows :: Separator -> RowCount -> Property
 prop_invalid_svrows s n = forAll (vectorOf (unRowCount n) (invalidSVRow s)) $ \svrs ->
-  testIO $ withSystemTempDirectory "warden-test" $ \tmp -> do
-    let fp = tmp </> "sv"
+  testIO $ withTestViewFile $ \vf -> do
+    let fp = viewFilePath vf
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
-    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) (ViewFile fp) $$ CL.fold (flip (:)) []
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) vf $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs ->

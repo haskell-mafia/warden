@@ -24,11 +24,9 @@ import           Data.Word
 import           Disorder.Core (utf8BS, genValidUtf8)
 import           Disorder.Corpus
 
-import           Lane.Data (dateAsPartition)
-
 import           P
 
-import           System.FilePath (joinPath, (</>))
+import           System.FilePath (joinPath)
 
 import           Test.Delorean.Arbitrary ()
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
@@ -221,21 +219,12 @@ instance Arbitrary FileName where
 instance Arbitrary View where
   arbitrary = (View . joinPath . fmap T.unpack) <$> listOf1 (elements muppets)
 
-data ValidViewFile = ValidViewFile View ViewFile
-  deriving (Eq, Show)
-
-instance Arbitrary ValidViewFile where
+instance Arbitrary ViewFile where
   arbitrary = do
     v <- arbitrary
     d <- arbitrary
-    fp <- (joinPath . fmap T.unpack) <$> listOf1 (elements viruses)
-    let vf = ViewFile $ (unView v) </> (T.unpack $ dateAsPartition d) </> fp
-    pure $ ValidViewFile v vf
-
-instance Arbitrary ViewFile where
-  arbitrary = do
-    (ValidViewFile _ vf) <- arbitrary
-    pure vf
+    fp <- (FilePart . T.pack . joinPath . fmap T.unpack) <$> listOf1 (elements viruses)
+    pure $ ViewFile v d fp
 
 newtype NPlus =
   NPlus {
@@ -354,7 +343,9 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
 
 instance Arbitrary ViewMetadata where
-  arbitrary = ViewMetadata <$> arbitrary <*> arbitrary
+  arbitrary = ViewMetadata <$> arbitrary
+                           <*> arbitrary
+                           <*> arbitrary
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary

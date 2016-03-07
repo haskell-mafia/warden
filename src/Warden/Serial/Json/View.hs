@@ -17,10 +17,12 @@ import           P
 import           Warden.Data.View
 
 fromViewFile :: ViewFile -> Value
-fromViewFile (ViewFile f) = String $ T.pack f
+fromViewFile vf = String $ renderViewFile vf
 
 toViewFile :: Value -> Parser ViewFile
-toViewFile (String s) = pure . ViewFile $ T.unpack s
+toViewFile (String s) = case viewFile (T.unpack s) of
+  Left _ -> fail . T.unpack $ "invalid view file: " <> s
+  Right vf -> pure vf
 toViewFile x          = typeMismatch "Warden.Data.View.ViewFile" x
 
 fromView :: View -> Value

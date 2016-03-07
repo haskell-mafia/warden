@@ -10,13 +10,13 @@ import           P
 import           System.IO (IO)
 
 import           Test.QuickCheck
-import           Test.Warden.Arbitrary
+import           Test.Warden.Arbitrary ()
 
 import           Warden.Data
 
-prop_tripping_filemarker :: ValidViewFile -> Property
-prop_tripping_filemarker (ValidViewFile v vf) =
-  tripping fileToMarker (markerToFile v) vf
+prop_tripping_filemarker :: ViewFile -> Property
+prop_tripping_filemarker =
+  tripping fileToMarker markerToFile
 
 prop_tripping_viewmarker :: View -> Property
 prop_tripping_viewmarker =

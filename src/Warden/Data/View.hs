@@ -9,30 +9,35 @@ module Warden.Data.View(
     DirTree(..)
   , DirName(..)
   , FileName(..)
+  , FilePart(..)
   , MaxDepth(..)
   , NonViewFile(..)
   , View(..)
   , ViewFile(..)
   , directoryDirs
   , directoryFiles
-  , isViewFile
   , joinDir
   , joinFile
   , removeViewPrefix
   , renderNonViewFile
   , renderView
   , renderViewFile
+  , viewFile
+  , viewFilePath
 ) where
 
-import           Data.Attoparsec.Text (IResult(..), parse)
+import           Data.Attoparsec.Text (Parser, IResult(..))
+import           Data.Attoparsec.Text (parse, anyChar, char)
 import           Data.List (stripPrefix)
 import           Data.String (IsString)
 import qualified Data.Text as T
 import           Data.Text (Text)
 
+import           Delorean.Local.Date (Date)
+
 import           GHC.Generics (Generic)
 
-import           Lane.Data (datePartitionParser)
+import           Lane.Data (datePartitionParser, dateAsPartition)
 
 import           System.FilePath (joinPath, splitDirectories, (</>))
 import           System.IO (FilePath)
@@ -47,15 +52,58 @@ newtype View =
 renderView :: View -> Text
 renderView = T.pack . unView
 
-newtype ViewFile =
+newtype FilePart =
+  FilePart {
+    unFilePart :: Text
+  } deriving (Eq, Show, Ord, Generic)
+
+instance NFData FilePart
+
+data ViewFile =
   ViewFile {
-    unViewFile :: FilePath
+      vfView :: !View
+    , vfDate :: !Date
+    , vfFilePart :: !FilePart
   } deriving (Eq, Show, Ord, Generic)
 
 instance NFData ViewFile
 
+viewFilePath :: ViewFile -> FilePath
+viewFilePath (ViewFile (View v) d (FilePart f)) =
+  v </> T.unpack (dateAsPartition d) </> T.unpack f
+
 renderViewFile :: ViewFile -> Text
-renderViewFile = T.pack . unViewFile
+renderViewFile = T.pack . viewFilePath
+
+manyAnd' :: Parser a -> Parser b -> Parser ([a], b)
+manyAnd' p end = go
+  where
+    go = (end >>= (pure . ((,) []))) `mplus` liftM2' f p go
+
+    f x (xs, y) = (x : xs, y)
+{-# INLINE manyAnd' #-}
+
+viewFile :: FilePath -> Either FilePath ViewFile
+viewFile fp =
+  let vf = do (v, dPart, fPart) <- split' $ T.pack fp
+              pure $ ViewFile v dPart fPart
+  in case vf of
+    Nothing -> Left fp
+    Just vf' -> Right vf'
+  where
+    -- Split into components: view, date partition, filename.
+    split' f = finalize $ parse viewDateP f
+
+    finalize (Partial c)    = finalize $ c ""
+    finalize (Done rest (v, dc)) = if T.null rest
+                                     then Nothing
+                                     else Just (v, dc, FilePart rest)
+    finalize _              = Nothing
+
+    -- This parser is extremely slow, don't use it where that matters.
+    viewDateP = do
+      (v, dp) <- fmap (first View) $ manyAnd' anyChar (char '/' *> datePartitionParser <* char '/')
+      pure (v, dp)
 
 newtype NonViewFile =
   NonViewFile {
@@ -64,19 +112,6 @@ newtype NonViewFile =
 
 renderNonViewFile :: NonViewFile -> Text
 renderNonViewFile = T.pack . unNonViewFile
-
-isViewFile :: View -> FilePath -> Bool
-isViewFile v fp = maybe
-  False
-  valid'
-  (T.pack <$> removeViewPrefix v fp)
-  where
-    -- Starts with a date partition and has a filename component at the end.
-    valid' f = finalize $ parse datePartitionParser f
-
-    finalize (Partial c)   = finalize $ c ""
-    finalize (Done rest _) = not $ T.null rest
-    finalize _             = False
 
 removeViewPrefix :: View -> FilePath -> Maybe FilePath
 removeViewPrefix (View v) fp =
@@ -126,4 +161,3 @@ directoryFiles = go []
       let xs = (joinFile (reverse (root : preds)) . unFileName) <$> leaves
           ys = concatMap (go (root : preds)) branches in
       xs <> ys
-

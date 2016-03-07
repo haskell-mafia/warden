@@ -14,10 +14,12 @@ import qualified Data.Text as T
 import           Disorder.Core.IO (testIO)
 import           Disorder.Corpus (muppets)
 
+import           Lane.Data (dateAsPartition)
+
 import           P
 
 import           System.Directory (createDirectoryIfMissing)
-import           System.FilePath ((</>))
+import           System.FilePath ((</>), takeDirectory)
 import           System.IO
 import           System.IO.Temp (withTempFile, withTempDirectory)
 import           System.Posix.Directory (getWorkingDirectory)
@@ -38,10 +40,16 @@ withTestFile a = do
   d <- getWorkingDirectory
   withTempFile d "warden-test-" (\f h -> a f h)
 
-withTestViewFile :: (ViewFile -> Handle -> IO a) -> IO a
+withTestViewFile :: (ViewFile -> IO a) -> IO a
 withTestViewFile a = do
   d <- getWorkingDirectory
-  withTempFile d "warden-viewfile-test-" (\f h -> a (ViewFile f) h)
+  vf <- generate . resize 2 $ arbitrary :: IO ViewFile
+  withTempDirectory d "warden-viewfile-test-" $ \d' -> do
+    let vd = (d' </>) . unView $ vfView vf
+    let dd = T.unpack . dateAsPartition $ vfDate vf
+    let fd = takeDirectory . T.unpack . unFilePart $ vfFilePart vf
+    createDirectoryIfMissing True $ vd </> dd </> fd
+    a $ vf { vfView = View vd }
 
 withTestView :: (View -> IO a) -> IO a
 withTestView a = do

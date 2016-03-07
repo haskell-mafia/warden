@@ -51,7 +51,8 @@ readViewFile :: Separator
              -> LineBound
              -> ViewFile
              -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewFile (Separator sep) (LineBound lb) vf@(ViewFile fp) =
+readViewFile (Separator sep) (LineBound lb) vf =
+  let fp = viewFilePath vf in
   slurp fp 0 Nothing 
     =$= sepByByteBounded newline lb
     =$= interpLines
@@ -64,7 +65,8 @@ readViewChunk :: Separator
               -> ViewFile
               -> Chunk
               -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewChunk (Separator sep) (LineBound lb) vf@(ViewFile fp) (Chunk offset size) =
+readViewChunk (Separator sep) (LineBound lb) vf (Chunk offset size) =
+  let fp = viewFilePath vf in
   slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
     =$= sepByByteBounded newline lb
     =$= interpLines

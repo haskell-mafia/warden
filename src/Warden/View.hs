@@ -10,7 +10,7 @@ module Warden.View(
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
-import           Data.List (zip, partition)
+import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 
@@ -27,17 +27,17 @@ import           X.Control.Monad.Trans.Either (EitherT, left)
 
 traverseView :: View -> EitherT WardenError (ResourceT IO) (NonEmpty ViewFile)
 traverseView v = do
-  (goods, bads) <- traverseView' v
+  (bads, goods) <- traverseView' v
   when (not $ null bads) $
     left . WardenTraversalError $ NonViewFiles bads
   when (null goods) $
     left $ WardenTraversalError EmptyView
   pure $ NE.fromList goods
 
-traverseView' :: View -> EitherT WardenError (ResourceT IO) ([ViewFile], [NonViewFile])
+traverseView' :: View -> EitherT WardenError (ResourceT IO) ([NonViewFile], [ViewFile])
 traverseView' v = do
   fs <- directoryFiles <$> traverseDirectory (MaxDepth 5) [] (DirName $ unView v)
-  pure . bimap (fmap ViewFile) (fmap NonViewFile) $ (partition (isViewFile v) fs)
+  pure . first (fmap NonViewFile) $ (partitionEithers $ viewFile <$> fs)
 
 -- | Traverse a directory tree to a maximum depth, ignoring hidden files.
 traverseDirectory :: MaxDepth -> [DirName] -> DirName -> EitherT WardenError (ResourceT IO) DirTree

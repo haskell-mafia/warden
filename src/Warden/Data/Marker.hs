@@ -22,13 +22,15 @@ module Warden.Data.Marker (
   ) where
 
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
-import           Data.Attoparsec.Text (string, satisfy, manyTill)
+import           Data.Attoparsec.Text (string, satisfy, manyTill')
 import           Data.Char (ord)
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Set (Set)
 import           Data.Text (Text)
 import qualified Data.Text as T
 
+import           Delorean.Local.Date (Date)
 import           Delorean.Local.DateTime (DateTime)
 
 import           System.FilePath ((</>), takeFileName, replaceFileName)
@@ -114,21 +116,22 @@ markerSuffix :: FilePath
 markerSuffix = ".warden"
 
 fileToMarker :: ViewFile -> FilePath
-fileToMarker (ViewFile vf) =
-  let fileName   = takeFileName vf
+fileToMarker vf =
+  let fileName   = takeFileName $ viewFilePath vf
       markerFile = "_" <> fileName <> markerSuffix in
-  replaceFileName vf markerFile
+  replaceFileName (viewFilePath vf) markerFile
 
-markerToFile :: View -> FilePath -> Maybe ViewFile
-markerToFile v fp
-  | not (isViewFile v fp) = Nothing
-  | otherwise             = do
-      fn <- finalize . parse fileMarker . T.pack $ takeFileName fp
-      pure . ViewFile $ replaceFileName fp fn
+markerToFile :: FilePath -> Maybe ViewFile
+markerToFile fp = case viewFile fp of
+  Left _ -> Nothing
+  Right vf -> do
+    fn <- finalize . parse fileMarker . T.pack $ takeFileName fp
+    let fp' = FilePart . T.pack $ replaceFileName (T.unpack . unFilePart $ vfFilePart vf) fn
+    pure $ vf { vfFilePart = fp' }
   where
     fileMarker :: Parser FilePath
     fileMarker =
-      string "_" *> manyTill filePathChar (string (T.pack markerSuffix))
+      string "_" *> manyTill' filePathChar (string $ T.pack markerSuffix)
 
     finalize (Partial c)  = finalize $ c ""
     finalize (Done "" "") = Nothing
@@ -175,4 +178,5 @@ data ViewMetadata =
   ViewMetadata {
       vmViewCounts :: !SVParseState
     , vmCheckParams :: !CheckParams
+    , vmDates :: !(Set Date)
   } deriving (Eq, Show)
