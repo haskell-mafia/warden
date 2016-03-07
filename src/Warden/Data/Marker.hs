@@ -12,6 +12,7 @@ module Warden.Data.Marker (
   , ViewMarker(..)
   , ViewMetadata(..)
   , currentMarkerVersion
+  , dateRange
   , filePathChar
   , fileToMarker
   , markerToFile
