@@ -34,7 +34,7 @@ import           Warden.Error
 import           Warden.Marker
 import           Warden.Row
 
-import           X.Control.Monad.Trans.Either (EitherT, left)
+import           X.Control.Monad.Trans.Either (EitherT)
 
 sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
@@ -46,14 +46,7 @@ runRowCheck :: WardenParams
             -> View
             -> NonEmpty ViewFile
             -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck wps ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
-  -- There should only be one view check, so exit early if we've already done
-  -- it.
-  existsP <- liftIO $ viewMarkerExists v
-  when (existsP && noForce) $ do
-    -- Fail with a more informative error if it's invalid.
-    void $ readViewMarker v
-    left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
+runRowCheck wps ps@(CheckParams _s _sf _lb verb _fce) sch v vfs = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running row checks on "
     , renderView v
@@ -63,10 +56,6 @@ runRowCheck wps ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
   now <- liftIO utcNow
   writeViewMarker $ mkViewMarker wps v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
-  where
-    noForce = case fce of
-      Force   -> False
-      NoForce -> True
 
 parseCheck :: NumCPUs
            -> CheckParams

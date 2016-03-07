@@ -9,22 +9,28 @@ module Warden.Data.Param (
   , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
+  , renderRunId
   ) where
 
 import           P
 
 import           Data.Text (Text)
-import           Data.UUID (UUID)
+import           Data.UUID (UUID, toText)
 
 import           Warden.Data.Check
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
 
+-- | 'RunId' is unique across invocations of warden, and can be used to 
+-- correlate file markers with the associated view marker from the run.
 newtype RunId =
   RunId {
     unRunId :: UUID
   } deriving (Eq, Show)
+
+renderRunId :: RunId -> Text
+renderRunId = toText . unRunId
 
 newtype WardenVersion =
   WardenVersion {

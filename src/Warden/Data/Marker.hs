@@ -4,6 +4,7 @@
 module Warden.Data.Marker (
     CheckResultSummary(..)
   , CheckResultType(..)
+  , DateRange(..)
   , FileMarker(..)
   , MarkerFailure(..)
   , MarkerStatus(..)
@@ -15,10 +16,9 @@ module Warden.Data.Marker (
   , filePathChar
   , fileToMarker
   , markerToFile
-  , markerToView
   , mkFileMarker
   , mkViewMarker
-  , viewToMarker
+  , viewMarkerPath
   ) where
 
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
@@ -27,14 +27,14 @@ import           Data.Char (ord)
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import           Data.Set (Set)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 
-import           Delorean.Local.Date (Date)
-import           Delorean.Local.DateTime (DateTime)
+import           Delorean.Local.Date (Date, renderDate)
+import           Delorean.Local.DateTime (DateTime, renderDateTime)
 
-import           System.FilePath ((</>), takeFileName, replaceFileName)
-import           System.FilePath (takeDirectory)
+import           System.FilePath (takeFileName, replaceFileName, joinPath)
 import           System.IO (FilePath)
 
 import           P
@@ -73,6 +73,24 @@ data CheckResultSummary =
     , summaryDescription :: !CheckDescription
     , summaryResultType :: !CheckResultType
   } deriving (Eq, Show)
+
+data DateRange =
+    NoDates
+  | DateRange Date Date
+  deriving (Eq, Show)
+
+dateRangePartition :: DateRange -> Text
+dateRangePartition (DateRange start end) = T.concat [
+    renderDate start
+  , "_"
+  , renderDate end
+  ]
+dateRangePartition NoDates = "no-dates"
+
+dateRange :: Set Date -> DateRange
+dateRange ds
+  | S.null ds = NoDates
+  | otherwise = DateRange (S.findMin ds) (S.findMax ds)
 
 summarizeFailures :: NonEmpty Failure -> MarkerFailure
 summarizeFailures fs = MarkerFailure $ renderFailure <$> fs
@@ -147,17 +165,24 @@ markerToFile fp = case viewFile fp of
     finalize (Done "" r)  = Just r
     finalize _            = Nothing
 
-viewToMarker :: View -> FilePath
-viewToMarker (View v) =
-  v </> ("_view" <> markerSuffix)
-
-markerToView :: FilePath -> Maybe View
-markerToView fp =
-  let v = takeDirectory fp
-      fn = takeFileName fp in
-  case fn of
-    "_view.warden" -> Just $ View v
-    _              -> Nothing
+viewMarkerPath :: ViewMarker -> FilePath
+viewMarkerPath vm =
+  let meta = vmMetadata vm
+      wps = vmWardenParams vm
+      view = unView $ vmView vm
+      ts = T.unpack . renderDateTime $ vmTimestamp vm
+      dates = vmDates meta
+      dr = T.unpack . dateRangePartition $ dateRange dates
+      rid = T.unpack . renderRunId $ wpRunId wps in
+  joinPath [
+      "_warden"
+    , "marker"
+    , "view"
+    , view
+    , dr
+    , ts
+    , rid <> ".warden"
+    ]
 
 filePathChar :: Parser Char
 filePathChar = satisfy (not . bad)

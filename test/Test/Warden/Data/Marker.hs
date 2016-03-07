@@ -18,10 +18,6 @@ prop_tripping_filemarker :: ViewFile -> Property
 prop_tripping_filemarker =
   tripping fileToMarker markerToFile
 
-prop_tripping_viewmarker :: View -> Property
-prop_tripping_viewmarker =
-  tripping viewToMarker markerToView
-
 prop_combineFileMarker :: WardenParams -> FileMarker -> FileMarker -> Property
 prop_combineFileMarker wps fm1 fm2 =
   let fm2' = fm2 {
