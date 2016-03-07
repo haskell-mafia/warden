@@ -48,9 +48,9 @@ checkViewFiles :: WardenParams
                -> View
                -> NonEmpty ViewFile
                -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles wps ps@(CheckParams _s sf _lb verb _fce) v vfs = do
+checkViewFiles wps ps@(CheckParams _s sf _lb verb fce) v vfs = do
   schema <- maybe (pure Nothing) (fmap Just . readSchema) sf
-  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps verb) <$> vfs
+  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps verb fce) <$> vfs
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 
