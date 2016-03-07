@@ -17,6 +17,7 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
+import           Data.UUID.V5 (generateNamed, namespaceOID)
 import           Data.Vector (Vector)
 import qualified Data.Vector          as V
 import           Data.Word
@@ -398,3 +399,16 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+
+instance Arbitrary NumCPUs where
+  arbitrary = (NumCPUs . unNPlus) <$> arbitrary
+
+instance Arbitrary RunId where
+  arbitrary = do
+    cn <- arbitrary
+    pure . RunId $ generateNamed namespaceOID cn
+
+instance Arbitrary WardenParams where
+  arbitrary = WardenParams <$> arbitrary
+                           <*> arbitrary
+                           <*> arbitrary

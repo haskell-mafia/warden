@@ -35,7 +35,7 @@ runFileCheck :: WardenParams
              -> ViewFile
              -> FileCheck
              -> EitherT WardenError (ResourceT IO) CheckResult
-runFileCheck (WardenParams _caps wv _rid) verb f (FileCheck desc chk) = do
+runFileCheck wps verb f (FileCheck desc chk) = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running file check "
     , renderCheckDescription desc
@@ -44,22 +44,22 @@ runFileCheck (WardenParams _caps wv _rid) verb f (FileCheck desc chk) = do
     , "."
     ]
   r <- chk f
-  buildFileMarker wv f desc r >>= writeFileMarker
+  buildFileMarker wps f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r
 
-buildFileMarker :: WardenVersion
+buildFileMarker :: WardenParams
                 -> ViewFile
                 -> CheckDescription
                 -> CheckStatus
                 -> EitherT WardenError (ResourceT IO) FileMarker
-buildFileMarker wv vf cd cs = do
+buildFileMarker wps vf cd cs = do
   t <- liftIO utcNow
-  let mark = mkFileMarker wv vf cd t cs
+  let mark = mkFileMarker wps vf cd t cs
   existsP <- liftIO $ fileMarkerExists vf
   if existsP
     then do
       old <- readFileMarker vf
-      hoistEither $ combineFileMarker wv mark old
+      hoistEither $ combineFileMarker wps mark old
     else
       pure mark
 

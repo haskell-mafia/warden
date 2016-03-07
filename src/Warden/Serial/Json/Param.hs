@@ -4,13 +4,14 @@
 module Warden.Serial.Json.Param(
     fromCheckParams
   , toCheckParams
-  , fromWardenVersion
-  , toWardenVersion
+  , fromWardenParams
+  , toWardenParams
   ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
+import           Data.UUID (toText, fromText)
 
 import           P
 
@@ -54,3 +55,34 @@ fromWardenVersion (WardenVersion v) = String v
 toWardenVersion :: Value -> Parser WardenVersion
 toWardenVersion (String s) = pure $ WardenVersion s
 toWardenVersion x = typeMismatch "Warden.Data.Params.WardenVersion" x
+
+fromRunId :: RunId -> Value
+fromRunId = String . toText . unRunId
+
+toRunId :: Value -> Parser RunId
+toRunId (String s) = case fromText s of
+  Just rid -> pure $ RunId rid
+  Nothing -> fail . T.unpack $ "invalid RunId: " <> s
+toRunId x = typeMismatch "Warden.Data.Params.RunId" x
+
+fromNumCPUs :: NumCPUs -> Value
+fromNumCPUs = toJSON . unNumCPUs
+
+toNumCPUs :: Value -> Parser NumCPUs
+toNumCPUs (Number n) = fmap NumCPUs . parseJSON $ Number n
+toNumCPUs x = typeMismatch "Warden.Data.Param.NumCPUs" x
+
+fromWardenParams :: WardenParams -> Value
+fromWardenParams (WardenParams caps wv rid) = object [
+    "warden-version" .= fromWardenVersion wv
+  , "num-caps" .= fromNumCPUs caps
+  , "run-id" .= fromRunId rid
+  ]
+
+toWardenParams :: Value -> Parser WardenParams
+toWardenParams (Object o) = do
+  wv <- toWardenVersion =<< (o .: "warden-version")
+  caps <- toNumCPUs =<< (o .: "num-caps")
+  rid <- toRunId =<< (o .: "run-id")
+  pure $ WardenParams caps wv rid
+toWardenParams x = typeMismatch "Warden.Data.Param.WardenParams" x

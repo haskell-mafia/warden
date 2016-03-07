@@ -46,7 +46,7 @@ runRowCheck :: WardenParams
             -> View
             -> NonEmpty ViewFile
             -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck (WardenParams caps wv _rid) ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
+runRowCheck wps ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
   -- There should only be one view check, so exit early if we've already done
   -- it.
   existsP <- liftIO $ viewMarkerExists v
@@ -59,9 +59,9 @@ runRowCheck (WardenParams caps wv _rid) ps@(CheckParams _s _sf _lb verb fce) sch
     , renderView v
     , "."
     ]
-  (r, md) <- parseCheck caps ps sch vfs
+  (r, md) <- parseCheck (wpCaps wps) ps sch vfs
   now <- liftIO utcNow
-  writeViewMarker $ mkViewMarker wv v ViewRowCounts now md r
+  writeViewMarker $ mkViewMarker wps v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
   where
     noForce = case fce of

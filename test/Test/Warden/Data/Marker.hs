@@ -22,20 +22,20 @@ prop_tripping_viewmarker :: View -> Property
 prop_tripping_viewmarker =
   tripping viewToMarker markerToView
 
-prop_combineFileMarker :: WardenVersion -> FileMarker -> FileMarker -> Property
-prop_combineFileMarker wv fm1 fm2 =
+prop_combineFileMarker :: WardenParams -> FileMarker -> FileMarker -> Property
+prop_combineFileMarker wps fm1 fm2 =
   let fm2' = fm2 {
       fmVersion = fmVersion fm1
     , fmViewFile = fmViewFile fm1
     } in
-  (isRight $ combineFileMarker wv fm1 fm2') === True
+  (isRight $ combineFileMarker wps fm1 fm2') === True
 
-prop_combineFileMarker_file :: WardenVersion -> Property
-prop_combineFileMarker_file wv = forAll (arbitrary `suchThat` (\(a, b) -> fmViewFile a /= fmViewFile b)) $ \(fm1, fm2) ->
+prop_combineFileMarker_file :: WardenParams -> Property
+prop_combineFileMarker_file wps = forAll (arbitrary `suchThat` (\(a, b) -> fmViewFile a /= fmViewFile b)) $ \(fm1, fm2) ->
   let fm2' = fm2 {
       fmVersion = fmVersion fm1
     } in
-  (isLeft $ combineFileMarker wv fm1 fm2') === True
+  (isLeft $ combineFileMarker wps fm1 fm2') === True
 
 return []
 tests :: IO Bool
