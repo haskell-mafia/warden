@@ -5,6 +5,7 @@ module Warden.Data.Param (
     CheckParams(..)
   , Force(..)
   , NumCPUs(..)
+  , RunId(..)
   , WardenVersion(..)
   , chunksForCPUs
   ) where
@@ -12,11 +13,17 @@ module Warden.Data.Param (
 import           P
 
 import           Data.Text (Text)
+import           Data.UUID (UUID)
 
 import           Warden.Data.Check
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
+
+newtype RunId =
+  RunId {
+    unRunId :: UUID
+  } deriving (Eq, Show)
 
 newtype WardenVersion =
   WardenVersion {

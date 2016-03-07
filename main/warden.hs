@@ -3,7 +3,6 @@
 
 import           BuildInfo_ambiata_warden
 
-import           Control.Concurrent (getNumCapabilities)
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.Char (ord)
@@ -22,6 +21,7 @@ import           System.IO (IO, print, putStrLn)
 import           Warden.Commands
 import           Warden.Data
 import           Warden.Error
+import           Warden.Param
 
 import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
@@ -42,7 +42,7 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun cmd -> do
-      caps <- NumCPUs <$> getNumCapabilities
+      caps <- getNumCPUs
       let wardenV = WardenVersion $ T.pack buildInfoVersion
       run wardenV caps cmd
 
