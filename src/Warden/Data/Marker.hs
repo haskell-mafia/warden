@@ -31,7 +31,7 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           Delorean.Local.Date (Date, renderDate)
-import           Delorean.Local.DateTime (DateTime, renderDateTime)
+import           Delorean.Local.DateTime (DateTime(..))
 
 import           System.FilePath (takeFileName, replaceFileName, joinPath)
 import           System.IO (FilePath)
@@ -152,7 +152,7 @@ viewMarkerPath vm =
   let meta = vmMetadata vm
       wps = vmWardenParams vm
       view = unView $ vmView vm
-      ts = T.unpack . renderDateTime $ vmTimestamp vm
+      ts = T.unpack . renderDateTimeDate $ vmTimestamp vm
       dates = vmDates meta
       dr = T.unpack . dateRangePartition $ dateRange dates
       rid = T.unpack . renderRunId $ wpRunId wps in
@@ -165,6 +165,9 @@ viewMarkerPath vm =
     , ts
     , rid <> ".warden"
     ]
+  where
+    renderDateTimeDate (DateTime d _t) =
+      renderDate d
 
 filePathChar :: Parser Char
 filePathChar = satisfy (not . bad)
