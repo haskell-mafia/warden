@@ -30,8 +30,12 @@ import           Warden.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
 
-runFileCheck :: Verbosity -> ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runFileCheck verb f (FileCheck desc chk) = do
+runFileCheck :: WardenVersion
+             -> Verbosity
+             -> ViewFile
+             -> FileCheck
+             -> EitherT WardenError (ResourceT IO) CheckResult
+runFileCheck wv verb f (FileCheck desc chk) = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running file check "
     , renderCheckDescription desc
@@ -40,18 +44,22 @@ runFileCheck verb f (FileCheck desc chk) = do
     , "."
     ]
   r <- chk f
-  buildFileMarker f desc r >>= writeFileMarker
+  buildFileMarker wv f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r
 
-buildFileMarker :: ViewFile -> CheckDescription -> CheckStatus -> EitherT WardenError (ResourceT IO) FileMarker
-buildFileMarker vf cd cs = do
+buildFileMarker :: WardenVersion
+                -> ViewFile
+                -> CheckDescription
+                -> CheckStatus
+                -> EitherT WardenError (ResourceT IO) FileMarker
+buildFileMarker wv vf cd cs = do
   t <- liftIO utcNow
-  let mark = mkFileMarker vf cd t cs
+  let mark = mkFileMarker wv vf cd t cs
   existsP <- liftIO $ fileMarkerExists vf
   if existsP
     then do
       old <- readFileMarker vf
-      hoistEither $ combineFileMarker mark old
+      hoistEither $ combineFileMarker wv mark old
     else
       pure mark
 

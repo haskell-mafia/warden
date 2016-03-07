@@ -5,15 +5,23 @@ module Warden.Data.Param (
     CheckParams(..)
   , Force(..)
   , NumCPUs(..)
+  , WardenVersion(..)
   , chunksForCPUs
   ) where
 
 import           P
 
+import           Data.Text (Text)
+
 import           Warden.Data.Check
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
+
+newtype WardenVersion =
+  WardenVersion {
+    unWardenVersion :: Text
+  } deriving (Eq, Show, Ord)
 
 newtype NumCPUs =
   NumCPUs {

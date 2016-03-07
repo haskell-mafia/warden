@@ -10,6 +10,7 @@ import           Data.Char (ord)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
+import qualified Data.Text as T
 
 import           Options.Applicative
 
@@ -42,14 +43,15 @@ main = do
       exitSuccess
     RunCommand RealRun cmd -> do
       caps <- NumCPUs <$> getNumCapabilities
-      run caps cmd
+      let wardenV = WardenVersion $ T.pack buildInfoVersion
+      run wardenV caps cmd
 
-run :: NumCPUs -> Command -> IO ()
-run caps (Check v ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
+run :: WardenVersion -> NumCPUs -> Command -> IO ()
+run wv caps (Check v ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ check wv caps v ps
   finishCheck (checkVerbosity ps) r
-run caps (SingleFileCheck vf ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck caps vf ps
+run wv caps (SingleFileCheck vf ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wv caps vf ps
   finishCheck (checkVerbosity ps) r
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()

@@ -89,13 +89,17 @@ summarizeResult typ dsc st =
 data FileMarker =
   FileMarker {
     fmVersion :: !MarkerVersion
+  , fmWardenVersion :: !WardenVersion
   , fmViewFile :: !ViewFile
   , fmTimestamp :: !DateTime
   , fmCheckResults :: ![CheckResultSummary]
   } deriving (Eq, Show)
 
-combineFileMarker :: FileMarker -> FileMarker -> Either WardenError FileMarker
-combineFileMarker a b
+combineFileMarker :: WardenVersion
+                  -> FileMarker
+                  -> FileMarker
+                  -> Either WardenError FileMarker
+combineFileMarker wv a b
   | fmViewFile a /= fmViewFile b =
       Left . WardenMarkerError $ MarkerFileMismatchError (fmViewFile a) (fmViewFile b)
   | fmVersion a /= fmVersion b =
@@ -105,12 +109,17 @@ combineFileMarker a b
           nv = fmVersion a
           nvf = fmViewFile a
           nrs = nub $ fmCheckResults a <> fmCheckResults b in
-      Right $ FileMarker nv nvf nt nrs
+      Right $ FileMarker nv wv nvf nt nrs
 
-mkFileMarker :: ViewFile -> CheckDescription -> DateTime -> CheckStatus -> FileMarker
-mkFileMarker v dsc dt cs =
+mkFileMarker :: WardenVersion
+             -> ViewFile
+             -> CheckDescription
+             -> DateTime
+             -> CheckStatus
+             -> FileMarker
+mkFileMarker wv v dsc dt cs =
   let crs = [summarizeResult FileResult dsc cs] in
-  FileMarker currentMarkerVersion v dt crs
+  FileMarker currentMarkerVersion wv v dt crs
 
 markerSuffix :: FilePath
 markerSuffix = ".warden"
@@ -163,16 +172,23 @@ filePathChar = satisfy (not . bad)
 data ViewMarker =
   ViewMarker {
     vmVersion :: !MarkerVersion
+  , vmWardenVersion :: !WardenVersion
   , vmView :: !View
   , vmTimestamp :: !DateTime
   , vmCheckResults :: ![CheckResultSummary]
   , vmMetadata :: !ViewMetadata
   } deriving (Eq, Show)
 
-mkViewMarker :: View -> CheckDescription -> DateTime -> ViewMetadata -> CheckStatus -> ViewMarker
-mkViewMarker v dsc dt vm cs =
+mkViewMarker :: WardenVersion
+             -> View
+             -> CheckDescription
+             -> DateTime
+             -> ViewMetadata
+             -> CheckStatus
+             -> ViewMarker
+mkViewMarker wv v dsc dt vm cs =
   let crs = [summarizeResult RowResult dsc cs] in
-  ViewMarker currentMarkerVersion v dt crs vm
+  ViewMarker currentMarkerVersion wv v dt crs vm
 
 data ViewMetadata =
   ViewMetadata {

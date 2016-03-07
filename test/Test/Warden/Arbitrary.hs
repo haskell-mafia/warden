@@ -321,6 +321,7 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
+                         <*> arbitrary
 
 genLooksVec :: Gen (Vector (Array FieldLooks ObservationCount))
 genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
@@ -342,6 +343,9 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
 
+instance Arbitrary WardenVersion where
+  arbitrary = WardenVersion <$> elements southpark
+
 instance Arbitrary ViewMetadata where
   arbitrary = ViewMetadata <$> arbitrary
                            <*> arbitrary
@@ -349,6 +353,7 @@ instance Arbitrary ViewMetadata where
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
+                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary

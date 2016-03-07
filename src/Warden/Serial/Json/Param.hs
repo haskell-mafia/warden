@@ -4,6 +4,8 @@
 module Warden.Serial.Json.Param(
     fromCheckParams
   , toCheckParams
+  , fromWardenVersion
+  , toWardenVersion
   ) where
 
 import           Data.Aeson
@@ -45,3 +47,10 @@ toCheckParams (Object o) = do
   sf <- maybe (pure Nothing) (fmap Just . toSchemaFile) =<< (o .:? "schema-file")
   pure $ CheckParams sep sf lb verb fce
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
+
+fromWardenVersion :: WardenVersion -> Value
+fromWardenVersion (WardenVersion v) = String v
+
+toWardenVersion :: Value -> Parser WardenVersion
+toWardenVersion (String s) = pure $ WardenVersion s
+toWardenVersion x = typeMismatch "Warden.Data.Params.WardenVersion" x
