@@ -3,6 +3,8 @@
 
 module Test.Warden.Data.Marker where
 
+import qualified Data.Set as S
+
 import           Disorder.Core (tripping)
 
 import           P
@@ -18,24 +20,13 @@ prop_tripping_filemarker :: ViewFile -> Property
 prop_tripping_filemarker =
   tripping fileToMarker markerToFile
 
-prop_tripping_viewmarker :: View -> Property
-prop_tripping_viewmarker =
-  tripping viewToMarker markerToView
-
-prop_combineFileMarker :: FileMarker -> FileMarker -> Property
-prop_combineFileMarker fm1 fm2 =
-  let fm2' = fm2 {
-      fmVersion = fmVersion fm1
-    , fmViewFile = fmViewFile fm1
-    } in
-  (isRight $ combineFileMarker fm1 fm2') === True
-
-prop_combineFileMarker_file :: Property
-prop_combineFileMarker_file = forAll (arbitrary `suchThat` (\(a, b) -> fmViewFile a /= fmViewFile b)) $ \(fm1, fm2) ->
-  let fm2' = fm2 {
-      fmVersion = fmVersion fm1
-    } in
-  (isLeft $ combineFileMarker fm1 fm2') === True
+prop_dateRange :: ViewMarker -> Property
+prop_dateRange vm =
+  let dates = vmDates $ vmMetadata vm
+      dr = dateRange dates in
+  case dr of
+    NoDates -> S.size dates === 0
+    DateRange a b -> (a <= b) === True
 
 return []
 tests :: IO Bool

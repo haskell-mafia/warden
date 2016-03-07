@@ -34,39 +34,28 @@ import           Warden.Error
 import           Warden.Marker
 import           Warden.Row
 
-import           X.Control.Monad.Trans.Either (EitherT, left)
+import           X.Control.Monad.Trans.Either (EitherT)
 
 sinkFoldM :: Monad m => FoldM m a b -> Consumer a m b
 sinkFoldM (FoldM f init extract) =
   lift init >>= CL.foldM f >>= lift . extract
 
-runRowCheck :: NumCPUs
+runRowCheck :: WardenParams
             -> CheckParams
             -> Maybe Schema
             -> View
             -> NonEmpty ViewFile
             -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck caps ps@(CheckParams _s _sf _lb verb fce) sch v vfs = do
-  -- There should only be one view check, so exit early if we've already done
-  -- it.
-  existsP <- liftIO $ viewMarkerExists v
-  when (existsP && noForce) $ do
-    -- Fail with a more informative error if it's invalid.
-    void $ readViewMarker v
-    left . WardenMarkerError . ViewMarkerExistsError v $ viewToMarker v
+runRowCheck wps ps@(CheckParams _s _sf _lb verb _fce) sch v vfs = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running row checks on "
     , renderView v
     , "."
     ]
-  (r, md) <- parseCheck caps ps sch vfs
+  (r, md) <- parseCheck (wpCaps wps) ps sch vfs
   now <- liftIO utcNow
-  writeViewMarker $ mkViewMarker v ViewRowCounts now md r
+  writeViewMarker $ mkViewMarker wps v ViewRowCounts now md r
   pure $ RowCheckResult ViewRowCounts r
-  where
-    noForce = case fce of
-      Force   -> False
-      NoForce -> True
 
 parseCheck :: NumCPUs
            -> CheckParams
@@ -75,7 +64,7 @@ parseCheck :: NumCPUs
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
-  fmap (finalizeSVParseState ps sch dates . resolveSVParseState . join) $
+  fmap (finalizeSVParseState ps sch dates vfs . resolveSVParseState . join) $
     mapM (parseViewFile caps verb s lb) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
@@ -99,15 +88,17 @@ parseViewFile' = Fold updateSVParseState initialSVParseState id
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema
                      -> Set Date
+                     -> NonEmpty ViewFile
                      -> SVParseState
                      -> (CheckStatus, ViewMetadata)
-finalizeSVParseState ps sch ds sv =
+finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkNumFields sch (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
-             ] in
-  (st, ViewMetadata sv ps ds)
+             ]
+      vfs' = S.fromList $ NE.toList vfs in
+  (st, ViewMetadata sv ps ds vfs')
 
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of

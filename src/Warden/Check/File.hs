@@ -28,10 +28,15 @@ import           Warden.Debug
 import           Warden.Error
 import           Warden.Marker
 
-import           X.Control.Monad.Trans.Either (EitherT, hoistEither)
+import           X.Control.Monad.Trans.Either (EitherT, left)
 
-runFileCheck :: Verbosity -> ViewFile -> FileCheck -> EitherT WardenError (ResourceT IO) CheckResult
-runFileCheck verb f (FileCheck desc chk) = do
+runFileCheck :: WardenParams
+             -> Verbosity
+             -> Force
+             -> ViewFile
+             -> FileCheck
+             -> EitherT WardenError (ResourceT IO) CheckResult
+runFileCheck wps verb fce f (FileCheck desc chk) = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running file check "
     , renderCheckDescription desc
@@ -40,20 +45,26 @@ runFileCheck verb f (FileCheck desc chk) = do
     , "."
     ]
   r <- chk f
-  buildFileMarker f desc r >>= writeFileMarker
+  buildFileMarker wps fce f desc r >>= writeFileMarker
   pure $ FileCheckResult desc f r
 
-buildFileMarker :: ViewFile -> CheckDescription -> CheckStatus -> EitherT WardenError (ResourceT IO) FileMarker
-buildFileMarker vf cd cs = do
+buildFileMarker :: WardenParams
+                -> Force
+                -> ViewFile
+                -> CheckDescription
+                -> CheckStatus
+                -> EitherT WardenError (ResourceT IO) FileMarker
+buildFileMarker wps fce vf cd cs = do
   t <- liftIO utcNow
-  let mark = mkFileMarker vf cd t cs
+  let mark = mkFileMarker wps vf cd t cs
   existsP <- liftIO $ fileMarkerExists vf
-  if existsP
-    then do
-      old <- readFileMarker vf
-      hoistEither $ combineFileMarker mark old
-    else
-      pure mark
+  if existsP && noForce
+    then left . WardenMarkerError $ FileMarkerExistsError vf
+    else pure mark
+  where
+    noForce = case fce of
+      Force -> False
+      NoForce -> True
 
 fileChecks :: NonEmpty FileCheck
 fileChecks = NE.fromList [

@@ -19,3 +19,9 @@
 [submodule "lib/twine"]
 	path = lib/twine
 	url = git@github.com:ambiata/twine.git
+[submodule "lib/debruijn"]
+	path = lib/debruijn
+	url = git@github.com:ambiata/debruijn.git
+[submodule "lib/tinfoil"]
+	path = lib/tinfoil
+	url = git@github.com:ambiata/tinfoil.git

@@ -25,7 +25,8 @@ import           Delorean.Local.DateTime (DateTime, local)
 
 import           P
 
-import           System.Directory (doesFileExist)
+import           System.Directory (doesFileExist, createDirectoryIfMissing)
+import           System.FilePath (takeDirectory)
 import           System.IO (IO, FilePath)
 
 import           Warden.Data
@@ -42,9 +43,11 @@ writeFileMarker fm =
 
 writeViewMarker :: ViewMarker -> EitherT WardenError (ResourceT IO) ()
 writeViewMarker vm =
-  let markf = viewToMarker $ vmView vm
-      markJson = encodePretty $ fromViewMarker vm in
-  liftIO $ writeFile markf markJson
+  let markf = viewMarkerPath vm
+      markd = takeDirectory markf
+      markJson = encodePretty $ fromViewMarker vm in liftIO $ do
+  createDirectoryIfMissing True markd
+  writeFile markf markJson
 
 readJson :: FilePath -> EitherT WardenError (ResourceT IO) Value
 readJson fp = do
@@ -61,18 +64,15 @@ readFileMarker' fp = do
   firstEitherT (WardenMarkerError . MarkerDecodeError fp . T.pack) . hoistEither $
     parseEither toFileMarker js
 
-readViewMarker :: View -> EitherT WardenError (ResourceT IO) ViewMarker
-readViewMarker = readViewMarker' . viewToMarker
-
-readViewMarker' :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
-readViewMarker' fp = do
+readViewMarker :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
+readViewMarker fp = do
   js <- readJson fp
   firstEitherT (WardenMarkerError . MarkerDecodeError fp . T.pack) . hoistEither $
     parseEither toViewMarker js
 
-viewMarkerExists :: View -> IO Bool
+viewMarkerExists :: ViewMarker -> IO Bool
 viewMarkerExists =
-  doesFileExist . viewToMarker
+  doesFileExist . viewMarkerPath
 
 fileMarkerExists :: ViewFile -> IO Bool
 fileMarkerExists =

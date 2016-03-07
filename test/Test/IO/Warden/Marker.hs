@@ -36,7 +36,7 @@ prop_writeViewMarker :: ViewMarker -> Property
 prop_writeViewMarker vm = testIO $ withTestView $ \v -> unsafeWarden $ do
   let vm' = vm { vmView = v }
   writeViewMarker vm'
-  vm'' <- readViewMarker $ vmView vm'
+  vm'' <- readViewMarker $ viewMarkerPath vm'
   pure $ vm'' === vm'
 
 return []

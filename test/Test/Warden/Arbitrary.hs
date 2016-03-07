@@ -21,6 +21,8 @@ import           Data.Vector (Vector)
 import qualified Data.Vector          as V
 import           Data.Word
 
+import           Debruijn.Hex (parseHex)
+
 import           Disorder.Core (utf8BS, genValidUtf8)
 import           Disorder.Corpus
 
@@ -321,6 +323,7 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
+                         <*> arbitrary
 
 genLooksVec :: Gen (Vector (Array FieldLooks ObservationCount))
 genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
@@ -342,13 +345,18 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
 
+instance Arbitrary WardenVersion where
+  arbitrary = WardenVersion <$> elements southpark
+
 instance Arbitrary ViewMetadata where
   arbitrary = ViewMetadata <$> arbitrary
+                           <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
+                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
@@ -393,3 +401,25 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+
+instance Arbitrary NumCPUs where
+  arbitrary = (NumCPUs . unNPlus) <$> arbitrary
+
+-- FIXME: expose test generators from debruijn
+instance Arbitrary RunId where
+  arbitrary = fmap RunId $
+    forceParse =<< (fmap T.pack $ vectorOf runIdLength hex)
+
+    where
+      hex = elements hexes
+
+      hexes = ['a'..'f'] <> ['0'..'9']
+
+      forceParse t = case parseHex runIdLength t of
+        Left err -> fail $ T.unpack err
+        Right h -> pure h
+
+instance Arbitrary WardenParams where
+  arbitrary = WardenParams <$> arbitrary
+                           <*> arbitrary
+                           <*> arbitrary

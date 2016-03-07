@@ -15,6 +15,7 @@ library
                        base                            >= 3          && < 5
                      , aeson                           == 0.8.*
                      , aeson-pretty                    == 0.7.2.*
+                     , ambiata-debruijn
                      , ambiata-delorean
                      , ambiata-lane
                      , ambiata-p
@@ -73,6 +74,7 @@ library
                        Warden.Error
                        Warden.Marker
                        Warden.Numeric
+                       Warden.Param
                        Warden.Row
                        Warden.Schema
                        Warden.Sampling.Reservoir
@@ -106,6 +108,7 @@ executable             warden-gen
                      , test
     build-depends:     base
                      , QuickCheck                      == 2.8.*
+                     , ambiata-debruijn
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-aeson
@@ -150,6 +153,7 @@ test-suite test
                        base                            >= 3          && < 5
                      , QuickCheck                      == 2.8.*
                      , aeson                           == 0.8.*
+                     , ambiata-debruijn
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-aeson
@@ -187,6 +191,7 @@ test-suite test-io
   build-depends:
                        base                            >= 3          && < 5
                      , QuickCheck                      == 2.8.*
+                     , ambiata-debruijn
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-core
@@ -230,6 +235,7 @@ benchmark bench
   build-depends:
                        base                            >= 3          && < 5
                      , QuickCheck                      == 2.8.*
+                     , ambiata-debruijn
                      , ambiata-delorean
                      , ambiata-delorean-test
                      , ambiata-disorder-core

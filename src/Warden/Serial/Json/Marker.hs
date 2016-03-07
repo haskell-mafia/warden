@@ -116,8 +116,9 @@ toCheckResultSummary (Object o) = do
 toCheckResultSummary x          = typeMismatch "Warden.Data.Marker.CheckResultSummary" x
 
 fromFileMarker :: FileMarker -> Value
-fromFileMarker (FileMarker v vf ts crs) = object [
+fromFileMarker (FileMarker v wps vf ts crs) = object [
     "version" .= fromMarkerVersion v
+  , "warden-params" .= fromWardenParams wps
   , "view-file" .= fromViewFile vf
   , "timestamp" .= fromDateTime ts
   , "results" .= (fromCheckResultSummary <$> crs)
@@ -126,17 +127,19 @@ fromFileMarker (FileMarker v vf ts crs) = object [
 toFileMarker :: Value -> Parser FileMarker
 toFileMarker (Object o) = do
   v <- toMarkerVersion =<< (o .: "version")
+  wps <- toWardenParams =<< (o .: "warden-params")
   vf <- toViewFile =<< (o .: "view-file")
   ts <- toDateTime =<< (o .: "timestamp")
   crs <- mapM toCheckResultSummary =<< (o .: "results")
-  pure $ FileMarker v vf ts crs
+  pure $ FileMarker v wps vf ts crs
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
-fromViewMetadata (ViewMetadata vc ps ds) = object [
+fromViewMetadata (ViewMetadata vc ps ds vfs) = object [
     "counts" .= fromSVParseState vc
   , "check-params" .= fromCheckParams ps
   , "check-dates" .= (fmap fromDate $ S.toList ds)
+  , "check-files" .= (fmap fromViewFile $ S.toList vfs)
   ]
 
 toViewMetadata :: Value -> Parser ViewMetadata
@@ -144,12 +147,14 @@ toViewMetadata (Object o) = do
   vc <- toSVParseState =<< (o .: "counts")
   ps <- toCheckParams =<< (o .: "check-params")
   ds <- fmap S.fromList $ mapM toDate =<< (o .: "check-dates")
-  pure $ ViewMetadata vc ps ds
+  vfs <- fmap S.fromList $ mapM toViewFile =<< (o .: "check-files")
+  pure $ ViewMetadata vc ps ds vfs
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 
 fromViewMarker :: ViewMarker -> Value
-fromViewMarker (ViewMarker ve vi ts crs vm) = object [
+fromViewMarker (ViewMarker ve wps vi ts crs vm) = object [
     "version" .= fromMarkerVersion ve
+  , "warden-params" .= fromWardenParams wps
   , "view" .= fromView vi
   , "timestamp" .= fromDateTime ts
   , "results" .= (fromCheckResultSummary <$> crs)
@@ -159,10 +164,10 @@ fromViewMarker (ViewMarker ve vi ts crs vm) = object [
 toViewMarker :: Value -> Parser ViewMarker
 toViewMarker (Object o) = do
   ve <- toMarkerVersion =<< (o .: "version")
+  wps <- toWardenParams =<< (o .: "warden-params")
   vi <- toView =<< (o .: "view")
   ts <- toDateTime =<< (o .: "timestamp")
   crs <- mapM toCheckResultSummary =<< (o .: "results")
   vm <- toViewMetadata =<< (o .: "metadata")
-  pure $ ViewMarker ve vi ts crs vm
+  pure $ ViewMarker ve wps vi ts crs vm
 toViewMarker x          = typeMismatch "Warden.Data.Marker.ViewMarker" x
-  

@@ -3,13 +3,13 @@
 
 import           BuildInfo_ambiata_warden
 
-import           Control.Concurrent (getNumCapabilities)
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.Char (ord)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text.IO as T
+import qualified Data.Text as T
 
 import           Options.Applicative
 
@@ -21,6 +21,7 @@ import           System.IO (IO, print, putStrLn)
 import           Warden.Commands
 import           Warden.Data
 import           Warden.Error
+import           Warden.Param
 
 import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
@@ -41,15 +42,15 @@ main = do
       print c
       exitSuccess
     RunCommand RealRun cmd -> do
-      caps <- NumCPUs <$> getNumCapabilities
-      run caps cmd
+      wps <- buildWardenParams . WardenVersion $ T.pack buildInfoVersion
+      run wps cmd
 
-run :: NumCPUs -> Command -> IO ()
-run caps (Check v ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ check caps v ps
+run :: WardenParams -> Command -> IO ()
+run wps (Check v ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ check wps v ps
   finishCheck (checkVerbosity ps) r
-run caps (SingleFileCheck vf ps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck caps vf ps
+run wps (SingleFileCheck vf ps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()

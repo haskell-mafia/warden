@@ -71,6 +71,7 @@ data MarkerError =
     MarkerDecodeError FilePath Text
   | ViewMarkerExistsError View FilePath
   | MarkerFileMismatchError ViewFile ViewFile
+  | FileMarkerExistsError ViewFile
   | MarkerViewMismatchError View View
   | FileMarkerVersionError ViewFile
   | ViewMarkerVersionError View
@@ -87,6 +88,11 @@ renderMarkerError = ("marker error: " <>) . render'
       , " - remove "
       , T.pack mf
       , " or run with -f if you'd like to run the view checks again"
+      ]
+    render' (FileMarkerExistsError vf) = T.concat [
+        "marker already exists for view file "
+      , T.pack (viewFilePath vf)
+      , " - remove it, or run with -f if you'd like to run the view checks again"
       ]
     render' (MarkerFileMismatchError a b) = T.concat [
         "cannot combine markers for files "
