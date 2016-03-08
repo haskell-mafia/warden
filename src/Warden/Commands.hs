@@ -4,6 +4,7 @@
 module Warden.Commands(
     check
   , fileCheck
+  , infer
 ) where
 
 import           Control.Monad.IO.Class (liftIO)
@@ -15,7 +16,7 @@ import           P
 
 import           System.Directory (makeAbsolute)
 import           System.FilePath (takeDirectory)
-import           System.IO (IO)
+import           System.IO (IO, FilePath)
 
 import qualified Warden.Check.File as File
 import qualified Warden.Check.Row as Row
@@ -25,7 +26,7 @@ import           Warden.Error
 import           Warden.Schema
 import           Warden.View
 
-import           X.Control.Monad.Trans.Either (EitherT)
+import           X.Control.Monad.Trans.Either (EitherT, left)
 
 check :: WardenParams
       -> View
@@ -53,4 +54,9 @@ checkViewFiles wps ps@(CheckParams _s sf _lb verb fce) v vfs = do
   frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps verb fce) <$> vfs
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
+
+infer :: WardenParams
+      -> [FilePath]
+      -> EitherT WardenError (ResourceT IO) Schema
+infer _wps _fps = left $ WardenNotImplementedError
 
