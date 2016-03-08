@@ -46,20 +46,10 @@ instance NFData FieldLooks
 -- 'LooksBoolean' (e.g., from the set {"true", "false",
 -- "undetermined"}). Likewise e.g., 'LooksIntegral' $$ \subseteq $$
 -- 'RealField'.
---
--- FIXME: come up with something easier to test than this horrible pattern-match
 fieldTypeIncludes :: FieldType -> FieldLooks -> Bool
-fieldTypeIncludes _ LooksEmpty = True
-fieldTypeIncludes TextField _ = True
-
--- equality
-fieldTypeIncludes CategoricalField LooksCategorical = True
-fieldTypeIncludes BooleanField LooksBoolean = True
-fieldTypeIncludes IntegralField LooksIntegral = True
-fieldTypeIncludes RealField LooksReal = True
-
--- set inclusion
-fieldTypeIncludes RealField LooksIntegral = True
-fieldTypeIncludes CategoricalField LooksBoolean = True
-
-fieldTypeIncludes _ _ = False
+fieldTypeIncludes ft fl = case ft of
+  TextField -> fl /= LooksBroken
+  CategoricalField -> fl == LooksCategorical || fl == LooksBoolean || fl == LooksEmpty
+  BooleanField -> fl == LooksBoolean || fl == LooksEmpty
+  IntegralField -> fl == LooksIntegral || fl == LooksEmpty
+  RealField -> fl == LooksReal || fl == LooksIntegral || fl == LooksEmpty
