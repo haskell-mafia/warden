@@ -3,8 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Warden.Data.Schema (
-    FieldType(..)
-  , Schema(..)
+    Schema(..)
   , SchemaField(..)
   , SchemaFile(..)
   , SchemaVersion(..)
@@ -19,6 +18,7 @@ import           P
 
 import           System.IO (FilePath)
 
+import           Warden.Data.Field
 import           Warden.Data.Row
 
 newtype SchemaFile =
@@ -40,11 +40,3 @@ data Schema = Schema !SchemaVersion !FieldCount !(Vector SchemaField)
 -- numeric types.
 data SchemaField = SchemaField !FieldType
   deriving (Eq, Show)
-
-data FieldType =
-    TextField
-  | CategoricalField
-  | BooleanField
-  | IntegralField
-  | RealField
-  deriving (Eq, Show, Enum, Bounded)

@@ -9,7 +9,6 @@
 module Warden.Data.Row (
     FieldCount(..)
   , FieldLookCount(..)
-  , FieldLooks(..)
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
@@ -38,7 +37,6 @@ import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
 import           Data.Char (chr, ord)
-import           Data.Ix (Ix)
 import           Data.List (repeat, zip)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -51,6 +49,8 @@ import           Data.Word (Word8)
 import           GHC.Generics (Generic)
 
 import           P
+
+import           Warden.Data.Field
 
 newtype LineBound =
   LineBound {
@@ -94,18 +94,6 @@ newtype RowCount =
   } deriving (Eq, Show, Ord, Num, Generic)
 
 instance NFData RowCount
-
-data FieldLooks =
-    LooksEmpty
-  | LooksIntegral
-  | LooksReal
-  | LooksText
-  | LooksCategorical
-  | LooksBoolean
-  | LooksBroken -- ^ Not valid UTF-8.
-  deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
-
-instance NFData FieldLooks
 
 emptyLookCountArray :: Array FieldLooks ObservationCount
 emptyLookCountArray =
