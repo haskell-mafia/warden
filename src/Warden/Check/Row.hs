@@ -103,11 +103,11 @@ finalizeSVParseState ps sch ds vfs sv =
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of
   0 -> CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
-  1 -> maybe CheckPassed (validateSchemaFields s) sch
+  1 -> maybe CheckPassed (validateSchemaFieldCount s) sch
   _ -> CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch s]
 
-validateSchemaFields :: Set FieldCount -> Schema -> CheckStatus
-validateSchemaFields s (Schema _v cnt _fs) =
+validateSchemaFieldCount :: Set FieldCount -> Schema -> CheckStatus
+validateSchemaFieldCount s (Schema _v cnt _fs) =
   let s' = S.singleton cnt
       d = S.difference s s' in
   case S.toList d of
