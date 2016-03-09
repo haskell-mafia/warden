@@ -34,11 +34,9 @@ module Warden.Data.Row (
 
 import           Control.Lens
 
-import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
 import           Data.Char (chr, ord)
-import           Data.List (repeat, zip)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -50,6 +48,8 @@ import           Data.Word (Word8)
 import           GHC.Generics (Generic)
 
 import           P
+
+import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 
@@ -98,9 +98,10 @@ newtype RowCount =
 
 instance NFData RowCount
 
-emptyLookCountArray :: Array FieldLooks ObservationCount
-emptyLookCountArray =
-  array (minBound, maxBound) (zip [minBound..maxBound] $ repeat (ObservationCount 0))
+emptyLookCountVector :: Vector ObservationCount
+emptyLookCountVector =
+  let ixs = fmap fromEnum ([minBound..maxBound] :: [FieldLooks]) in
+  V.replicate (length ixs) (ObservationCount 0)
 
 combineFieldLooks :: FieldLookCount
                   -> FieldLookCount
@@ -112,19 +113,19 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
   where
     combine' = V.zipWith addLooks
 
-    addLooks a b = accum (+) a $ assocs b
+    addLooks a b = V.accum (+) a . V.toList $ V.indexed b
 
     -- To retain some sanity in the event of mismatched field counts.
     matchSize a b =
       let la = V.length a
           lb = V.length b
           ln = max la lb
-          na = V.concat [a, V.replicate (ln - la) emptyLookCountArray]
-          nb = V.concat [b, V.replicate (ln - lb) emptyLookCountArray] in
+          na = V.concat [a, V.replicate (ln - la) emptyLookCountVector]
+          nb = V.concat [b, V.replicate (ln - lb) emptyLookCountVector] in
       (na, nb) 
 
 data FieldLookCount =
-    FieldLookCount !(Vector (Array FieldLooks ObservationCount))
+    FieldLookCount !(Vector (Vector ObservationCount))
   | NoFieldLookCount
   deriving (Eq, Show)
 
@@ -184,9 +185,9 @@ parseField t = case parseOnly fieldP (asciiToLower t) of
   Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
 
-updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
+updateFieldLooks :: Text -> Vector ObservationCount -> Vector ObservationCount
 updateFieldLooks !t !a =
-  accum  (+) a [(parseField t, 1)]
+  V.accum (+) a [(fromEnum (parseField t), 1)]
 {-# INLINE updateFieldLooks #-}
 
 fieldP :: Parser ParsedField
@@ -243,7 +244,7 @@ updateSVParseState !st row =
 
   updateFields (SVFields !v) NoFieldLookCount =
     FieldLookCount $ V.zipWith updateFieldLooks v $
-      V.replicate (V.length v) emptyLookCountArray
+      V.replicate (V.length v) emptyLookCountVector
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a

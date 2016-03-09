@@ -6,28 +6,30 @@ module Warden.Serial.Json.Row(
   , toFieldCount
   , fromSVParseState
   , toSVParseState
-  , toFieldArray
-  , fromFieldArray
+  , toFieldVector
+  , fromFieldVector
   , toLineBound
   , fromLineBound
   , toSeparator
   , fromSeparator
   ) where
 
+import           Control.Monad.ST (runST)
+
 import           Data.Aeson ((.:), (.:?), (.=), object, parseJSON, toJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
-import           Data.Array (elems, indices, array)
-import qualified Data.Array as A
 import           Data.Char (chr, ord)
-import           Data.List (zip)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import           Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector.Algorithms.Insertion as Insertion
 
 import           P
 
+import           Prelude (toEnum, fromEnum)
+
 import           Warden.Data.Row
-import           Warden.Data.Field
 import           Warden.Serial.Json.Field
 
 fromSeparator :: Separator -> Value
@@ -60,28 +62,30 @@ toFieldCount :: Value -> Parser FieldCount
 toFieldCount (Number n) = FieldCount <$> parseJSON (Number n)
 toFieldCount x          = typeMismatch "Warden.Data.Row.FieldCount" x
 
-fromFieldArray :: A.Array FieldLooks ObservationCount -> Value
-fromFieldArray a =
-  let is = fromFieldLooks <$> indices a
-      vs = fmap (toJSON . unObservationCount) $ elems a in
-  toJSON . fmap fromAssoc $ zip is vs
+fromFieldVector :: Vector ObservationCount -> Value
+fromFieldVector a =
+  toJSON $ V.imap fromAssoc a
   where
-    fromAssoc (i, v) = object [
-        "looks" .= i
-      , "count" .= v
+    fromAssoc i v = object [
+        "looks" .= fromFieldLooks (toEnum i)
+      , "count" .= toJSON (unObservationCount v)
       ]
 
-toFieldArray :: Value -> Parser (A.Array FieldLooks ObservationCount)
-toFieldArray (Array os) = do
-  as <- mapM toAssoc $ V.toList os
-  pure . array (minBound, maxBound) $ as
+toFieldVector :: Value -> Parser (Vector ObservationCount)
+toFieldVector (Array os) = do
+  assocs <- V.mapM toAssoc os
+  pure . V.map snd $ runST $ do
+    assocs' <- V.thaw assocs
+    -- Insertion sort because the vectors are very small.
+    Insertion.sort assocs'
+    V.freeze assocs'
   where
     toAssoc (Object o) = do
-      looks <- toFieldLooks =<< (o .: "looks")
+      looks <- fmap fromEnum $ toFieldLooks =<< (o .: "looks")
       count' <- fmap ObservationCount $ parseJSON =<< (o .: "count")
       pure (looks, count')
     toAssoc x = typeMismatch "(Warden.Data.Row.FieldLooks, Integer)" x
-toFieldArray x = typeMismatch "Array Warden.Data.Row.FieldLooks Integer" x
+toFieldVector x = typeMismatch "Vector Warden.Data.Row.FieldLooks Integer" x
 
 fromSVParseState :: SVParseState -> Value
 fromSVParseState (SVParseState br tr nfs fas) = object $ [
@@ -92,13 +96,13 @@ fromSVParseState (SVParseState br tr nfs fas) = object $ [
          NoFieldLookCount ->
            []
          FieldLookCount fas' ->
-           ["field-looks" .= (fmap fromFieldArray $ V.toList fas')]
+           ["field-looks" .= (fmap fromFieldVector $ V.toList fas')]
 
 toSVParseState :: Value -> Parser SVParseState
 toSVParseState (Object o) = do
   br <- toRowCount =<< (o .: "bad-rows")
   tr <- toRowCount =<< (o .: "total-rows")
   nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
-  fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldArray) =<< (o .:? "field-looks")
+  fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldVector) =<< (o .:? "field-looks")
   pure $ SVParseState br tr nfs fas
 toSVParseState x          = typeMismatch "Warden.Data.Row.SVParseState" x
