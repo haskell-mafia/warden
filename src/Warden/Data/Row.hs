@@ -87,7 +87,6 @@ instance NFData Separator
 data Row =
     SVFields !(Vector Text)
   | RowFailure !Text
-  | SVEOF
   deriving (Eq, Show, Generic)
 
 instance NFData Row
@@ -233,11 +232,9 @@ updateSVParseState !st row =
  where
   countGood (SVFields _)   = RowCount 1
   countGood (RowFailure _) = RowCount 0
-  countGood SVEOF          = RowCount 0
 
   countBad (SVFields _)    = RowCount 0
   countBad (RowFailure _)  = RowCount 1
-  countBad SVEOF           = RowCount 0
 
   updateNumFields (SVFields !v) !ns =
     let n = FieldCount $ V.length v in
