@@ -247,3 +247,4 @@ updateSVParseState !st row =
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
+{-# INLINE updateSVParseState #-}
