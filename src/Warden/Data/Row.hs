@@ -1,8 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 
@@ -41,8 +45,9 @@ import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
+import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 import           Data.Word (Word8)
 
 import           GHC.Generics (Generic)
@@ -70,8 +75,13 @@ renderFieldCount = T.pack . show . unFieldCount
 
 newtype ObservationCount =
   ObservationCount {
-    unObservationCount :: Integer
+    unObservationCount :: Int64
   } deriving (Eq, Show, Ord, Num, Generic)
+
+$(derivingUnbox "ObservationCount"
+  [t| ObservationCount -> Int64 |]
+  [| \(ObservationCount x) -> x |]
+  [| \x -> (ObservationCount x) |])
 
 instance NFData ObservationCount
 
@@ -85,7 +95,7 @@ instance NFData Separator
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
 data Row =
-    SVFields !(Vector Text)
+    SVFields !(V.Vector Text)
   | RowFailure !Text
   deriving (Eq, Show, Generic)
 
@@ -98,10 +108,10 @@ newtype RowCount =
 
 instance NFData RowCount
 
-emptyLookCountVector :: Vector ObservationCount
+emptyLookCountVector :: VU.Vector ObservationCount
 emptyLookCountVector =
   let ixs = fmap fromEnum ([minBound..maxBound] :: [FieldLooks]) in
-  V.replicate (length ixs) (ObservationCount 0)
+  VU.replicate (length ixs) (ObservationCount 0)
 
 combineFieldLooks :: FieldLookCount
                   -> FieldLookCount
@@ -113,7 +123,7 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
   where
     combine' = V.zipWith addLooks
 
-    addLooks a b = V.accum (+) a . V.toList $ V.indexed b
+    addLooks a b = VU.accumulate (+) a $ VU.indexed b
 
     -- To retain some sanity in the event of mismatched field counts.
     matchSize a b =
@@ -125,7 +135,7 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
       (na, nb) 
 
 data FieldLookCount =
-    FieldLookCount !(Vector (Vector ObservationCount))
+    FieldLookCount !(V.Vector (VU.Vector ObservationCount))
   | NoFieldLookCount
   deriving (Eq, Show)
 
@@ -185,9 +195,9 @@ parseField t = case parseOnly fieldP (asciiToLower t) of
   Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
 
-updateFieldLooks :: Text -> Vector ObservationCount -> Vector ObservationCount
+updateFieldLooks :: Text -> VU.Vector ObservationCount -> VU.Vector ObservationCount
 updateFieldLooks !t !a =
-  V.accum (+) a [(fromEnum (parseField t), 1)]
+  VU.accum (+) a [(fromEnum (parseField t), 1)]
 {-# INLINE updateFieldLooks #-}
 
 fieldP :: Parser ParsedField

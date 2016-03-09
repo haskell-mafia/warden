@@ -21,13 +21,13 @@ import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.Char (chr, ord)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import           Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector.Algorithms.Insertion as Insertion
 
 import           P
 
-import           Prelude (toEnum, fromEnum)
+import           Prelude (fromEnum)
 
 import           Warden.Data.Row
 import           Warden.Serial.Json.Field
@@ -62,19 +62,20 @@ toFieldCount :: Value -> Parser FieldCount
 toFieldCount (Number n) = FieldCount <$> parseJSON (Number n)
 toFieldCount x          = typeMismatch "Warden.Data.Row.FieldCount" x
 
-fromFieldVector :: Vector ObservationCount -> Value
+fromFieldVector :: VU.Vector ObservationCount -> Value
 fromFieldVector a =
-  toJSON $ V.imap fromAssoc a
+  let ls = V.fromList $ [minBound..maxBound] in
+  toJSON . V.zipWith fromAssoc ls $ VU.convert a
   where
-    fromAssoc i v = object [
-        "looks" .= fromFieldLooks (toEnum i)
+    fromAssoc l v = object [
+        "looks" .= fromFieldLooks l
       , "count" .= toJSON (unObservationCount v)
       ]
 
-toFieldVector :: Value -> Parser (Vector ObservationCount)
+toFieldVector :: Value -> Parser (VU.Vector ObservationCount)
 toFieldVector (Array os) = do
   assocs <- V.mapM toAssoc os
-  pure . V.map snd $ runST $ do
+  pure . VU.map snd . VU.convert $ runST $ do
     assocs' <- V.thaw assocs
     -- Insertion sort because the vectors are very small.
     Insertion.sort assocs'
@@ -85,7 +86,7 @@ toFieldVector (Array os) = do
       count' <- fmap ObservationCount $ parseJSON =<< (o .: "count")
       pure (looks, count')
     toAssoc x = typeMismatch "(Warden.Data.Row.FieldLooks, Integer)" x
-toFieldVector x = typeMismatch "Vector Warden.Data.Row.FieldLooks Integer" x
+toFieldVector x = typeMismatch "V.Vector Warden.Data.Row.FieldLooks Integer" x
 
 fromSVParseState :: SVParseState -> Value
 fromSVParseState (SVParseState br tr nfs fas) = object $ [

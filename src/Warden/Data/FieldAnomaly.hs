@@ -9,12 +9,10 @@ module Warden.Data.FieldAnomaly (
   ) where
 
 import           Data.List.NonEmpty (NonEmpty, nonEmpty)
-import           Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 
 import           P
-
-import           Prelude (toEnum)
 
 import           Warden.Data.Field
 import           Warden.Data.Row
@@ -29,10 +27,10 @@ data AnomalousField =
 
 -- | For a given field type and set of value observations of that field, find
 -- any which look anomalous.
-fieldAnomalies :: FieldType -> Vector ObservationCount -> Maybe AnomalousField
+fieldAnomalies :: FieldType -> VU.Vector ObservationCount -> Maybe AnomalousField
 fieldAnomalies ft obs = do
   as <- nonEmpty . catMaybes . V.toList . V.map (uncurry (checkFieldType ft)) $
-    V.imap (\i v -> (toEnum i, v)) obs
+    V.zip (V.fromList [minBound..maxBound]) $ VU.convert obs
   pure $ AnomalousField ft as
 
 checkFieldType :: FieldType -> FieldLooks -> ObservationCount -> Maybe FieldAnomaly

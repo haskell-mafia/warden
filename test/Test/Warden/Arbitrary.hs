@@ -15,8 +15,8 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
-import           Data.Vector (Vector)
 import qualified Data.Vector          as V
+import qualified Data.Vector.Unboxed as VU
 import           Data.Word
 
 import           Debruijn.Hex (parseHex)
@@ -323,12 +323,12 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
 
-genLooksVec :: Gen (Vector (Vector ObservationCount))
+genLooksVec :: Gen (V.Vector (VU.Vector ObservationCount))
 genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
   where
     genFieldLooks = do
       vs <- vectorOf (length ([minBound..maxBound] :: [FieldLooks])) arbitrary
-      pure $ V.fromList vs
+      pure $ VU.fromList vs
 
 instance Arbitrary FieldLookCount where
   arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
