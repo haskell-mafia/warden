@@ -34,6 +34,7 @@ import           P
 
 import           System.IO
 
+import           Warden.Data.FieldAnomaly
 import           Warden.Data.Row
 import           Warden.Data.View
 import           Warden.Error
@@ -141,6 +142,8 @@ data RowFailure =
 
 data SchemaFailure =
     IncorrectFieldCount FieldCount !(Set FieldCount)
+  | FieldCountObservationMismatch FieldCount FieldCount
+  | FieldTypeAnomaly AnomalousField
   deriving (Eq, Show)
 
 renderFailure :: Failure -> Text
@@ -169,4 +172,14 @@ renderSchemaFailure (IncorrectFieldCount c ds) = T.concat [
   , T.pack (show c)
   , ", got "
   , T.pack (show ds)
+  ]
+renderSchemaFailure (FieldCountObservationMismatch a b) = T.concat [
+    "Field count in schema differs from unique field observations. schema count is "
+  , renderFieldCount a
+  , ", observed "
+  , renderFieldCount b
+  ]
+renderSchemaFailure (FieldTypeAnomaly a) = T.concat [
+    "Field type differs from that specified in schema: "
+  , T.pack (show a)
   ]

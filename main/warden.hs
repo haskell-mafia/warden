@@ -16,12 +16,13 @@ import           Options.Applicative
 import           P
 
 import           System.Exit (exitSuccess, exitFailure)
-import           System.IO (IO, print, putStrLn)
+import           System.IO (IO, FilePath, print, putStrLn)
 
 import           Warden.Commands
 import           Warden.Data
 import           Warden.Error
 import           Warden.Param
+import           Warden.Schema
 
 import           X.Control.Monad.Trans.Either (mapEitherT)
 import           X.Control.Monad.Trans.Either.Exit (orDie)
@@ -30,6 +31,7 @@ import           X.Options.Applicative
 data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
+  | Infer ![FilePath]
   deriving (Eq, Show)
 
 main :: IO ()
@@ -52,6 +54,9 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
+run wps (Infer fs) = do
+  s <- orDie renderWardenError . mapEitherT runResourceT $ infer wps fs
+  T.putStrLn $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
 finishCheck verb rs = do
@@ -65,6 +70,7 @@ wardenP :: Parser Command
 wardenP = subparser $
      command' "check" "Run checks over a view." checkP
   <> command' "check-file" "Run checks over a single file." fileCheckP
+  <> command' "infer" "Attempt to infer a schema from a set of metadata files." inferP
 
 checkP :: Parser Command
 checkP = Check <$> viewP <*> checkParamsP
@@ -72,12 +78,20 @@ checkP = Check <$> viewP <*> checkParamsP
 fileCheckP :: Parser Command
 fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
 
+inferP :: Parser Command
+inferP = Infer <$> some markerFileP
+
 checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
                            <*> schemaFileP
                            <*> lineBoundP
                            <*> verbosityP
                            <*> forceP
+
+markerFileP :: Parser FilePath
+markerFileP = strArgument $
+     metavar "MARKER-FILE"
+  <> help "Path to view marker file(s) from `warden check`."
 
 viewP :: Parser View
 viewP = View <$> (strArgument $

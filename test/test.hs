@@ -1,6 +1,7 @@
 import           Disorder.Core.Main
 
 import qualified Test.Warden.Data.Check
+import qualified Test.Warden.Data.FieldAnomaly
 import qualified Test.Warden.Data.Marker
 import qualified Test.Warden.Data.Numeric
 import qualified Test.Warden.Data.Row
@@ -14,6 +15,7 @@ import qualified Test.Warden.Serial.Json.Schema
 main :: IO ()
 main = disorderMain [
     Test.Warden.Data.Check.tests
+  , Test.Warden.Data.FieldAnomaly.tests
   , Test.Warden.Data.Marker.tests
   , Test.Warden.Data.Numeric.tests
   , Test.Warden.Data.Row.tests

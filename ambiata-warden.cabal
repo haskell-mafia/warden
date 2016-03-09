@@ -64,6 +64,8 @@ library
                        Warden.Data
                        Warden.Data.Check
                        Warden.Data.Chunk
+                       Warden.Data.Field
+                       Warden.Data.FieldAnomaly
                        Warden.Data.Marker
                        Warden.Data.Numeric
                        Warden.Data.Param
@@ -80,6 +82,7 @@ library
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Check
+                       Warden.Serial.Json.Field
                        Warden.Serial.Json.Marker
                        Warden.Serial.Json.Numeric
                        Warden.Serial.Json.Param

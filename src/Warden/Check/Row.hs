@@ -15,11 +15,12 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.Conduit (Consumer, ($$))
 import qualified Data.Conduit.List as CL
+import           Data.List.NonEmpty (NonEmpty, nonEmpty)
 import qualified Data.List.NonEmpty as NE
-import           Data.List.NonEmpty (NonEmpty)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           Delorean.Local.Date (Date)
 
@@ -94,6 +95,7 @@ finalizeSVParseState :: CheckParams
 finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkNumFields sch (sv ^. numFields)
+             , checkFieldAnomalies sch (sv ^. fieldLooks)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
@@ -103,11 +105,11 @@ finalizeSVParseState ps sch ds vfs sv =
 checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
 checkNumFields sch s = case S.size s of
   0 -> CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
-  1 -> maybe CheckPassed (validateSchemaFields s) sch
+  1 -> maybe CheckPassed (validateSchemaFieldCount s) sch
   _ -> CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch s]
 
-validateSchemaFields :: Set FieldCount -> Schema -> CheckStatus
-validateSchemaFields s (Schema _v cnt _fs) =
+validateSchemaFieldCount :: Set FieldCount -> Schema -> CheckStatus
+validateSchemaFieldCount s (Schema _v cnt _fs) =
   let s' = S.singleton cnt
       d = S.difference s s' in
   case S.toList d of
@@ -123,3 +125,21 @@ checkTotalRows (RowCount n)
 checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
 checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
+
+checkFieldAnomalies :: Maybe Schema -> FieldLookCount -> CheckStatus
+checkFieldAnomalies Nothing _ = CheckPassed
+checkFieldAnomalies _ NoFieldLookCount = CheckPassed
+checkFieldAnomalies (Just (Schema SchemaV1 _fc fs)) (FieldLookCount as) =
+  let schemaCount = FieldCount  $ V.length fs
+      obsCount = FieldCount $ V.length as in
+  if schemaCount /= obsCount
+    then
+      CheckFailed $ NE.fromList [SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount]
+    else
+      let rs = V.zipWith fieldAnomalies (schemaFieldType `V.map` fs) as
+          anoms = catMaybes $ V.toList rs in
+      case nonEmpty anoms of
+        Nothing ->
+          CheckPassed
+        Just anoms' ->
+          CheckFailed $ (SchemaCheckFailure . FieldTypeAnomaly) <$> anoms'
