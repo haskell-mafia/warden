@@ -369,7 +369,7 @@ instance Arbitrary SchemaVersion where
   arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary Schema where
-  arbitrary = Schema <$> arbitrary <*> arbitrary <*> arbitrary
+  arbitrary = Schema <$> arbitrary <*> arbitrary
 
 instance Arbitrary ObservationCount where
   arbitrary = (ObservationCount . fromIntegral . unNPlus) <$> arbitrary

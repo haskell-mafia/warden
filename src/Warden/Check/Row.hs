@@ -94,28 +94,12 @@ finalizeSVParseState :: CheckParams
                      -> (CheckStatus, ViewMetadata)
 finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
-               checkNumFields sch (sv ^. numFields)
-             , checkFieldAnomalies sch (sv ^. fieldLooks)
+               checkFieldAnomalies sch (sv ^. fieldLooks)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
       vfs' = S.fromList $ NE.toList vfs in
   (st, ViewMetadata sv ps ds vfs')
-
-checkNumFields :: Maybe Schema -> Set FieldCount -> CheckStatus
-checkNumFields sch s = case S.size s of
-  0 -> CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
-  1 -> maybe CheckPassed (validateSchemaFieldCount s) sch
-  _ -> CheckFailed $ NE.fromList [RowCheckFailure $ FieldCountMismatch s]
-
-validateSchemaFieldCount :: Set FieldCount -> Schema -> CheckStatus
-validateSchemaFieldCount s (Schema _v cnt _fs) =
-  let s' = S.singleton cnt
-      d = S.difference s s' in
-  case S.toList d of
-    [] -> CheckPassed
-    _ -> CheckFailed $
-            NE.fromList [SchemaCheckFailure $ IncorrectFieldCount cnt d]
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)
@@ -129,7 +113,7 @@ checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
 checkFieldAnomalies :: Maybe Schema -> FieldLookCount -> CheckStatus
 checkFieldAnomalies Nothing _ = CheckPassed
 checkFieldAnomalies _ NoFieldLookCount = CheckPassed
-checkFieldAnomalies (Just (Schema SchemaV1 _fc fs)) (FieldLookCount as) =
+checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
   let schemaCount = FieldCount  $ V.length fs
       obsCount = FieldCount $ V.length as in
   if schemaCount /= obsCount

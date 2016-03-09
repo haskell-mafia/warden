@@ -20,7 +20,6 @@ import           P
 import           System.IO (FilePath)
 
 import           Warden.Data.Field
-import           Warden.Data.Row
 
 newtype SchemaFile =
   SchemaFile {
@@ -33,8 +32,8 @@ renderSchemaFile = T.pack . unSchemaFile
 data SchemaVersion =
     SchemaV1
   deriving (Eq, Show, Enum, Bounded)
--- FIXME: get rid of FieldCount
-data Schema = Schema !SchemaVersion !FieldCount !(Vector SchemaField)
+
+data Schema = Schema !SchemaVersion !(Vector SchemaField)
   deriving (Eq, Show)
 
 -- | This will contain more data in the future, e.g., summary statistics for
