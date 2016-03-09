@@ -24,6 +24,7 @@ module Warden.Data.Row (
   , initialSVParseState
   , numFields
   , parseField
+  , renderFieldCount
   , renderParsedField
   , resolveSVParseState
   , totalRows
@@ -64,10 +65,13 @@ newtype FieldCount =
 
 instance NFData FieldCount
 
+renderFieldCount :: FieldCount -> Text
+renderFieldCount = T.pack . show . unFieldCount
+
 newtype ObservationCount =
   ObservationCount {
     unObservationCount :: Integer
-  } deriving (Eq, Show, Num, Generic)
+  } deriving (Eq, Show, Ord, Num, Generic)
 
 instance NFData ObservationCount
 

@@ -18,7 +18,7 @@ import           Warden.Data.Field
 import           Warden.Data.Row
 
 data FieldAnomaly =
-    FieldAnomaly !FieldLooks !RowCount
+    FieldAnomaly !FieldLooks !ObservationCount
   deriving (Eq, Show)
 
 data AnomalousField =
@@ -27,14 +27,14 @@ data AnomalousField =
 
 -- | For a given field type and set of value observations of that field, find
 -- any which look anomalous.
-fieldAnomalies :: FieldType -> Array FieldLooks RowCount -> Maybe AnomalousField
+fieldAnomalies :: FieldType -> Array FieldLooks ObservationCount -> Maybe AnomalousField
 fieldAnomalies ft obs = do
   as <- nonEmpty . catMaybes . fmap (uncurry (checkFieldType ft)) $ A.assocs obs
   pure $ AnomalousField ft as
 
-checkFieldType :: FieldType -> FieldLooks -> RowCount -> Maybe FieldAnomaly
+checkFieldType :: FieldType -> FieldLooks -> ObservationCount -> Maybe FieldAnomaly
 checkFieldType ft looks cnt
   | fieldTypeIncludes ft looks = Nothing
-  | otherwise = if cnt > (RowCount 0)
+  | otherwise = if cnt > (ObservationCount 0)
                   then Just $ FieldAnomaly looks cnt
                   else Nothing

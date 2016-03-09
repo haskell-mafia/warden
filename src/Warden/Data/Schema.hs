@@ -8,6 +8,7 @@ module Warden.Data.Schema (
   , SchemaFile(..)
   , SchemaVersion(..)
   , renderSchemaFile
+  , schemaFieldType
   ) where
 
 import           Data.Text (Text)
@@ -32,7 +33,7 @@ renderSchemaFile = T.pack . unSchemaFile
 data SchemaVersion =
     SchemaV1
   deriving (Eq, Show, Enum, Bounded)
-
+-- FIXME: get rid of FieldCount
 data Schema = Schema !SchemaVersion !FieldCount !(Vector SchemaField)
   deriving (Eq, Show)
 
@@ -40,3 +41,6 @@ data Schema = Schema !SchemaVersion !FieldCount !(Vector SchemaField)
 -- numeric types.
 data SchemaField = SchemaField !FieldType
   deriving (Eq, Show)
+
+schemaFieldType :: SchemaField -> FieldType
+schemaFieldType (SchemaField ft) = ft
