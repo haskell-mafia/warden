@@ -2,20 +2,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {- This module will probably live in brandix soon. -}
 
 module Warden.Data.Field (
-    FieldLooks(..)
+    CompatibleEntries(..)
+  , FieldHistogram(..)
+  , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
   ) where
 
 import           Data.Ix (Ix)
+import qualified Data.Vector.Unboxed as VU
+import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 
 import           GHC.Generics (Generic)
 
 import           P
+
+import           Prelude (fromEnum, toEnum)
 
 data FieldType =
     TextField
@@ -26,6 +35,11 @@ data FieldType =
   deriving (Eq, Show, Enum, Bounded, Ord, Ix, Generic)
 
 instance NFData FieldType
+
+$(derivingUnbox "fieldType"
+  [t| FieldType -> Int |]
+  [| \x -> fromEnum x |]
+  [| \y -> toEnum y |])
 
 data FieldLooks =
     LooksEmpty
@@ -38,6 +52,11 @@ data FieldLooks =
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
 instance NFData FieldLooks
+
+$(derivingUnbox "FieldLooks"
+  [t| FieldLooks -> Int |]
+  [| \x -> fromEnum x |]
+  [| \y -> toEnum y |])
 
 -- | Schema field types kinda look like a join semilattice under set
 -- inclusion. For example, if a given field is classified as a 
@@ -53,3 +72,26 @@ fieldTypeIncludes ft fl = case ft of
   BooleanField -> fl == LooksBoolean || fl == LooksEmpty
   IntegralField -> fl == LooksIntegral || fl == LooksEmpty
   RealField -> fl == LooksReal || fl == LooksIntegral || fl == LooksEmpty
+
+-- | Number of observed values which are compatible with a given field type.
+newtype CompatibleEntries =
+  CompatibleEntries {
+    unCompatibleEntries :: Int64
+  } deriving (Eq, Show, Ord, Num, Generic)
+
+instance NFData CompatibleEntries
+
+$(derivingUnbox "CompatibleEntries"
+  [t| CompatibleEntries -> Int64 |]
+  [| \(CompatibleEntries x) -> x |]
+  [| \x -> (CompatibleEntries x) |])
+
+-- | Map of field types to the number of observed values which seem compatible
+-- with that type.
+newtype FieldHistogram =
+  FieldHistogram {
+    unFieldHistogram :: VU.Vector CompatibleEntries
+  } deriving (Eq, Show, Generic)
+
+
+instance NFData FieldHistogram

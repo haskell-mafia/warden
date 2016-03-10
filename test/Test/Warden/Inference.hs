@@ -1,22 +1,35 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Test.Warden.Inference where
 
+import           Control.Lens (view)
+
 import           Data.List (take, repeat)
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Text as T
 
 import           Disorder.Core.UniquePair (UniquePair(..))
+import           Disorder.Corpus (muppets)
 
 import           P
 
 import           System.IO (IO)
 
 import           Test.QuickCheck
-import           Test.Warden.Arbitrary ()
+import           Test.Warden
+import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Inference
+
+prop_fieldLookSum :: NonEmpty ViewMarker -> Property
+prop_fieldLookSum vms =
+  let total = sum $ fmap (sumFLC . view fieldLooks . vmViewCounts . vmMetadata) vms
+      total' = sumFLC $ fieldLookSum vms in
+  total === total'
 
 prop_viewMarkerMismatch_same :: ViewMarker -> Property
 prop_viewMarkerMismatch_same vm =
@@ -33,6 +46,50 @@ prop_validateViewMarkers_same vm = forAll (choose (1, 100)) $ \n ->
   let vms = NE.fromList . take n $ repeat vm in
   (validateViewMarkers vms) === (Right ())
 
+prop_compatibleEntries_text :: ObservationCount -> Property
+prop_compatibleEntries_text oc = forAll (elements muppets) $ \t ->
+  let l = parseField t
+      csText = compatibleEntries TextField l oc
+      csIntegral = compatibleEntries IntegralField l oc
+      csReal = compatibleEntries RealField l oc
+      csBoolean = compatibleEntries BooleanField l oc in
+  (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries 0, CompatibleEntries 0, CompatibleEntries 0)
+
+prop_compatibleEntries_integral :: ObservationCount -> Int -> Property
+prop_compatibleEntries_integral oc n =
+  let l = parseField . T.pack $ show n
+      csText = compatibleEntries TextField l oc
+      csIntegral = compatibleEntries IntegralField l oc
+      csReal = compatibleEntries RealField l oc
+      csBoolean = compatibleEntries BooleanField l oc in
+  (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries 0)
+
+prop_compatibleEntries_boolean :: ObservationCount -> Property
+prop_compatibleEntries_boolean oc = forAll renderedBool $ \b ->
+  let l = parseField b
+      csText = compatibleEntries TextField l oc
+      csIntegral = compatibleEntries IntegralField l oc
+      csReal = compatibleEntries RealField l oc
+      csBoolean = compatibleEntries BooleanField l oc in
+  (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries 0, CompatibleEntries 0, CompatibleEntries (unObservationCount oc))
+
+prop_compatibleEntries_real :: ObservationCount -> Double -> Property
+prop_compatibleEntries_real oc n =
+  let l = parseField . T.pack $ show n
+      csText = compatibleEntries TextField l oc
+      csIntegral = compatibleEntries IntegralField l oc
+      csReal = compatibleEntries RealField l oc
+      csBoolean = compatibleEntries BooleanField l oc in
+  (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries 0, CompatibleEntries (unObservationCount oc), CompatibleEntries 0)
+
+prop_compatibleEntries_empty :: ObservationCount -> Property
+prop_compatibleEntries_empty oc =
+  let l = parseField ""
+      csText = compatibleEntries TextField l oc
+      csIntegral = compatibleEntries IntegralField l oc
+      csReal = compatibleEntries RealField l oc
+      csBoolean = compatibleEntries BooleanField l oc in
+  (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc))
 
 return []
 tests :: IO Bool

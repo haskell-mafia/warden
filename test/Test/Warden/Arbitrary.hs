@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# OPTIONS_GHC -fno-warn-orphans       #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Warden.Arbitrary where
 
@@ -417,3 +418,13 @@ instance Arbitrary WardenParams where
   arbitrary = WardenParams <$> arbitrary
                            <*> arbitrary
                            <*> arbitrary
+
+renderedBool :: Gen Text
+renderedBool =
+  let reps = [
+               "t"
+             , "true"
+             , "f"
+             , "false"
+             ] in
+  elements $ reps <> (T.toUpper <$> reps)

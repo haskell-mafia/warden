@@ -7,24 +7,15 @@ import           Control.Lens ((^.))
 
 import qualified Data.Set as S
 
-import qualified Data.Vector as V
-import qualified Data.Vector.Unboxed as VU
-
 import           P
 
 import           System.IO (IO)
 
 import           Test.QuickCheck
+import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
-
-sumFLC :: FieldLookCount -> ObservationCount
-sumFLC l = sum . join $ VU.toList <$> (lookArrays l)
-  where
-    lookArrays l' = case l' of
-      NoFieldLookCount -> []
-      FieldLookCount v -> V.toList v
 
 prop_resolveSVParseState :: [SVParseState] -> Property
 prop_resolveSVParseState ss =

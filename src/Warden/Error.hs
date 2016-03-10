@@ -8,6 +8,7 @@ module Warden.Error (
   , MarkerError(..)
   , SchemaError(..)
   , TraversalError(..)
+  , ValidationFailure(..)
   , renderWardenError
 ) where
 
@@ -130,11 +131,22 @@ renderSchemaError = ("schema error: " <>) . render'
 
 data InferenceError =
     NoViewMarkersError
-  | MarkerValidationFailure Text
+  | MarkerValidationFailure ValidationFailure
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
 renderInferenceError = ("inference error: " <>) . render'
   where
     render' NoViewMarkersError = "No view markers provided."
-    render' (MarkerValidationFailure t) = "Inconsistent view markers: " <> t
+    render' (MarkerValidationFailure vf) = "Invalid view markers: " <> renderValidationFailure vf
+
+data ValidationFailure =
+    ViewMarkerMismatch Text
+  | NoFieldCounts
+  deriving (Eq, Show)
+
+renderValidationFailure :: ValidationFailure -> Text
+renderValidationFailure f = "Validation failure: " <> render' f
+  where
+    render' (ViewMarkerMismatch t) = "mismatch: " <> t
+    render' NoFieldCounts = "No field counts to perform inference on."
