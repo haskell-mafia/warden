@@ -14,9 +14,14 @@ module Warden.Data.Field (
   , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
+  , renderCompatibleEntries
+  , renderFieldHistogram
   ) where
 
 import           Data.Ix (Ix)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 
@@ -81,6 +86,9 @@ newtype CompatibleEntries =
 
 instance NFData CompatibleEntries
 
+renderCompatibleEntries :: CompatibleEntries -> Text
+renderCompatibleEntries (CompatibleEntries n) = T.pack $ show n
+
 $(derivingUnbox "CompatibleEntries"
   [t| CompatibleEntries -> Int64 |]
   [| \(CompatibleEntries x) -> x |]
@@ -93,5 +101,10 @@ newtype FieldHistogram =
     unFieldHistogram :: VU.Vector CompatibleEntries
   } deriving (Eq, Show, Generic)
 
+renderFieldHistogram :: FieldHistogram -> Text
+renderFieldHistogram (FieldHistogram cs) =
+  T.pack . show . V.toList .
+    V.zip (V.fromList [minBound..maxBound] :: V.Vector FieldType) .
+      V.map renderCompatibleEntries $ VU.convert cs
 
 instance NFData FieldHistogram

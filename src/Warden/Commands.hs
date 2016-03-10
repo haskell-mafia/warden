@@ -11,6 +11,8 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
+import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           P
 
@@ -22,6 +24,7 @@ import qualified Warden.Check.File as File
 import qualified Warden.Check.Row as Row
 
 import           Warden.Data
+import           Warden.Debug
 import           Warden.Error
 import           Warden.Inference
 import           Warden.Marker
@@ -57,10 +60,18 @@ checkViewFiles wps ps@(CheckParams _s sf _lb verb fce) v vfs = do
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 
-infer :: [FilePath]
+infer :: Verbosity
+      -> [FilePath]
       -> EitherT WardenError (ResourceT IO) Schema
-infer fps = case nonEmpty fps of
+infer v fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
-    hoistEither $ inferSchema vms
+    cs <- hoistEither $ countCompatibleFields vms
+    liftIO . debugPrintLn v $ renderFieldHistogramVector cs
+    left WardenNotImplementedError
+  where
+    renderFieldHistogramVector hs =
+      T.intercalate "\n" . V.toList .
+        V.map (\(i, t) -> (T.pack $ show i) <> ": " <> t) .
+          V.indexed $ V.map renderFieldHistogram hs

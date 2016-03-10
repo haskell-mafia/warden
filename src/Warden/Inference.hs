@@ -5,8 +5,11 @@
 {- Most of this module will probably end up in brandix. -}
 
 module Warden.Inference (
-    fieldLookSum
-  , inferSchema
+    compatibleEntries
+  , countsForField
+  , countsForType
+  , fieldLookSum
+  , countCompatibleFields
   , validateViewMarkers
   , viewMarkerMismatch
   ) where
@@ -79,13 +82,12 @@ compatibleEntries t l o =
     then CompatibleEntries $ unObservationCount o
     else CompatibleEntries 0
 
-inferSchema :: NonEmpty ViewMarker -> Either WardenError Schema
-inferSchema vms = do
+countCompatibleFields :: NonEmpty ViewMarker -> Either WardenError (V.Vector FieldHistogram)
+countCompatibleFields vms = do
   first WardenInferenceError $ validateViewMarkers vms
   case fieldLookSum vms of
       NoFieldLookCount ->
         Left . WardenInferenceError $
           MarkerValidationFailure NoFieldCounts
       FieldLookCount fls ->
-        let _fcs = V.map countsForField fls in
-        Left WardenNotImplementedError
+        Right $ V.map countsForField fls

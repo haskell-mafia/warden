@@ -31,7 +31,7 @@ import           X.Options.Applicative
 data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
-  | Infer ![FilePath]
+  | Infer !Verbosity ![FilePath]
   deriving (Eq, Show)
 
 main :: IO ()
@@ -54,8 +54,8 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
-run _wps (Infer fs) = do
-  s <- orDie renderWardenError . mapEitherT runResourceT $ infer fs
+run _wps (Infer v fs) = do
+  s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fs
   T.putStrLn $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
@@ -79,7 +79,7 @@ fileCheckP :: Parser Command
 fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
 
 inferP :: Parser Command
-inferP = Infer <$> some markerFileP
+inferP = Infer <$> verbosityP <*> some markerFileP
 
 checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
