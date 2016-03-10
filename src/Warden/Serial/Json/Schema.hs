@@ -17,21 +17,18 @@ import           P
 
 import           Warden.Data.Schema
 import           Warden.Serial.Json.Field
-import           Warden.Serial.Json.Row
 
 fromSchema :: Schema -> Value
-fromSchema (Schema v c fs) = object [
-    "field-count" .= fromFieldCount c
-  , "fields" .= (fmap fromSchemaField $ V.toList fs)
+fromSchema (Schema v fs) = object [
+    "fields" .= (fmap fromSchemaField $ V.toList fs)
   , "version" .= fromSchemaVersion v
   ]
 
 toSchema :: Value -> Parser Schema
 toSchema (Object o) = do
   v <- toSchemaVersion =<< (o .: "version")
-  c <- toFieldCount =<< (o .: "field-count")
   fs <- fmap V.fromList $ mapM toSchemaField =<< (o .: "fields")
-  pure $ Schema v c fs
+  pure $ Schema v fs
 toSchema x = typeMismatch "Warden.Data.Schema.Schema" x
 
 fromSchemaVersion :: SchemaVersion -> Value

@@ -1,8 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 
@@ -34,22 +38,23 @@ module Warden.Data.Row (
 
 import           Control.Lens
 
-import           Data.Array (Array, accum, array, assocs)
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
 import           Data.Char (chr, ord)
-import           Data.List (repeat, zip)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
+import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 import           Data.Word (Word8)
 
 import           GHC.Generics (Generic)
 
 import           P
+
+import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 
@@ -70,8 +75,13 @@ renderFieldCount = T.pack . show . unFieldCount
 
 newtype ObservationCount =
   ObservationCount {
-    unObservationCount :: Integer
+    unObservationCount :: Int64
   } deriving (Eq, Show, Ord, Num, Generic)
+
+$(derivingUnbox "ObservationCount"
+  [t| ObservationCount -> Int64 |]
+  [| \(ObservationCount x) -> x |]
+  [| \x -> (ObservationCount x) |])
 
 instance NFData ObservationCount
 
@@ -85,9 +95,8 @@ instance NFData Separator
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
 data Row =
-    SVFields !(Vector Text)
+    SVFields !(V.Vector Text)
   | RowFailure !Text
-  | SVEOF
   deriving (Eq, Show, Generic)
 
 instance NFData Row
@@ -99,9 +108,10 @@ newtype RowCount =
 
 instance NFData RowCount
 
-emptyLookCountArray :: Array FieldLooks ObservationCount
-emptyLookCountArray =
-  array (minBound, maxBound) (zip [minBound..maxBound] $ repeat (ObservationCount 0))
+emptyLookCountVector :: VU.Vector ObservationCount
+emptyLookCountVector =
+  let ixs = fmap fromEnum ([minBound..maxBound] :: [FieldLooks]) in
+  VU.replicate (length ixs) (ObservationCount 0)
 
 combineFieldLooks :: FieldLookCount
                   -> FieldLookCount
@@ -113,19 +123,19 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
   where
     combine' = V.zipWith addLooks
 
-    addLooks a b = accum (+) a $ assocs b
+    addLooks a b = VU.accumulate (+) a $ VU.indexed b
 
     -- To retain some sanity in the event of mismatched field counts.
     matchSize a b =
       let la = V.length a
           lb = V.length b
           ln = max la lb
-          na = V.concat [a, V.replicate (ln - la) emptyLookCountArray]
-          nb = V.concat [b, V.replicate (ln - lb) emptyLookCountArray] in
+          na = V.concat [a, V.replicate (ln - la) emptyLookCountVector]
+          nb = V.concat [b, V.replicate (ln - lb) emptyLookCountVector] in
       (na, nb) 
 
 data FieldLookCount =
-    FieldLookCount !(Vector (Array FieldLooks ObservationCount))
+    FieldLookCount !(V.Vector (VU.Vector ObservationCount))
   | NoFieldLookCount
   deriving (Eq, Show)
 
@@ -185,9 +195,9 @@ parseField t = case parseOnly fieldP (asciiToLower t) of
   Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
 
-updateFieldLooks :: Text -> Array FieldLooks ObservationCount -> Array FieldLooks ObservationCount
+updateFieldLooks :: Text -> VU.Vector ObservationCount -> VU.Vector ObservationCount
 updateFieldLooks !t !a =
-  accum  (+) a [(parseField t, 1)]
+  VU.accum (+) a [(fromEnum (parseField t), 1)]
 {-# INLINE updateFieldLooks #-}
 
 fieldP :: Parser ParsedField
@@ -233,11 +243,9 @@ updateSVParseState !st row =
  where
   countGood (SVFields _)   = RowCount 1
   countGood (RowFailure _) = RowCount 0
-  countGood SVEOF          = RowCount 0
 
   countBad (SVFields _)    = RowCount 0
   countBad (RowFailure _)  = RowCount 1
-  countBad SVEOF           = RowCount 0
 
   updateNumFields (SVFields !v) !ns =
     let n = FieldCount $ V.length v in
@@ -246,7 +254,8 @@ updateSVParseState !st row =
 
   updateFields (SVFields !v) NoFieldLookCount =
     FieldLookCount $ V.zipWith updateFieldLooks v $
-      V.replicate (V.length v) emptyLookCountArray
+      V.replicate (V.length v) emptyLookCountVector
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
+{-# INLINE updateSVParseState #-}

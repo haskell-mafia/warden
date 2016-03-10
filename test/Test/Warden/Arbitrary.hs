@@ -5,20 +5,18 @@
 module Test.Warden.Arbitrary where
 
 import           Data.AEq (AEq, (===), (~==))
-import           Data.Array (Array, array)
 import qualified Data.ByteString      as BS
 import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
-import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
-import           Data.Vector (Vector)
 import qualified Data.Vector          as V
+import qualified Data.Vector.Unboxed as VU
 import           Data.Word
 
 import           Debruijn.Hex (parseHex)
@@ -325,16 +323,12 @@ instance Arbitrary FileMarker where
                          <*> arbitrary
                          <*> arbitrary
 
-genLooksVec :: Gen (Vector (Array FieldLooks ObservationCount))
+genLooksVec :: Gen (V.Vector (VU.Vector ObservationCount))
 genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
   where
     genFieldLooks = do
-      pairs <- genLooksPairs
-      pure $ array (minBound, maxBound) pairs
-
-    genLooksPairs = do
       vs <- vectorOf (length ([minBound..maxBound] :: [FieldLooks])) arbitrary
-      pure $ zip [minBound..maxBound] vs
+      pure $ VU.fromList vs
 
 instance Arbitrary FieldLookCount where
   arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
@@ -375,7 +369,7 @@ instance Arbitrary SchemaVersion where
   arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary Schema where
-  arbitrary = Schema <$> arbitrary <*> arbitrary <*> arbitrary
+  arbitrary = Schema <$> arbitrary <*> arbitrary
 
 instance Arbitrary ObservationCount where
   arbitrary = (ObservationCount . fromIntegral . unNPlus) <$> arbitrary

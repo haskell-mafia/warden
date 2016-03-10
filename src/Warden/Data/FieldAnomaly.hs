@@ -9,8 +9,8 @@ module Warden.Data.FieldAnomaly (
   ) where
 
 import           Data.List.NonEmpty (NonEmpty, nonEmpty)
-import           Data.Array (Array)
-import qualified Data.Array as A
+import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 
 import           P
 
@@ -27,9 +27,10 @@ data AnomalousField =
 
 -- | For a given field type and set of value observations of that field, find
 -- any which look anomalous.
-fieldAnomalies :: FieldType -> Array FieldLooks ObservationCount -> Maybe AnomalousField
+fieldAnomalies :: FieldType -> VU.Vector ObservationCount -> Maybe AnomalousField
 fieldAnomalies ft obs = do
-  as <- nonEmpty . catMaybes . fmap (uncurry (checkFieldType ft)) $ A.assocs obs
+  as <- nonEmpty . catMaybes . V.toList . V.map (uncurry (checkFieldType ft)) $
+    V.zip (V.fromList [minBound..maxBound]) $ VU.convert obs
   pure $ AnomalousField ft as
 
 checkFieldType :: FieldType -> FieldLooks -> ObservationCount -> Maybe FieldAnomaly
