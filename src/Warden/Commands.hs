@@ -10,7 +10,7 @@ module Warden.Commands(
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
-import           Data.List.NonEmpty (NonEmpty(..), (<|))
+import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
 
 import           P
 
@@ -23,10 +23,12 @@ import qualified Warden.Check.Row as Row
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Inference
+import           Warden.Marker
 import           Warden.Schema
 import           Warden.View
 
-import           X.Control.Monad.Trans.Either (EitherT, left)
+import           X.Control.Monad.Trans.Either (EitherT, left, hoistEither)
 
 check :: WardenParams
       -> View
@@ -55,8 +57,11 @@ checkViewFiles wps ps@(CheckParams _s sf _lb verb fce) v vfs = do
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 
-infer :: WardenParams
-      -> [FilePath]
+infer :: [FilePath]
       -> EitherT WardenError (ResourceT IO) Schema
-infer _wps _fps = left $ WardenNotImplementedError
+infer fps = case nonEmpty fps of
+  Nothing -> left $ WardenInferenceError NoViewMarkersError
+  Just fps' -> do
+    vms <- mapM readViewMarker fps'
+    hoistEither $ inferSchema vms
 

@@ -54,8 +54,8 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
-run wps (Infer fs) = do
-  s <- orDie renderWardenError . mapEitherT runResourceT $ infer wps fs
+run _wps (Infer fs) = do
+  s <- orDie renderWardenError . mapEitherT runResourceT $ infer fs
   T.putStrLn $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()

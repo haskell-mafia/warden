@@ -3,6 +3,7 @@
 
 module Warden.Error (
     WardenError(..)
+  , InferenceError(..)
   , LoadError(..)
   , MarkerError(..)
   , SchemaError(..)
@@ -26,6 +27,7 @@ data WardenError =
   | WardenTraversalError TraversalError
   | WardenMarkerError MarkerError
   | WardenSchemaError SchemaError
+  | WardenInferenceError InferenceError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -37,6 +39,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenTraversalError te) = renderTraversalError te
     render' (WardenMarkerError me) = renderMarkerError me
     render' (WardenSchemaError se) = renderSchemaError se
+    render' (WardenInferenceError ie) = renderInferenceError ie
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -124,3 +127,12 @@ renderSchemaError = ("schema error: " <>) . render'
   where
     render' (SchemaDecodeError sf t) =
       "failed to decode schema at " <> renderSchemaFile sf <> ": " <> t
+
+data InferenceError =
+    NoViewMarkersError
+  deriving (Eq, Show)
+
+renderInferenceError :: InferenceError -> Text
+renderInferenceError = ("inference error: " <>) . render'
+  where
+    render' NoViewMarkersError = "No view markers provided."
