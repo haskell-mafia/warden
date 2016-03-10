@@ -130,9 +130,11 @@ renderSchemaError = ("schema error: " <>) . render'
 
 data InferenceError =
     NoViewMarkersError
+  | MarkerValidationFailure Text
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
 renderInferenceError = ("inference error: " <>) . render'
   where
     render' NoViewMarkersError = "No view markers provided."
+    render' (MarkerValidationFailure t) = "Inconsistent view markers: " <> t

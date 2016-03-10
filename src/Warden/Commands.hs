@@ -64,4 +64,3 @@ infer fps = case nonEmpty fps of
   Just fps' -> do
     vms <- mapM readViewMarker fps'
     hoistEither $ inferSchema vms
-
