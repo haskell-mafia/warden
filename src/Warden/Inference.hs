@@ -75,12 +75,11 @@ compatibleEntries t l o =
     then CompatibleEntries $ unObservationCount o
     else CompatibleEntries 0
 
-countCompatibleFields :: NonEmpty ViewMarker -> Either WardenError (V.Vector FieldHistogram)
+countCompatibleFields :: NonEmpty ViewMarker -> Either InferenceError (V.Vector FieldHistogram)
 countCompatibleFields vms = do
-  first WardenInferenceError $ validateViewMarkers vms
+  validateViewMarkers vms
   case fieldLookSum vms of
       NoFieldLookCount ->
-        Left . WardenInferenceError $
-          MarkerValidationFailure NoFieldCounts
+        Left $ MarkerValidationFailure NoFieldCounts
       FieldLookCount fls ->
         Right $ V.map countsForField fls
