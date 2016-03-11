@@ -53,7 +53,6 @@ data FieldLooks =
   | LooksText
   | LooksCategorical
   | LooksBoolean
-  | LooksBroken -- ^ Not valid UTF-8.
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
 instance NFData FieldLooks
@@ -72,7 +71,7 @@ $(derivingUnbox "FieldLooks"
 -- 'RealField'.
 fieldTypeIncludes :: FieldType -> FieldLooks -> Bool
 fieldTypeIncludes ft fl = case ft of
-  TextField -> fl /= LooksBroken
+  TextField -> True
   CategoricalField -> fl == LooksCategorical || fl == LooksBoolean || fl == LooksEmpty
   BooleanField -> fl == LooksBoolean || fl == LooksEmpty
   IntegralField -> fl == LooksIntegral || fl == LooksEmpty

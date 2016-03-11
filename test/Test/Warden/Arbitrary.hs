@@ -11,6 +11,7 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
+import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Text            (Text)
@@ -116,12 +117,7 @@ tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
   liftM renderTestField <$> (vectorOf n (arbitrary :: Gen TestField))
 
 instance Arbitrary ParsedField where
-  arbitrary = elements [
-      ParsedIntegral
-    , ParsedReal
-    , ParsedText
-    , ParsedBoolean
-    ]
+  arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary TestField where
   arbitrary = oneof [textField, integralField, realField]
@@ -426,5 +422,7 @@ renderedBool =
              , "true"
              , "f"
              , "false"
+             , "True"
+             , "False"
              ] in
-  elements $ reps <> (T.toUpper <$> reps)
+  elements . nub $ reps <> (T.toUpper <$> reps)
