@@ -102,8 +102,8 @@ newtype FieldHistogram =
 
 renderFieldHistogram :: FieldHistogram -> Text
 renderFieldHistogram (FieldHistogram cs) =
-  T.pack . show . V.toList .
-    V.zip (V.fromList [minBound..maxBound] :: V.Vector FieldType) .
+  T.intercalate ", " . fmap (\(t,n) -> (T.pack $ show t <> " = " <> show n)) .
+    V.toList . V.zip (V.fromList [minBound..maxBound] :: V.Vector FieldType) .
       V.map renderCompatibleEntries $ VU.convert cs
 
 instance NFData FieldHistogram
