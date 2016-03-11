@@ -141,12 +141,19 @@ renderInferenceError = ("inference error: " <>) . render'
     render' (MarkerValidationFailure vf) = "Invalid view markers: " <> renderValidationFailure vf
 
 data ValidationFailure =
-    ViewMarkerMismatch Text
+    ViewMarkerMismatch Text Text Text
   | NoFieldCounts
   deriving (Eq, Show)
 
 renderValidationFailure :: ValidationFailure -> Text
 renderValidationFailure f = "Validation failure: " <> render' f
   where
-    render' (ViewMarkerMismatch t) = "mismatch: " <> t
+    render' (ViewMarkerMismatch t x y) = T.concat [
+        "mismatch: "
+      , t
+      , ": "
+      , x
+      , " /= "
+      , y
+      ]
     render' NoFieldCounts = "No field counts to perform inference on."

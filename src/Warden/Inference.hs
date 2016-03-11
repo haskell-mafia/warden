@@ -17,7 +17,6 @@ module Warden.Inference (
 import           Control.Lens ((^.), view)
 
 import           Data.List.NonEmpty (NonEmpty(..))
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -28,7 +27,7 @@ import           Warden.Data
 import           Warden.Error
 
 -- | Do these two markers look like they're compatible?
-viewMarkerMismatch :: ViewMarker -> ViewMarker -> Either Text ()
+viewMarkerMismatch :: ViewMarker -> ViewMarker -> Either ValidationFailure ()
 viewMarkerMismatch a b = do
   validateVersion (vmVersion a) (vmVersion b)
   validateView (vmView a) (vmView b)
@@ -43,13 +42,7 @@ viewMarkerMismatch a b = do
     validateEq ctx x y =
       if x == y
         then pure ()
-        else Left $ T.concat [
-                 ctx
-               , ": "
-               , T.pack (show x)
-               , " /= "
-               , T.pack (show y)
-               ]
+        else Left $ ViewMarkerMismatch ctx (T.pack $ show x) (T.pack $ show y)
 
     fields' vm' = (vmViewCounts $ vmMetadata vm') ^. numFields
 
@@ -61,7 +54,7 @@ validateViewMarkers (m:|ms) = go m ms
     go _ [] = pure ()
     go prev !(m':ms') = case viewMarkerMismatch prev m' of
       Right () -> go m' ms'
-      Left f -> Left . MarkerValidationFailure $ ViewMarkerMismatch f
+      Left f -> Left $ MarkerValidationFailure f
 
 fieldLookSum :: NonEmpty ViewMarker -> FieldLookCount
 fieldLookSum =
