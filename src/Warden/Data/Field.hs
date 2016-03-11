@@ -31,6 +31,8 @@ import           P
 
 import           Prelude (fromEnum, toEnum)
 
+import           Warden.Data.Poset
+
 data FieldType =
     TextField
   | CategoricalField
@@ -40,6 +42,28 @@ data FieldType =
   deriving (Eq, Show, Enum, Bounded, Ord, Ix, Generic)
 
 instance NFData FieldType
+
+instance Poset FieldType where
+  TextField        <=| TextField        = True
+  TextField        <=| _                = False
+
+  RealField        <=| TextField        = True
+  RealField        <=| RealField        = True
+  RealField        <=| _                = False
+
+  CategoricalField <=| TextField        = True
+  CategoricalField <=| CategoricalField = True
+  CategoricalField <=| _                = False
+
+  IntegralField    <=| TextField        = True
+  IntegralField    <=| RealField        = True
+  IntegralField    <=| IntegralField    = True
+  IntegralField    <=| _                = False
+
+  BooleanField     <=| TextField        = True
+  BooleanField     <=| CategoricalField = True
+  BooleanField     <=| BooleanField     = True
+  BooleanField     <=| _                = False
 
 $(derivingUnbox "fieldType"
   [t| FieldType -> Int |]
