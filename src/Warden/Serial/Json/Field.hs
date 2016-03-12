@@ -23,7 +23,6 @@ fromFieldLooks LooksReal = "looks-real"
 fromFieldLooks LooksText = "looks-text"
 fromFieldLooks LooksCategorical = "looks-categorical"
 fromFieldLooks LooksBoolean = "looks-boolean"
-fromFieldLooks LooksBroken = "looks-broken"
 
 toFieldLooks :: Value -> Parser FieldLooks
 toFieldLooks (String "looks-empty") = pure LooksEmpty
@@ -32,7 +31,6 @@ toFieldLooks (String "looks-real") = pure LooksReal
 toFieldLooks (String "looks-text") = pure LooksText
 toFieldLooks (String "looks-categorical") = pure LooksCategorical
 toFieldLooks (String "looks-boolean") = pure LooksBoolean
-toFieldLooks (String "looks-broken") = pure LooksBroken
 toFieldLooks (String s) = fail . T.unpack $ "invalid field description: " <> s
 toFieldLooks x = typeMismatch "Warden.Data.Row.FieldLooks" x
 

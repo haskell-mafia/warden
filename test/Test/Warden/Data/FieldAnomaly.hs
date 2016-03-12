@@ -14,13 +14,8 @@ import           Warden.Data
 
 -- Text includes everything.
 prop_checkFieldType_text :: ObservationCount -> Property
-prop_checkFieldType_text rc = forAll (arbitrary `suchThat` (not . (== LooksBroken))) $ \fl ->
+prop_checkFieldType_text rc = forAll arbitrary $ \fl ->
   checkFieldType TextField fl rc === Nothing
-
--- Broken is included by nothing.
-prop_checkFieldType_broken :: FieldType -> Property
-prop_checkFieldType_broken ft = forAll (arbitrary `suchThat` (> (ObservationCount 0))) $ \rc ->
-  (checkFieldType ft LooksBroken rc) === (Just (FieldAnomaly LooksBroken rc))
 
 return []
 tests :: IO Bool

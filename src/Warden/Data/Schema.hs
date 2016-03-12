@@ -2,6 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+{- This module will probably end up in brandix. -}
+
 module Warden.Data.Schema (
     Schema(..)
   , SchemaField(..)

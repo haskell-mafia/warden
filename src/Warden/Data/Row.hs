@@ -161,12 +161,13 @@ resolveSVParseState = foldr update initialSVParseState
       . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
       $! acc
 
+-- | We don't include a ParsedText here; Text is indicated by failure of
+-- the parser.
 data ParsedField =
     ParsedIntegral
   | ParsedReal
-  | ParsedText
   | ParsedBoolean
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Enum, Bounded)
 
 instance NFData ParsedField
 
@@ -188,10 +189,9 @@ asciiToLower = T.map charToLower
 parseField :: Text -> FieldLooks
 parseField "" = LooksEmpty
 parseField t = case parseOnly fieldP (asciiToLower t) of
-  Left _ -> LooksBroken
+  Left _ -> LooksText
   Right ParsedIntegral -> LooksIntegral
   Right ParsedReal -> LooksReal
-  Right ParsedText -> LooksText
   Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
 
@@ -205,7 +205,6 @@ fieldP = choice [
     void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
   , void (double <* endOfInput) >> pure ParsedReal
   , void (boolP <* endOfInput) >> pure ParsedBoolean
-  , void takeText >> pure ParsedText
   ]
 {-# INLINE fieldP #-}
 

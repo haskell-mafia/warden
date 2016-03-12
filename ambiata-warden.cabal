@@ -75,6 +75,7 @@ library
                        Warden.Data.View
                        Warden.Debug
                        Warden.Error
+                       Warden.Inference
                        Warden.Marker
                        Warden.Numeric
                        Warden.Param

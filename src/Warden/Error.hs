@@ -3,10 +3,12 @@
 
 module Warden.Error (
     WardenError(..)
+  , InferenceError(..)
   , LoadError(..)
   , MarkerError(..)
   , SchemaError(..)
   , TraversalError(..)
+  , ValidationFailure(..)
   , renderWardenError
 ) where
 
@@ -26,6 +28,7 @@ data WardenError =
   | WardenTraversalError TraversalError
   | WardenMarkerError MarkerError
   | WardenSchemaError SchemaError
+  | WardenInferenceError InferenceError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -37,6 +40,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenTraversalError te) = renderTraversalError te
     render' (WardenMarkerError me) = renderMarkerError me
     render' (WardenSchemaError se) = renderSchemaError se
+    render' (WardenInferenceError ie) = renderInferenceError ie
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -124,3 +128,32 @@ renderSchemaError = ("schema error: " <>) . render'
   where
     render' (SchemaDecodeError sf t) =
       "failed to decode schema at " <> renderSchemaFile sf <> ": " <> t
+
+data InferenceError =
+    NoViewMarkersError
+  | MarkerValidationFailure ValidationFailure
+  deriving (Eq, Show)
+
+renderInferenceError :: InferenceError -> Text
+renderInferenceError = ("inference error: " <>) . render'
+  where
+    render' NoViewMarkersError = "No view markers provided."
+    render' (MarkerValidationFailure vf) = "Invalid view markers: " <> renderValidationFailure vf
+
+data ValidationFailure =
+    ViewMarkerMismatch Text Text Text
+  | NoFieldCounts
+  deriving (Eq, Show)
+
+renderValidationFailure :: ValidationFailure -> Text
+renderValidationFailure f = "Validation failure: " <> render' f
+  where
+    render' (ViewMarkerMismatch t x y) = T.concat [
+        "mismatch: "
+      , t
+      , ": "
+      , x
+      , " /= "
+      , y
+      ]
+    render' NoFieldCounts = "No field counts to perform inference on."
