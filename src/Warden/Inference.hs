@@ -6,10 +6,13 @@
 
 module Warden.Inference (
     compatibleEntries
+  , countCompatibleFields
   , countsForField
   , countsForType
+  , generateSchema
+  , inferField
+  , fieldCandidates
   , fieldLookSum
-  , countCompatibleFields
   , validateViewMarkers
   , viewMarkerMismatch
   ) where
@@ -17,6 +20,8 @@ module Warden.Inference (
 import           Control.Lens ((^.), view)
 
 import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -83,3 +88,26 @@ countCompatibleFields vms = do
         Left $ MarkerValidationFailure NoFieldCounts
       FieldLookCount fls ->
         Right $ V.map countsForField fls
+
+fieldCandidates :: FieldHistogram -> Either InferenceError (Set FieldType)
+fieldCandidates (FieldHistogram cs) =
+  if VU.null cs
+    then Left $ EmptyFieldHistogram
+    else
+      let targetCount = VU.maximum cs
+          cands = VU.filter (\(_, n) -> n == targetCount) $
+                    VU.zip (VU.fromList $ [minBound..maxBound]) cs in
+      pure . S.fromList . VU.toList $ VU.map fst cands
+
+inferField :: FieldHistogram -> Either InferenceError FieldType
+inferField h = do
+  fcs <- fieldCandidates h
+  case S.toList (minima fcs) of
+    [] -> Left NoMinimalFieldTypes
+    [ft] -> pure ft
+    fts -> Left $ CannotResolveCandidates fts
+
+generateSchema :: V.Vector FieldHistogram -> Either InferenceError Schema
+generateSchema hs = do
+  fts <- V.mapM inferField hs
+  pure . Schema currentSchemaVersion $ SchemaField <$> fts

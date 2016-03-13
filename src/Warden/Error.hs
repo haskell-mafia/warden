@@ -133,13 +133,26 @@ renderSchemaError = ("schema error: " <>) . render'
 data InferenceError =
     NoViewMarkersError
   | MarkerValidationFailure ValidationFailure
+  | EmptyFieldHistogram
+  | NoMinimalFieldTypes
+  | CannotResolveCandidates [FieldType]
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
 renderInferenceError = ("inference error: " <>) . render'
   where
-    render' NoViewMarkersError = "No view markers provided."
-    render' (MarkerValidationFailure vf) = "Invalid view markers: " <> renderValidationFailure vf
+    render' NoViewMarkersError =
+      "No view markers provided."
+    render' (MarkerValidationFailure vf) =
+      "Invalid view markers: " <> renderValidationFailure vf
+    render' EmptyFieldHistogram =
+      "No counts in field histogram. This should be impossible."
+    render' NoMinimalFieldTypes =
+      "No minimal field types in field histogram. This should be impossible."
+    render' (CannotResolveCandidates fts) = T.concat [
+        "Multiple candidates with equally high score. This field must be resolved manually between: "
+      , T.intercalate ", " (renderFieldType <$> fts)
+      ]
 
 data ValidationFailure =
     ViewMarkerMismatch Text Text Text

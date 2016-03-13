@@ -71,7 +71,7 @@ infer v fps = case nonEmpty fps of
     cs <- firstEitherT WardenInferenceError . hoistEither $
             countCompatibleFields vms
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
-    left WardenNotImplementedError
+    firstEitherT WardenInferenceError . hoistEither $ generateSchema cs
   where
     renderFieldHistogramVector hs =
       T.intercalate "\n" . V.toList .
