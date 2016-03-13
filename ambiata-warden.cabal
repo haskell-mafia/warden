@@ -85,6 +85,7 @@ library
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json
                        Warden.Serial.Json.Check
+                       Warden.Serial.Json.Common
                        Warden.Serial.Json.Field
                        Warden.Serial.Json.Marker
                        Warden.Serial.Json.Numeric

@@ -19,6 +19,7 @@ import qualified Data.Text as T
 
 import           System.IO (FilePath)
 
+import           Warden.Data.Field
 import           Warden.Data.Schema
 import           Warden.Data.View
 

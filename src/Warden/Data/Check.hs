@@ -15,10 +15,12 @@ module Warden.Data.Check (
   , checkStatusFailed
   , isCheckFailure
   , parseCheckDescription
+  , parseVerbosity
   , renderFailure
   , renderCheckDescription
   , renderCheckResult
   , renderCheckStatus
+  , renderVerbosity
   , resolveCheckStatus
   ) where
 
@@ -59,6 +61,15 @@ data Verbosity =
     Verbose
   | Quiet
   deriving (Eq, Show)
+
+renderVerbosity :: Verbosity -> Text
+renderVerbosity Verbose = "verbose"
+renderVerbosity Quiet = "quiet"
+
+parseVerbosity :: Text -> Maybe Verbosity
+parseVerbosity "verbose" = pure Verbose
+parseVerbosity "quiet" = pure Quiet
+parseVerbosity _ = Nothing
 
 data FileCheck =
     FileCheck !CheckDescription (ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
