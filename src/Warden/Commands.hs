@@ -32,6 +32,7 @@ import           Warden.Schema
 import           Warden.View
 
 import           X.Control.Monad.Trans.Either (EitherT, left, hoistEither)
+import           X.Control.Monad.Trans.Either (firstEitherT)
 
 check :: WardenParams
       -> View
@@ -67,7 +68,8 @@ infer v fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
-    cs <- hoistEither $ countCompatibleFields vms
+    cs <- firstEitherT WardenInferenceError . hoistEither $
+            countCompatibleFields vms
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
     left WardenNotImplementedError
   where
