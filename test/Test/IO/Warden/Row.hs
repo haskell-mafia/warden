@@ -32,8 +32,8 @@ import           Warden.Row
 
 import           X.Control.Monad.Trans.Either
 
-prop_valid_svrows :: Separator -> FieldCount -> RowCount -> Property
-prop_valid_svrows s i n = forAll (vectorOf (fromIntegral $ unRowCount n) $ validSVRow s i) $ \svrs ->
+prop_valid_svrows :: Separator -> FieldCount -> Property
+prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRow s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
@@ -44,8 +44,8 @@ prop_valid_svrows s i n = forAll (vectorOf (fromIntegral $ unRowCount n) $ valid
         let expected = reverse $ (SVFields . V.fromList . getValidSVRow) <$> svrs
         pure $ expected === rs
 
-prop_valid_svrows_chunked :: ChunkCount -> Separator -> FieldCount -> RowCount -> Property
-prop_valid_svrows_chunked cc s i n = forAll (vectorOf (fromIntegral $ unRowCount n) $ validSVRow s i) $ \svrs ->
+prop_valid_svrows_chunked :: ChunkCount -> Separator -> FieldCount -> Property
+prop_valid_svrows_chunked cc s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRow s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
@@ -58,8 +58,8 @@ prop_valid_svrows_chunked cc s i n = forAll (vectorOf (fromIntegral $ unRowCount
         let expected = reverse $ (SVFields . V.fromList . getValidSVRow) <$> svrs
         pure $ expected === rs
 
-prop_invalid_svrows :: Separator -> RowCount -> Property
-prop_invalid_svrows s n = forAll (vectorOf (fromIntegral $ unRowCount n) (invalidSVRow s)) $ \svrs ->
+prop_invalid_svrows :: Separator -> Property
+prop_invalid_svrows s = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n (invalidSVRow s)) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs

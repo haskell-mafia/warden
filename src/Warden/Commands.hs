@@ -62,16 +62,18 @@ checkViewFiles wps ps@(CheckParams _s sf _lb verb fce) v vfs = do
   pure $ rr <| frs
 
 infer :: Verbosity
+      -> FieldMatchRatio
       -> [FilePath]
       -> EitherT WardenError (ResourceT IO) Schema
-infer v fps = case nonEmpty fps of
+infer v fmr fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
     cs <- firstEitherT WardenInferenceError . hoistEither $
             countCompatibleFields vms
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
-    firstEitherT WardenInferenceError . hoistEither $ generateSchema cs
+    firstEitherT WardenInferenceError . hoistEither $
+      generateSchema fmr (totalViewRows vms) cs
   where
     renderFieldHistogramVector hs =
       T.intercalate "\n" . V.toList .

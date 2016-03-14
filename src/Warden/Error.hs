@@ -9,6 +9,12 @@ module Warden.Error (
   , SchemaError(..)
   , TraversalError(..)
   , ValidationFailure(..)
+  , renderInferenceError
+  , renderLoadError
+  , renderMarkerError
+  , renderSchemaError
+  , renderTraversalError
+  , renderValidationFailure
   , renderWardenError
 ) where
 
@@ -20,6 +26,7 @@ import qualified Data.Text as T
 import           System.IO (FilePath)
 
 import           Warden.Data.Field
+import           Warden.Data.Row
 import           Warden.Data.Schema
 import           Warden.Data.View
 
@@ -136,6 +143,8 @@ data InferenceError =
   | EmptyFieldHistogram
   | NoMinimalFieldTypes
   | CannotResolveCandidates [FieldType]
+  | ZeroRowCountError
+  | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
@@ -152,6 +161,14 @@ renderInferenceError = ("inference error: " <>) . render'
     render' (CannotResolveCandidates fts) = T.concat [
         "Multiple candidates with equally high score. This field must be resolved manually between: "
       , T.intercalate ", " (renderFieldType <$> fts)
+      ]
+    render' ZeroRowCountError =
+      "Total row count reported by view markers is zero."
+    render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
+        "Fields have observation counts higher than the total row count "
+      , renderRowCount rc
+      , " : "
+      , T.intercalate ", " (renderCompatibleEntries <$> cs)
       ]
 
 data ValidationFailure =

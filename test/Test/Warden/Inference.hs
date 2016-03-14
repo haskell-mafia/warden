@@ -9,8 +9,11 @@ import           Control.Lens (view)
 import           Data.List (take, repeat)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Vector.Unboxed as VU
 
+import           Disorder.Core.Property (failWith)
 import           Disorder.Core.UniquePair (UniquePair(..))
 import           Disorder.Corpus (muppets)
 
@@ -23,6 +26,7 @@ import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
+import           Warden.Error
 import           Warden.Inference
 
 prop_fieldLookSum :: NonEmpty ViewMarker -> Property
@@ -90,6 +94,39 @@ prop_compatibleEntries_empty oc =
       csReal = compatibleEntries RealField l oc
       csBoolean = compatibleEntries BooleanField l oc in
   (csText, csIntegral, csReal, csBoolean) === (CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc), CompatibleEntries (unObservationCount oc))
+
+prop_normalizeFieldHistogram :: FieldHistogram -> Property
+prop_normalizeFieldHistogram h =
+  forAll (arbitrary `suchThat` (>= histogramMax)) $ \rc ->
+    let normed = normalizeFieldHistogram rc h in
+    case normed of
+      Left e ->
+        failWith $ renderInferenceError e
+      Right normed' -> 
+        (VU.all (>= 0.0) normed', VU.all (<= 1.0) normed') === (True, True)
+  where
+    histogramMax = RowCount . unCompatibleEntries . VU.maximum $ unFieldHistogram h
+
+prop_fieldCandidates :: FieldMatchRatio -> Property
+prop_fieldCandidates fmr = forAll validHistogramPair $ \(rc, h) ->  case fieldCandidates fmr rc h of
+    Left e ->
+      failWith $ renderInferenceError e
+    Right cands ->
+      S.member TextField cands === True
+
+prop_fieldCandidates_real :: FieldMatchRatio -> Property
+prop_fieldCandidates_real fmr = forAll realHistogramPair $ \(rc, h) -> case fieldCandidates fmr rc h of
+  Left e ->
+    failWith $ renderInferenceError e
+  Right cands ->
+    S.member RealField cands === True
+
+prop_fieldCandidates_boolean :: FieldMatchRatio -> Property
+prop_fieldCandidates_boolean fmr = forAll booleanHistogramPair $ \(rc, h) -> case fieldCandidates fmr rc h of
+  Left e ->
+    failWith $ renderInferenceError e
+  Right cands ->
+    S.member BooleanField cands === True
 
 return []
 tests :: IO Bool

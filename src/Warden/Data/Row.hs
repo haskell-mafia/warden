@@ -30,6 +30,7 @@ module Warden.Data.Row (
   , parseField
   , renderFieldCount
   , renderParsedField
+  , renderRowCount
   , resolveSVParseState
   , totalRows
   , updateFieldLooks
@@ -107,6 +108,9 @@ newtype RowCount =
   } deriving (Eq, Show, Ord, Num, Generic)
 
 instance NFData RowCount
+
+renderRowCount :: RowCount -> Text
+renderRowCount = T.pack . show . unRowCount
 
 emptyLookCountVector :: VU.Vector ObservationCount
 emptyLookCountVector =

@@ -13,6 +13,8 @@ module Warden.Inference (
   , inferField
   , fieldCandidates
   , fieldLookSum
+  , normalizeFieldHistogram
+  , totalViewRows
   , validateViewMarkers
   , viewMarkerMismatch
   ) where
@@ -89,25 +91,57 @@ countCompatibleFields vms = do
       FieldLookCount fls ->
         Right $ V.map countsForField fls
 
-fieldCandidates :: FieldHistogram -> Either InferenceError (Set FieldType)
-fieldCandidates (FieldHistogram cs) =
-  if VU.null cs
+totalViewRows :: NonEmpty ViewMarker -> RowCount
+totalViewRows = sum . fmap (view totalRows . vmViewCounts . vmMetadata)
+
+normalizeFieldHistogram :: RowCount -> FieldHistogram -> Either InferenceError (VU.Vector NormalizedEntries)
+normalizeFieldHistogram (RowCount rc) (FieldHistogram cs) = do
+  when (rc == 0) $
+    Left ZeroRowCountError
+  case greaterThanRowCount of
+    [] ->
+      pure $ VU.map normalize' cs
+    xs ->
+      Left $ CompatibleFieldsGTRowCount (RowCount rc) xs
+  where
+    greaterThanRowCount =
+      VU.toList . VU.map CompatibleEntries . VU.filter (> rc) $
+        VU.map unCompatibleEntries cs
+
+    normalize' (CompatibleEntries c) =
+      NormalizedEntries $ (fromIntegral c) / (fromIntegral rc)
+
+fieldCandidates :: FieldMatchRatio
+                -> RowCount
+                -> FieldHistogram
+                -> Either InferenceError (Set FieldType)
+fieldCandidates (FieldMatchRatio fmr) totalRowCount h = do
+  normed <- normalizeFieldHistogram totalRowCount h
+  if VU.null normed
     then Left $ EmptyFieldHistogram
     else
-      let targetCount = VU.maximum cs
-          cands = VU.filter (\(_, n) -> n == targetCount) $
-                    VU.zip (VU.fromList $ [minBound..maxBound]) cs in
+      let cands = VU.filter (aboveMatchThreshold . snd) $
+                    VU.zip (VU.fromList $ [minBound..maxBound]) normed in
       pure . S.fromList . VU.toList $ VU.map fst cands
+  where
+    aboveMatchThreshold (NormalizedEntries n) =
+      n >= fmr
 
-inferField :: FieldHistogram -> Either InferenceError FieldType
-inferField h = do
-  fcs <- fieldCandidates h
+inferField :: FieldMatchRatio
+           -> RowCount
+           -> FieldHistogram
+           -> Either InferenceError FieldType
+inferField fmr totalRowCount h = do
+  fcs <- fieldCandidates fmr totalRowCount h
   case S.toList (minima fcs) of
     [] -> Left NoMinimalFieldTypes
     [ft] -> pure ft
     fts -> Left $ CannotResolveCandidates fts
 
-generateSchema :: V.Vector FieldHistogram -> Either InferenceError Schema
-generateSchema hs = do
-  fts <- V.mapM inferField hs
+generateSchema :: FieldMatchRatio
+               -> RowCount
+               -> V.Vector FieldHistogram
+               -> Either InferenceError Schema
+generateSchema fmr totalRowCount hs = do
+  fts <- V.mapM (inferField fmr totalRowCount) hs
   pure . Schema currentSchemaVersion $ SchemaField <$> fts
