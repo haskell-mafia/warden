@@ -31,6 +31,14 @@ in an error-free field of type `t`. For example, the field type
 integers are contained within the reals (sorry Liam), but not the
 inverse.
 
+```
+    Real+---------Text-------+ Categorical
+        |                    |
+        |                    |
+        v                    v
+    Integral               Boolean
+```
+
 # Schema generation
 
 Roughly:

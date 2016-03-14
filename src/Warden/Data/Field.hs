@@ -43,6 +43,15 @@ data FieldType =
 
 instance NFData FieldType
 
+-- | Truth table for 'FieldType' set inclusion.
+--
+-- Looks like this:
+--
+-- Real+---------Text-------+ Categorical
+--     |                    |
+--     |                    |
+--     v                    v
+-- Integral               Boolean
 instance Poset FieldType where
   TextField        <=| TextField        = True
   TextField        <=| _                = False
