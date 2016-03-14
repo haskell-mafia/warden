@@ -6,6 +6,7 @@ import qualified Test.Warden.Data.FieldAnomaly
 import qualified Test.Warden.Data.Marker
 import qualified Test.Warden.Data.Numeric
 import qualified Test.Warden.Data.Row
+import qualified Test.Warden.Data.TextCounts
 import qualified Test.Warden.Data.View
 import qualified Test.Warden.Inference
 import qualified Test.Warden.Numeric
@@ -22,6 +23,7 @@ main = disorderMain [
   , Test.Warden.Data.Marker.tests
   , Test.Warden.Data.Numeric.tests
   , Test.Warden.Data.Row.tests
+  , Test.Warden.Data.TextCounts.tests
   , Test.Warden.Data.View.tests
   , Test.Warden.Inference.tests
   , Test.Warden.Numeric.tests

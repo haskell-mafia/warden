@@ -485,7 +485,6 @@ booleanHistogramPair = do
                , (fromEnum CategoricalField, nCategorical)
                ]
   pure (rc, h')
-
   
 instance Arbitrary FieldMatchRatio where
   arbitrary = fmap (FieldMatchRatio . unUnitReal) $ arbitrary

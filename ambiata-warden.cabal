@@ -26,6 +26,7 @@ library
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
+                     , cityhash                        == 0.3.0.*
                      , conduit                         == 1.2.*
                      , conduit-extra                   == 1.1.*
                      , containers                      == 0.5.*
@@ -74,6 +75,7 @@ library
                        Warden.Data.Poset
                        Warden.Data.Row
                        Warden.Data.Schema
+                       Warden.Data.TextCounts
                        Warden.Data.View
                        Warden.Debug
                        Warden.Error

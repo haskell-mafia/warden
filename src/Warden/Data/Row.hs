@@ -141,7 +141,9 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
 data FieldLookCount =
     FieldLookCount !(V.Vector (VU.Vector ObservationCount))
   | NoFieldLookCount
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData FieldLookCount
 
 data SVParseState =
   SVParseState {
