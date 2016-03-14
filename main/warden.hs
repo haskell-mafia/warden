@@ -56,7 +56,7 @@ run wps (SingleFileCheck vf ps) = do
   finishCheck (checkVerbosity ps) r
 run _wps (Infer v fs) = do
   s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fs
-  T.putStrLn $ renderSchema s
+  T.writeFile "schema.json" $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
 finishCheck verb rs = do
