@@ -10,14 +10,12 @@
 
 module Warden.Data.Field (
     CompatibleEntries(..)
-  , FieldHistogram(..)
   , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
   , parseFieldLooks
   , parseFieldType
   , renderCompatibleEntries
-  , renderFieldHistogram
   , renderFieldLooks
   , renderFieldType
   ) where
@@ -25,8 +23,6 @@ module Warden.Data.Field (
 import           Data.Ix (Ix)
 import           Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Vector as V
-import qualified Data.Vector.Unboxed as VU
 import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 
 import           GHC.Generics (Generic)
@@ -152,18 +148,3 @@ $(derivingUnbox "CompatibleEntries"
   [t| CompatibleEntries -> Int64 |]
   [| \(CompatibleEntries x) -> x |]
   [| \x -> (CompatibleEntries x) |])
-
--- | Map of field types to the number of observed values which seem compatible
--- with that type.
-newtype FieldHistogram =
-  FieldHistogram {
-    unFieldHistogram :: VU.Vector CompatibleEntries
-  } deriving (Eq, Show, Generic)
-
-renderFieldHistogram :: FieldHistogram -> Text
-renderFieldHistogram (FieldHistogram cs) =
-  T.intercalate ", " . fmap (\(t,n) -> (T.pack $ show t <> " = " <> show n)) .
-    V.toList . V.zip (V.fromList [minBound..maxBound] :: V.Vector FieldType) .
-      V.map renderCompatibleEntries $ VU.convert cs
-
-instance NFData FieldHistogram
