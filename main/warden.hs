@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import           BuildInfo_ambiata_warden
 
@@ -32,6 +33,7 @@ data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
   | Infer !Verbosity !FieldMatchRatio !SchemaFile ![FilePath]
+  | Sanity !View !SanityParams
   deriving (Eq, Show)
 
 main :: IO ()
@@ -57,6 +59,9 @@ run wps (SingleFileCheck vf ps) = do
 run _wps (Infer v fmr sf fs) = do
   s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fs
   T.writeFile (unSchemaFile sf) $ renderSchema s
+run wps (Sanity v sps) = do
+  r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
+  finishCheck (sanityVerbosity sps) r
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
 finishCheck verb rs = do
@@ -70,6 +75,7 @@ wardenP :: Parser Command
 wardenP = subparser $
      command' "check" "Run checks over a view." checkP
   <> command' "check-file" "Run checks over a single file." fileCheckP
+  <> command' "sanity" "Run pre-extract sanity checks over a view." sanityP
   <> command' "infer" "Attempt to infer a schema from a set of metadata files." inferP
 
 checkP :: Parser Command
@@ -77,6 +83,9 @@ checkP = Check <$> viewP <*> checkParamsP
 
 fileCheckP :: Parser Command
 fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
+
+sanityP :: Parser Command
+sanityP = Sanity <$> viewP <*> sanityParamsP
 
 inferP :: Parser Command
 inferP = Infer <$> verbosityP
@@ -90,6 +99,10 @@ checkParamsP = CheckParams <$> separatorP
                            <*> lineBoundP
                            <*> verbosityP
                            <*> forceP
+
+sanityParamsP :: Parser SanityParams
+sanityParamsP = SanityParams <$> verbosityP
+                             <*> forceP
 
 markerFileP :: Parser FilePath
 markerFileP = strArgument $

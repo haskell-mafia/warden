@@ -6,6 +6,7 @@ module Warden.Data.Param (
   , Force(..)
   , NumCPUs(..)
   , RunId(..)
+  , SanityParams(..)
   , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
@@ -69,6 +70,12 @@ data CheckParams =
     , checkVerbosity :: !Verbosity
     , checkForce :: !Force
     } deriving (Eq, Show)
+
+data SanityParams =
+  SanityParams {
+      sanityVerbosity :: !Verbosity
+    , sanityForce :: !Force
+  } deriving (Eq, Show)
 
 data WardenParams =
   WardenParams {
