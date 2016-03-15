@@ -75,6 +75,9 @@ benchUpdateSVParseState rs = foldl' updateSVParseState initialSVParseState rs
 benchHashText :: [Text] -> [Int]
 benchHashText = fmap hashText
 
+benchUpdateTextCounts :: [Row] -> TextCounts
+benchUpdateTextCounts rs = foldl' (flip updateTextCounts) NoTextCounts rs
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -91,5 +94,6 @@ main = do
             bgroup "folds" $ [
                 bench "updateSVParseState/1000" $ nf benchUpdateSVParseState rs
               , bench "hashText/1000" $ nf benchHashText ts
+              , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]
         ]
