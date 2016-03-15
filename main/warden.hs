@@ -31,7 +31,7 @@ import           X.Options.Applicative
 data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
-  | Infer !Verbosity !FieldMatchRatio ![FilePath]
+  | Infer !Verbosity !FieldMatchRatio !SchemaFile ![FilePath]
   deriving (Eq, Show)
 
 main :: IO ()
@@ -54,9 +54,9 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
-run _wps (Infer v fmr fs) = do
+run _wps (Infer v fmr sf fs) = do
   s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fs
-  T.writeFile "schema.json" $ renderSchema s
+  T.writeFile (unSchemaFile sf) $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
 finishCheck verb rs = do
@@ -81,6 +81,7 @@ fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
 inferP :: Parser Command
 inferP = Infer <$> verbosityP
                <*> fieldMatchRatioP
+               <*> outputSchemaP
                <*> some markerFileP
 
 checkParamsP :: Parser CheckParams
@@ -150,6 +151,14 @@ schemaFileP = maybe Nothing (Just . SchemaFile) <$> (optional . strOption $
      long "schema"
   <> metavar "SCHEMA-FILE"
   <> help "JSON-format schema against which to validate the dataset.")
+
+outputSchemaP :: Parser SchemaFile
+outputSchemaP = SchemaFile <$> (strOption $
+     long "output-schema"
+  <> short 'o'
+  <> metavar "SCHEMA-FILE"
+  <> value "schema.json"
+  <> help "File to which to write generated schema (defaults to \"schema.json\").")
 
 fieldMatchRatioP :: Parser FieldMatchRatio
 fieldMatchRatioP = FieldMatchRatio <$> (option auto $

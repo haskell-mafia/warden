@@ -28,4 +28,4 @@ $WARDEN check-file -f -v -b 1000 -s , /not/a/real/view/year=2016/month=03/day=04
 
 $WARDEN infer /not/a/real/marker/file1 /not/a/real/marker/file2
 
-$WARDEN infer -v -m 0.999 /not/a/real/marker/file1 /not/a/real/marker/file2
+$WARDEN infer -o foo.json -v -m 0.999 /not/a/real/marker/file1 /not/a/real/marker/file2
