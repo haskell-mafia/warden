@@ -34,6 +34,7 @@ module Warden.Data.Row (
   , resolveSVParseState
   , totalRows
   , updateFieldLooks
+  , updateTextCounts
   , updateSVParseState
 ) where
 
@@ -58,6 +59,7 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Field
+import           Warden.Data.TextCounts
 
 newtype LineBound =
   LineBound {
@@ -232,6 +234,15 @@ boolP = trueP <|> falseP
 
 initialSVParseState :: SVParseState
 initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
+
+updateTextCounts :: Row -> TextCounts -> TextCounts
+updateTextCounts (SVFields vs) NoTextCounts =
+  TextCounts $ V.zipWith updateUniqueTextCount vs $
+      V.replicate (V.length vs) emptyUniqueTextCount
+updateTextCounts (SVFields vs) (TextCounts tcs) =
+  TextCounts $ V.zipWith updateUniqueTextCount vs tcs
+updateTextCounts _ tc = tc
+{-# INLINE updateTextCounts #-}
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: SVParseState

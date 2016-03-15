@@ -15,6 +15,7 @@ module Warden.Data.TextCounts (
   , TextFreeformThreshold(..)
   , combineTextCounts
   , combineUniqueTextCounts
+  , emptyUniqueTextCount
   , hashText
   , updateUniqueTextCount
   ) where
@@ -36,6 +37,9 @@ data UniqueTextCount =
   deriving (Eq, Show, Generic)
 
 instance NFData UniqueTextCount
+
+emptyUniqueTextCount :: UniqueTextCount
+emptyUniqueTextCount = UniqueTextCount IS.empty
 
 newtype TextFreeformThreshold =
   TextFreeformThreshold {
@@ -61,9 +65,9 @@ hashText t =
   fromIntegral . cityHash64 $ T.encodeUtf8 t
 {-# INLINE hashText #-}
 
-updateUniqueTextCount :: UniqueTextCount -> Text -> UniqueTextCount
-updateUniqueTextCount LooksFreeform _ = LooksFreeform
-updateUniqueTextCount (UniqueTextCount c) t
+updateUniqueTextCount :: Text -> UniqueTextCount -> UniqueTextCount
+updateUniqueTextCount _ LooksFreeform = LooksFreeform
+updateUniqueTextCount t (UniqueTextCount c)
   | IS.size c >= (unTextFreeformThreshold textFreeformThreshold) =
       LooksFreeform
   | otherwise =
