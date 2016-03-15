@@ -95,6 +95,7 @@ library
                        Warden.Serial.Json.Param
                        Warden.Serial.Json.Row
                        Warden.Serial.Json.Schema
+                       Warden.Serial.Json.TextCounts
                        Warden.Serial.Json.View
                        Warden.View
 
@@ -214,6 +215,7 @@ test-suite test-io
                      , cassava                         == 0.4.*
                      , conduit                         == 1.2.*
                      , conduit-extra                   == 1.1.*
+                     , containers                      == 0.5.*
                      , deepseq                         == 1.3.*
                      , directory
                      , either                          == 4.3.*
@@ -254,6 +256,7 @@ benchmark bench
                      , async                           == 2.0.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
+                     , containers                      == 0.5.*
                      , conduit                         == 1.2.*
                      , conduit-extra                   == 1.1.*
                      , criterion                       == 1.1.*

@@ -11,6 +11,7 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
+import qualified Data.IntSet as IS
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -348,8 +349,21 @@ genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
 instance Arbitrary FieldLookCount where
   arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
 
+instance Arbitrary UniqueTextCount where
+  arbitrary = oneof [
+      pure LooksFreeform
+   , (UniqueTextCount . IS.fromList) <$> arbitrary
+   ]
+
+instance Arbitrary TextCounts where
+  arbitrary = oneof [
+      pure NoTextCounts
+    , (TextCounts <$> arbitrary)
+    ]
+
 instance Arbitrary SVParseState where
   arbitrary = SVParseState <$> arbitrary
+                           <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
