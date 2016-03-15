@@ -13,6 +13,8 @@ module Warden.Data.TextCounts (
     UniqueTextCount(..)
   , TextCounts(..)
   , TextFreeformThreshold(..)
+  , combineTextCounts
+  , combineUniqueTextCounts
   , hashText
   , updateUniqueTextCount
   ) where
@@ -42,7 +44,7 @@ newtype TextFreeformThreshold =
 
 data TextCounts =
     TextCounts !(V.Vector UniqueTextCount)
-  | NoTextCount
+  | NoTextCounts
   deriving (Eq, Show, Generic)
 
 instance NFData TextCounts
@@ -57,6 +59,7 @@ textFreeformThreshold = TextFreeformThreshold 1000
 hashText :: Text -> Int
 hashText t =
   fromIntegral . cityHash64 $ T.encodeUtf8 t
+{-# INLINE hashText #-}
 
 updateUniqueTextCount :: UniqueTextCount -> Text -> UniqueTextCount
 updateUniqueTextCount LooksFreeform _ = LooksFreeform
@@ -66,3 +69,22 @@ updateUniqueTextCount (UniqueTextCount c) t
   | otherwise =
       let h = hashText t in
       UniqueTextCount $ IS.insert h c
+{-# INLINE updateUniqueTextCount #-}
+
+combineTextCounts :: TextCounts -> TextCounts -> TextCounts
+combineTextCounts NoTextCounts NoTextCounts = NoTextCounts
+combineTextCounts NoTextCounts (TextCounts b) = TextCounts b
+combineTextCounts (TextCounts a) NoTextCounts = TextCounts a
+combineTextCounts (TextCounts a) (TextCounts b) = TextCounts $ combine'
+  where
+    combine' = V.zipWith combineUniqueTextCounts a b
+
+combineUniqueTextCounts :: UniqueTextCount -> UniqueTextCount -> UniqueTextCount
+combineUniqueTextCounts LooksFreeform LooksFreeform = LooksFreeform
+combineUniqueTextCounts LooksFreeform (UniqueTextCount _) = LooksFreeform
+combineUniqueTextCounts (UniqueTextCount _) LooksFreeform = LooksFreeform
+combineUniqueTextCounts (UniqueTextCount a) (UniqueTextCount b) =
+  let c = IS.union a b in
+  if IS.size c >= (unTextFreeformThreshold textFreeformThreshold)
+    then LooksFreeform
+    else UniqueTextCount c
