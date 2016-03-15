@@ -31,7 +31,7 @@ import           X.Options.Applicative
 data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
-  | Infer !Verbosity ![FilePath]
+  | Infer !Verbosity !FieldMatchRatio !SchemaFile ![FilePath]
   deriving (Eq, Show)
 
 main :: IO ()
@@ -54,9 +54,9 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) r
-run _wps (Infer v fs) = do
-  s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fs
-  T.putStrLn $ renderSchema s
+run _wps (Infer v fmr sf fs) = do
+  s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fs
+  T.writeFile (unSchemaFile sf) $ renderSchema s
 
 finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
 finishCheck verb rs = do
@@ -79,7 +79,10 @@ fileCheckP :: Parser Command
 fileCheckP = SingleFileCheck <$> viewFileP <*> checkParamsP
 
 inferP :: Parser Command
-inferP = Infer <$> verbosityP <*> some markerFileP
+inferP = Infer <$> verbosityP
+               <*> fieldMatchRatioP
+               <*> outputSchemaP
+               <*> some markerFileP
 
 checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
@@ -148,3 +151,19 @@ schemaFileP = maybe Nothing (Just . SchemaFile) <$> (optional . strOption $
      long "schema"
   <> metavar "SCHEMA-FILE"
   <> help "JSON-format schema against which to validate the dataset.")
+
+outputSchemaP :: Parser SchemaFile
+outputSchemaP = SchemaFile <$> (strOption $
+     long "output-schema"
+  <> short 'o'
+  <> metavar "SCHEMA-FILE"
+  <> value "schema.json"
+  <> help "File to which to write generated schema (defaults to \"schema.json\").")
+
+fieldMatchRatioP :: Parser FieldMatchRatio
+fieldMatchRatioP = FieldMatchRatio <$> (option auto $
+     long "schema-match-ratio"
+  <> short 'm'
+  <> metavar "MATCH-RATIO"
+  <> value 0.95
+  <> help "Minimum threshold of compatible observations to accept a field-type candidate, as a ratio to total number of rows. Defaults to 0.95.")

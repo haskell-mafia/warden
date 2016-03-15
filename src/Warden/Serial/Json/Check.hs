@@ -15,6 +15,7 @@ import qualified Data.Text as T
 import           P
 
 import           Warden.Data.Check
+import           Warden.Serial.Json.Common
 
 fromCheckDescription :: CheckDescription -> Value
 fromCheckDescription d = String $ renderCheckDescription d
@@ -26,11 +27,8 @@ toCheckDescription (String s) = case parseCheckDescription s of
 toCheckDescription x          = typeMismatch "Warden.Data.Check.CheckDescription" x
 
 fromVerbosity :: Verbosity -> Value
-fromVerbosity Verbose = String "verbose"
-fromVerbosity Quiet = String "quiet"
+fromVerbosity = String . renderVerbosity
 
 toVerbosity :: Value -> Parser Verbosity
-toVerbosity (String "verbose") = pure Verbose
-toVerbosity (String "quiet") = pure Quiet
-toVerbosity (String s) = fail $ "invalid Verbosity: " <> T.unpack s
+toVerbosity (String s) = fromTextField parseVerbosity "Verbosity" s
 toVerbosity x = typeMismatch "Warden.Data.Check.Verbosity" x

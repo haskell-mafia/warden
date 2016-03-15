@@ -8,6 +8,7 @@ import           Warden.Data.Check as X
 import           Warden.Data.Chunk as X
 import           Warden.Data.Field as X
 import           Warden.Data.FieldAnomaly as X
+import           Warden.Data.Inference as X
 import           Warden.Data.Marker as X
 import           Warden.Data.Numeric as X
 import           Warden.Data.Param as X

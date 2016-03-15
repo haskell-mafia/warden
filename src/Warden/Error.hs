@@ -9,6 +9,12 @@ module Warden.Error (
   , SchemaError(..)
   , TraversalError(..)
   , ValidationFailure(..)
+  , renderInferenceError
+  , renderLoadError
+  , renderMarkerError
+  , renderSchemaError
+  , renderTraversalError
+  , renderValidationFailure
   , renderWardenError
 ) where
 
@@ -19,6 +25,8 @@ import qualified Data.Text as T
 
 import           System.IO (FilePath)
 
+import           Warden.Data.Field
+import           Warden.Data.Row
 import           Warden.Data.Schema
 import           Warden.Data.View
 
@@ -132,13 +140,36 @@ renderSchemaError = ("schema error: " <>) . render'
 data InferenceError =
     NoViewMarkersError
   | MarkerValidationFailure ValidationFailure
+  | EmptyFieldHistogram
+  | NoMinimalFieldTypes
+  | CannotResolveCandidates [FieldType]
+  | ZeroRowCountError
+  | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
 renderInferenceError = ("inference error: " <>) . render'
   where
-    render' NoViewMarkersError = "No view markers provided."
-    render' (MarkerValidationFailure vf) = "Invalid view markers: " <> renderValidationFailure vf
+    render' NoViewMarkersError =
+      "No view markers provided."
+    render' (MarkerValidationFailure vf) =
+      "Invalid view markers: " <> renderValidationFailure vf
+    render' EmptyFieldHistogram =
+      "No counts in field histogram. This should be impossible."
+    render' NoMinimalFieldTypes =
+      "No minimal field types in field histogram. This should be impossible."
+    render' (CannotResolveCandidates fts) = T.concat [
+        "Multiple candidates with equally high score. This field must be resolved manually between: "
+      , T.intercalate ", " (renderFieldType <$> fts)
+      ]
+    render' ZeroRowCountError =
+      "Total row count reported by view markers is zero."
+    render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
+        "Fields have observation counts higher than the total row count "
+      , renderRowCount rc
+      , " : "
+      , T.intercalate ", " (renderCompatibleEntries <$> cs)
+      ]
 
 data ValidationFailure =
     ViewMarkerMismatch Text Text Text

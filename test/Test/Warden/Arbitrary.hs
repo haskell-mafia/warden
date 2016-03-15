@@ -28,9 +28,12 @@ import           Disorder.Corpus
 
 import           P
 
+import           Prelude (fromEnum)
+
 import           System.FilePath (joinPath)
 
 import           Test.Delorean.Arbitrary ()
+import           Test.QuickCheck (NonNegative(..))
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
 import           Test.QuickCheck.Instances ()
@@ -66,7 +69,7 @@ newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
 instance Arbitrary RowCount where
-  arbitrary = RowCount <$> choose (1, 100)
+  arbitrary = fmap (RowCount . getNonNegative) $ arbitrary `suchThat` ((<= 10000) . getNonNegative)
 
 instance Arbitrary FieldCount where
   arbitrary = fmap FieldCount $ arbitrary `suchThat` (>= 2)
@@ -230,6 +233,14 @@ newtype NPlus =
 
 instance Arbitrary NPlus where
   arbitrary = NPlus <$> choose (1, 10000)
+
+newtype UnitReal =
+  UnitReal {
+    unUnitReal :: Double
+  } deriving (Eq, Show)
+
+instance Arbitrary UnitReal where
+  arbitrary = UnitReal <$> choose (0.0, 1.0)
 
 newtype InvalidDirTree =
   InvalidDirTree {
@@ -426,3 +437,48 @@ renderedBool =
              , "False"
              ] in
   elements . nub $ reps <> (T.toUpper <$> reps)
+
+instance Arbitrary CompatibleEntries where
+  arbitrary = (CompatibleEntries . getNonNegative) <$> arbitrary `suchThat` ((<= 10000) . getNonNegative)
+
+instance Arbitrary FieldHistogram where
+  arbitrary = fmap (FieldHistogram . VU.fromList) $
+    vectorOf (length ([minBound..maxBound] :: [FieldType])) arbitrary
+
+-- No abnormalities, the happy case.
+validHistogramPair :: Gen (RowCount, FieldHistogram)
+validHistogramPair = do
+  n <- fmap (fromIntegral . unNPlus) $ arbitrary
+  let rc = RowCount n
+  let nText = CompatibleEntries n
+  nOthers <- replicateM (length ([minBound..maxBound] :: [FieldType])) (upTo n)
+  let h = VU.fromList $ nText : nOthers
+  let h' = FieldHistogram . VU.update h $ VU.fromList [(fromEnum TextField, nText)]
+  pure (rc, h')
+  where
+    upTo n = fmap CompatibleEntries $ choose (1, n)
+
+-- Example of field type in the middle of the tree.
+realHistogramPair :: Gen (RowCount, FieldHistogram)
+realHistogramPair = do
+  (rc, FieldHistogram h) <- validHistogramPair
+  let nReal = CompatibleEntries $ unRowCount rc
+  let h' = FieldHistogram . VU.update h $ VU.fromList [(fromEnum RealField, nReal)]
+  pure (rc, h')
+
+-- Example of field type at the bottom of the tree.
+booleanHistogramPair :: Gen (RowCount, FieldHistogram)
+booleanHistogramPair = do
+  (rc, FieldHistogram h) <- validHistogramPair
+  let nBoolean = CompatibleEntries $ unRowCount rc
+  let nCategorical = CompatibleEntries $ unRowCount rc
+  let h' = FieldHistogram . VU.update h $
+             VU.fromList [
+                 (fromEnum BooleanField, nBoolean)
+               , (fromEnum CategoricalField, nCategorical)
+               ]
+  pure (rc, h')
+
+  
+instance Arbitrary FieldMatchRatio where
+  arbitrary = fmap (FieldMatchRatio . unUnitReal) $ arbitrary

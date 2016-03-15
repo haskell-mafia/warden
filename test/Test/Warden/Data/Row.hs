@@ -31,7 +31,7 @@ prop_updateSVParseState :: [ValidRow] -> Property
 prop_updateSVParseState rs =
   let rs' = unValidRow <$> rs
       s = foldl updateSVParseState initialSVParseState rs' in
-  (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount $ length rs)
+  (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
 
 prop_combineFieldLooks :: [FieldLookCount] -> Property
 prop_combineFieldLooks ls =

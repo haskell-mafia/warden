@@ -6,10 +6,15 @@
 
 module Warden.Inference (
     compatibleEntries
+  , countCompatibleFields
   , countsForField
   , countsForType
+  , generateSchema
+  , inferField
+  , fieldCandidates
   , fieldLookSum
-  , countCompatibleFields
+  , normalizeFieldHistogram
+  , totalViewRows
   , validateViewMarkers
   , viewMarkerMismatch
   ) where
@@ -17,6 +22,8 @@ module Warden.Inference (
 import           Control.Lens ((^.), view)
 
 import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -83,3 +90,58 @@ countCompatibleFields vms = do
         Left $ MarkerValidationFailure NoFieldCounts
       FieldLookCount fls ->
         Right $ V.map countsForField fls
+
+totalViewRows :: NonEmpty ViewMarker -> RowCount
+totalViewRows = sum . fmap (view totalRows . vmViewCounts . vmMetadata)
+
+normalizeFieldHistogram :: RowCount -> FieldHistogram -> Either InferenceError (VU.Vector NormalizedEntries)
+normalizeFieldHistogram (RowCount rc) (FieldHistogram cs) = do
+  when (rc == 0) $
+    Left ZeroRowCountError
+  case greaterThanRowCount of
+    [] ->
+      pure $ VU.map normalize' cs
+    xs ->
+      Left $ CompatibleFieldsGTRowCount (RowCount rc) xs
+  where
+    greaterThanRowCount =
+      VU.toList . VU.map CompatibleEntries . VU.filter (> rc) $
+        VU.map unCompatibleEntries cs
+
+    normalize' (CompatibleEntries c) =
+      NormalizedEntries $ (fromIntegral c) / (fromIntegral rc)
+
+fieldCandidates :: FieldMatchRatio
+                -> RowCount
+                -> FieldHistogram
+                -> Either InferenceError (Set FieldType)
+fieldCandidates (FieldMatchRatio fmr) totalRowCount h = do
+  normed <- normalizeFieldHistogram totalRowCount h
+  if VU.null normed
+    then Left $ EmptyFieldHistogram
+    else
+      let cands = VU.filter (aboveMatchThreshold . snd) $
+                    VU.zip (VU.fromList $ [minBound..maxBound]) normed in
+      pure . S.fromList . VU.toList $ VU.map fst cands
+  where
+    aboveMatchThreshold (NormalizedEntries n) =
+      n >= fmr
+
+inferField :: FieldMatchRatio
+           -> RowCount
+           -> FieldHistogram
+           -> Either InferenceError FieldType
+inferField fmr totalRowCount h = do
+  fcs <- fieldCandidates fmr totalRowCount h
+  case S.toList (minima fcs) of
+    [] -> Left NoMinimalFieldTypes
+    [ft] -> pure ft
+    fts -> Left $ CannotResolveCandidates fts
+
+generateSchema :: FieldMatchRatio
+               -> RowCount
+               -> V.Vector FieldHistogram
+               -> Either InferenceError Schema
+generateSchema fmr totalRowCount hs = do
+  fts <- V.mapM (inferField fmr totalRowCount) hs
+  pure . Schema currentSchemaVersion $ SchemaField <$> fts

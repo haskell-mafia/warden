@@ -10,19 +10,19 @@
 
 module Warden.Data.Field (
     CompatibleEntries(..)
-  , FieldHistogram(..)
   , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
+  , parseFieldLooks
+  , parseFieldType
   , renderCompatibleEntries
-  , renderFieldHistogram
+  , renderFieldLooks
+  , renderFieldType
   ) where
 
 import           Data.Ix (Ix)
 import           Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Vector as V
-import qualified Data.Vector.Unboxed as VU
 import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 
 import           GHC.Generics (Generic)
@@ -70,6 +70,21 @@ $(derivingUnbox "fieldType"
   [| \x -> fromEnum x |]
   [| \y -> toEnum y |])
 
+renderFieldType :: FieldType -> Text
+renderFieldType TextField = "text-field"
+renderFieldType CategoricalField = "categorical-field"
+renderFieldType BooleanField = "boolean-field"
+renderFieldType IntegralField = "integral-field"
+renderFieldType RealField = "real-field"
+
+parseFieldType :: Text -> Maybe FieldType
+parseFieldType "text-field" = pure TextField
+parseFieldType "categorical-field" = pure CategoricalField
+parseFieldType "boolean-field" = pure BooleanField
+parseFieldType "integral-field" = pure IntegralField
+parseFieldType "real-field" = pure RealField
+parseFieldType _ = Nothing
+
 data FieldLooks =
     LooksEmpty
   | LooksIntegral
@@ -85,6 +100,23 @@ $(derivingUnbox "FieldLooks"
   [t| FieldLooks -> Int |]
   [| \x -> fromEnum x |]
   [| \y -> toEnum y |])
+
+renderFieldLooks :: FieldLooks -> Text
+renderFieldLooks LooksEmpty = "looks-empty"
+renderFieldLooks LooksIntegral = "looks-integral"
+renderFieldLooks LooksReal = "looks-real"
+renderFieldLooks LooksText = "looks-text"
+renderFieldLooks LooksCategorical = "looks-categorical"
+renderFieldLooks LooksBoolean = "looks-boolean"
+
+parseFieldLooks :: Text -> Maybe FieldLooks
+parseFieldLooks "looks-empty" = pure LooksEmpty
+parseFieldLooks "looks-integral" = pure LooksIntegral
+parseFieldLooks "looks-real" = pure LooksReal
+parseFieldLooks "looks-text" = pure LooksText
+parseFieldLooks "looks-categorical" = pure LooksCategorical
+parseFieldLooks "looks-boolean" = pure LooksBoolean
+parseFieldLooks _ = Nothing
 
 -- | Schema field types kinda look like a join semilattice under set
 -- inclusion. For example, if a given field is classified as a 
@@ -116,18 +148,3 @@ $(derivingUnbox "CompatibleEntries"
   [t| CompatibleEntries -> Int64 |]
   [| \(CompatibleEntries x) -> x |]
   [| \x -> (CompatibleEntries x) |])
-
--- | Map of field types to the number of observed values which seem compatible
--- with that type.
-newtype FieldHistogram =
-  FieldHistogram {
-    unFieldHistogram :: VU.Vector CompatibleEntries
-  } deriving (Eq, Show, Generic)
-
-renderFieldHistogram :: FieldHistogram -> Text
-renderFieldHistogram (FieldHistogram cs) =
-  T.intercalate ", " . fmap (\(t,n) -> (T.pack $ show t <> " = " <> show n)) .
-    V.toList . V.zip (V.fromList [minBound..maxBound] :: V.Vector FieldType) .
-      V.map renderCompatibleEntries $ VU.convert cs
-
-instance NFData FieldHistogram

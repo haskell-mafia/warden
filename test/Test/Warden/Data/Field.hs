@@ -8,6 +8,7 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S
 
+import           Disorder.Core.Tripping (tripping)
 import           Disorder.Core.UniquePair (UniquePair(..))
 
 import           P
@@ -20,6 +21,12 @@ import           Test.Warden.Data.Poset.Laws
 
 import           Warden.Data.Field
 import           Warden.Data.Poset
+
+prop_FieldLooks_tripping :: FieldLooks -> Property
+prop_FieldLooks_tripping = tripping renderFieldLooks parseFieldLooks
+
+prop_FieldType_tripping :: FieldType -> Property
+prop_FieldType_tripping = tripping renderFieldType parseFieldType
 
 prop_FieldType_posetLaws :: (UniquePair FieldType) -> FieldType -> FieldType -> FieldType -> Property
 prop_FieldType_posetLaws =

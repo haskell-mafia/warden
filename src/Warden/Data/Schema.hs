@@ -9,6 +9,7 @@ module Warden.Data.Schema (
   , SchemaField(..)
   , SchemaFile(..)
   , SchemaVersion(..)
+  , currentSchemaVersion
   , renderSchemaFile
   , schemaFieldType
   ) where
@@ -34,6 +35,9 @@ renderSchemaFile = T.pack . unSchemaFile
 data SchemaVersion =
     SchemaV1
   deriving (Eq, Show, Enum, Bounded)
+
+currentSchemaVersion :: SchemaVersion
+currentSchemaVersion = maxBound
 
 data Schema = Schema !SchemaVersion !(Vector SchemaField)
   deriving (Eq, Show)
