@@ -502,11 +502,9 @@ booleanHistogramPair :: Gen (RowCount, FieldHistogram)
 booleanHistogramPair = do
   (rc, FieldHistogram h) <- validHistogramPair
   let nBoolean = CompatibleEntries $ unRowCount rc
-  let nCategorical = CompatibleEntries $ unRowCount rc
   let h' = FieldHistogram . VU.update h $
              VU.fromList [
                  (fromEnum BooleanField, nBoolean)
-               , (fromEnum CategoricalField, nCategorical)
                ]
   pure (rc, h')
   

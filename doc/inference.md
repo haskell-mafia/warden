@@ -32,11 +32,11 @@ integers are contained within the reals (sorry Liam), but not the
 inverse.
 
 ```
-    Real+---------Text-------+ Categorical
-        |                    |
-        |                    |
-        v                    v
-    Integral               Boolean
+    Real+---------Text-------+ Boolean
+        |
+        |
+        v
+    Integral
 ```
 
 # Schema generation
