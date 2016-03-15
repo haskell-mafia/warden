@@ -55,7 +55,7 @@ instance NFData TextCounts
 
 -- Probably want to make this configurable.
 textFreeformThreshold :: TextFreeformThreshold
-textFreeformThreshold = TextFreeformThreshold 1000
+textFreeformThreshold = TextFreeformThreshold 100
 
 -- | Don't use this on 32-bit platforms.
 --
