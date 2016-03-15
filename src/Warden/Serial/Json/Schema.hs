@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Warden.Serial.Json.Schema(
     fromSchema
@@ -8,7 +9,7 @@ module Warden.Serial.Json.Schema(
   , toSchemaFile
   ) where
 
-import           Data.Aeson ((.:), (.=), object)
+import           Data.Aeson ((.:), (.=), object, toJSON, parseJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -40,14 +41,16 @@ toSchemaVersion (String x) = fail . T.unpack $ "unknown schema version " <> x
 toSchemaVersion x = typeMismatch "Warden.Data.Schema.SchemaVersion" x
 
 fromSchemaField :: SchemaField -> Value
-fromSchemaField (SchemaField t) = object [
+fromSchemaField (SchemaField t f) = object [
       "field-type" .= fromFieldType t
+    , "field-form" .= fromFieldForm f
     ]
 
 toSchemaField :: Value -> Parser SchemaField
 toSchemaField (Object o) = do
-  f <- toFieldType =<< (o .: "field-type")
-  pure $ SchemaField f
+  t <- toFieldType =<< (o .: "field-type")
+  f <- toFieldForm =<< (o .: "field-form")
+  pure $ SchemaField t f
 toSchemaField x = typeMismatch "Warden.Data.Schema.SchemaField" x
 
 fromSchemaFile :: SchemaFile -> Value
@@ -56,3 +59,25 @@ fromSchemaFile (SchemaFile f) = String $ T.pack f
 toSchemaFile :: Value -> Parser SchemaFile
 toSchemaFile (String s) = pure . SchemaFile $ T.unpack s
 toSchemaFile x = typeMismatch "Warden.Data.Schema.SchemaFile" x
+
+fromFieldForm :: FieldForm -> Value
+fromFieldForm FreeForm = object [ "form-type" .= String "freeform" ]
+fromFieldForm UnknownForm = object [ "form-type" .= String "unknown" ]
+fromFieldForm (CategoricalForm c) = object [
+    "form-type" .= String "categorical"
+  , "uniques" .= toJSON (unFieldUniques c)
+  ]
+
+toFieldForm :: Value -> Parser FieldForm
+toFieldForm (Object o) =
+  o .: "form-type" >>= \case
+    String "freeform" -> pure FreeForm
+    String "unknown" -> pure UnknownForm
+    String "categorical" -> toCategorical'
+    x -> fail $ "Invalid FieldForm: " <> show x
+  where
+    toCategorical' = do
+      c <- fmap FieldUniques $ parseJSON =<< (o .: "uniques")
+      pure $ CategoricalForm c
+toFieldForm x = typeMismatch "Warden.Data.Schema.FieldForm" x
+  

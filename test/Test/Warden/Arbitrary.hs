@@ -391,8 +391,18 @@ instance Arbitrary ChunkCount where
 instance Arbitrary FieldType where
   arbitrary = elements [minBound..maxBound]
 
+instance Arbitrary FieldForm where
+  arbitrary = oneof [
+      pure UnknownForm
+    , pure FreeForm
+    , CategoricalForm <$> arbitrary
+    ]
+
+instance Arbitrary FieldUniques where
+  arbitrary = fmap (FieldUniques . getNonNegative) arbitrary
+
 instance Arbitrary SchemaField where
-  arbitrary = SchemaField <$> arbitrary
+  arbitrary = SchemaField <$> arbitrary <*> arbitrary
 
 instance Arbitrary SchemaVersion where
   arbitrary = elements [minBound..maxBound]

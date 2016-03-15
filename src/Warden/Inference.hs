@@ -144,4 +144,4 @@ generateSchema :: FieldMatchRatio
                -> Either InferenceError Schema
 generateSchema fmr totalRowCount hs = do
   fts <- V.mapM (inferField fmr totalRowCount) hs
-  pure . Schema currentSchemaVersion $ SchemaField <$> fts
+  pure . Schema currentSchemaVersion $ (flip SchemaField UnknownForm) <$> fts
