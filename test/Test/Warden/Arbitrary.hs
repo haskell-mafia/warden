@@ -33,6 +33,7 @@ import           Prelude (fromEnum)
 import           System.FilePath (joinPath)
 
 import           Test.Delorean.Arbitrary ()
+import           Test.QuickCheck (NonNegative(..))
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
 import           Test.QuickCheck.Instances ()
@@ -68,7 +69,7 @@ newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
 instance Arbitrary RowCount where
-  arbitrary = fmap (RowCount . fromIntegral . unNat) $ arbitrary
+  arbitrary = fmap (RowCount . getNonNegative) $ arbitrary `suchThat` ((<= 10000) . getNonNegative)
 
 instance Arbitrary FieldCount where
   arbitrary = fmap FieldCount $ arbitrary `suchThat` (>= 2)
@@ -232,14 +233,6 @@ newtype NPlus =
 
 instance Arbitrary NPlus where
   arbitrary = NPlus <$> choose (1, 10000)
-
-newtype Nat =
-  Nat {
-    unNat :: Int
-  } deriving (Eq, Show, Ord, Num)
-
-instance Arbitrary Nat where
-  arbitrary = Nat <$> choose (0, 10000)
 
 newtype UnitReal =
   UnitReal {
@@ -446,7 +439,7 @@ renderedBool =
   elements . nub $ reps <> (T.toUpper <$> reps)
 
 instance Arbitrary CompatibleEntries where
-  arbitrary = (CompatibleEntries . fromIntegral . unNat) <$> arbitrary
+  arbitrary = (CompatibleEntries . getNonNegative) <$> arbitrary `suchThat` ((<= 10000) . getNonNegative)
 
 instance Arbitrary FieldHistogram where
   arbitrary = fmap (FieldHistogram . VU.fromList) $
