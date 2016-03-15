@@ -6,11 +6,11 @@
 [build.dist]
   HADDOCK="true"
   BENCH = "true"
-  PUBLISH = "warden"
+  PUBLISH = "warden warden-gen"
 
 [build.branches]
   BENCH = "true"
-  PUBLISH_BRANCHES = "warden"
+  PUBLISH_BRANCHES = "warden warden-gen"
 
 [build.profiling]
   PROFILING = "true"
