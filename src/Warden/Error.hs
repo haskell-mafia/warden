@@ -20,12 +20,15 @@ module Warden.Error (
 
 import           P
 
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           System.IO (FilePath)
 
 import           Warden.Data.Field
+import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.Schema
 import           Warden.Data.View
@@ -174,6 +177,7 @@ renderInferenceError = ("inference error: " <>) . render'
 data ValidationFailure =
     ViewMarkerMismatch Text Text Text
   | NoFieldCounts
+  | ChecksMarkedFailed (NonEmpty RunId)
   deriving (Eq, Show)
 
 renderValidationFailure :: ValidationFailure -> Text
@@ -188,3 +192,4 @@ renderValidationFailure f = "Validation failure: " <> render' f
       , y
       ]
     render' NoFieldCounts = "No field counts to perform inference on."
+    render' (ChecksMarkedFailed rids) = "Some markers recorded a failed check status and cannot be used in inference: " <> (T.intercalate ", " . NE.toList $ renderRunId <$> rids)

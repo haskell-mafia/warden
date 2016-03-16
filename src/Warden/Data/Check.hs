@@ -6,25 +6,19 @@ module Warden.Data.Check (
   , CheckResult(..)
   , CheckStatus(..)
   , Failure(..)
-  , FileCheck(..)
   , Insanity(..)
   , RowFailure(..)
   , SchemaFailure(..)
-  , Verbosity(..)
   , checkHasFailures
   , checkStatusFailed
   , isCheckFailure
   , parseCheckDescription
-  , parseVerbosity
   , renderFailure
   , renderCheckDescription
   , renderCheckResult
   , renderCheckStatus
-  , renderVerbosity
   , resolveCheckStatus
   ) where
-
-import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -34,14 +28,9 @@ import qualified Data.Text as T
 
 import           P
 
-import           System.IO
-
 import           Warden.Data.FieldAnomaly
 import           Warden.Data.Row
 import           Warden.Data.View
-import           Warden.Error
-
-import           X.Control.Monad.Trans.Either (EitherT)
 
 data CheckDescription =
     FileSanityChecks
@@ -56,23 +45,6 @@ parseCheckDescription :: Text -> Maybe CheckDescription
 parseCheckDescription "file-sanity-checks" = Just FileSanityChecks
 parseCheckDescription "view-row-counts"    = Just ViewRowCounts
 parseCheckDescription _                    = Nothing
-
-data Verbosity =
-    Verbose
-  | Quiet
-  deriving (Eq, Show)
-
-renderVerbosity :: Verbosity -> Text
-renderVerbosity Verbose = "verbose"
-renderVerbosity Quiet = "quiet"
-
-parseVerbosity :: Text -> Maybe Verbosity
-parseVerbosity "verbose" = pure Verbose
-parseVerbosity "quiet" = pure Quiet
-parseVerbosity _ = Nothing
-
-data FileCheck =
-    FileCheck !CheckDescription (ViewFile -> EitherT WardenError (ResourceT IO) CheckStatus)
 
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus

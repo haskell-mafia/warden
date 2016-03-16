@@ -59,6 +59,7 @@ library
   exposed-modules:
                        BuildInfo_ambiata_warden
                        Warden
+                       Warden.Check
                        Warden.Check.File
                        Warden.Check.Row
                        Warden.Chunk

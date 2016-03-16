@@ -7,11 +7,14 @@ module Warden.Data.Param (
   , NumCPUs(..)
   , RunId(..)
   , SanityParams(..)
+  , Verbosity(..)
   , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
   , parseRunId
+  , parseVerbosity
   , renderRunId
+  , renderVerbosity
   , runIdLength
   ) where
 
@@ -21,7 +24,6 @@ import           Data.Text (Text)
 
 import           Debruijn.Hex (Hex, unHex, parseHex)
 
-import           Warden.Data.Check
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
@@ -56,6 +58,21 @@ newtype NumCPUs =
 
 chunksForCPUs :: NumCPUs -> ChunkCount
 chunksForCPUs = ChunkCount . unNumCPUs
+
+
+data Verbosity =
+    Verbose
+  | Quiet
+  deriving (Eq, Show)
+
+renderVerbosity :: Verbosity -> Text
+renderVerbosity Verbose = "verbose"
+renderVerbosity Quiet = "quiet"
+
+parseVerbosity :: Text -> Maybe Verbosity
+parseVerbosity "verbose" = pure Verbose
+parseVerbosity "quiet" = pure Quiet
+parseVerbosity _ = Nothing
 
 data Force =
     Force

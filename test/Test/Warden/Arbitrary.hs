@@ -378,6 +378,19 @@ instance Arbitrary ViewMarker where
                          <*> arbitrary
                          <*> arbitrary
 
+passedViewMarker :: Gen ViewMarker
+passedViewMarker = do
+  results <- listOf1 arbitrary
+  let results' = fmap (\r -> r { summaryStatus = MarkerPass }) results
+  mark <- arbitrary
+  pure $ mark { vmCheckResults = results' }
+
+failedViewMarker :: Gen ViewMarker
+failedViewMarker = do
+  results <- listOf1 arbitrary `suchThat` (not . all ((== MarkerPass) . summaryStatus))
+  mark <- arbitrary
+  pure $ mark { vmCheckResults = results }
+
 instance Arbitrary ChunkCount where
   arbitrary = (ChunkCount . unNPlus) <$> (arbitrary `suchThat` ((< 1000) . unNPlus))
 

@@ -21,7 +21,8 @@ module Warden.Inference (
 
 import           Control.Lens ((^.), view)
 
-import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.List (zip)
+import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -56,12 +57,19 @@ viewMarkerMismatch a b = do
 -- | Sanity-check view markers to prevent human error, e.g., trying to run
 -- `infer` on markers from multiple views.
 validateViewMarkers :: NonEmpty ViewMarker -> Either InferenceError ()
-validateViewMarkers (m:|ms) = go m ms
+validateViewMarkers (m:|ms) = go m ms >> checkFails
   where
     go _ [] = pure ()
     go prev !(m':ms') = case viewMarkerMismatch prev m' of
       Right () -> go m' ms'
       Left f -> Left $ MarkerValidationFailure f
+
+    checkFails =
+      let markers = m:ms
+          stati = join $ (fmap summaryStatus . vmCheckResults) <$> markers in
+      case nonEmpty (filter ((/= MarkerPass) . snd) $ zip markers stati) of
+        Nothing -> pure ()
+        Just fs -> Left . MarkerValidationFailure . ChecksMarkedFailed $ (wpRunId . vmWardenParams . fst) <$> fs
 
 fieldLookSum :: NonEmpty ViewMarker -> FieldLookCount
 fieldLookSum =

@@ -15,7 +15,7 @@ import qualified Data.Text as T
 import           P
 
 import           Warden.Data
-import           Warden.Serial.Json.Check
+import           Warden.Serial.Json.Common
 import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Schema
 
@@ -70,6 +70,14 @@ fromNumCPUs = toJSON . unNumCPUs
 toNumCPUs :: Value -> Parser NumCPUs
 toNumCPUs (Number n) = fmap NumCPUs . parseJSON $ Number n
 toNumCPUs x = typeMismatch "Warden.Data.Param.NumCPUs" x
+
+
+fromVerbosity :: Verbosity -> Value
+fromVerbosity = String . renderVerbosity
+
+toVerbosity :: Value -> Parser Verbosity
+toVerbosity (String s) = fromTextField parseVerbosity "Verbosity" s
+toVerbosity x = typeMismatch "Warden.Data.Check.Verbosity" x
 
 fromWardenParams :: WardenParams -> Value
 fromWardenParams (WardenParams caps wv rid) = object [
