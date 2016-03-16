@@ -15,7 +15,6 @@ import qualified Data.Set as S
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V

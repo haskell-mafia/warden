@@ -15,7 +15,6 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Aeson.Types (parseEither)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.ByteString.Lazy (readFile, writeFile)
-import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 

@@ -20,8 +20,6 @@ module Warden.Data.Param (
 
 import           P
 
-import           Data.Text (Text)
-
 import           Debruijn.Hex (Hex, unHex, parseHex)
 
 import           Warden.Data.Chunk

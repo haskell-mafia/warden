@@ -5,7 +5,6 @@ module Warden.Debug (
     debugPrintLn
   ) where
 
-import           Data.Text (Text)
 import           Data.Text.IO (putStrLn)
 
 import           P

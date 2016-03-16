@@ -20,7 +20,6 @@ import           Data.Csv (DecodeOptions(..), HasHeader(..))
 import           Data.Csv (defaultDecodeOptions)
 import           Data.Csv.Incremental (Parser(..), decodeWith)
 import           Data.List.NonEmpty (NonEmpty)
-import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Vector (Vector)
 import           Data.Word (Word8)

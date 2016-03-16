@@ -23,7 +23,6 @@ module Warden.Data.Check (
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
-import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           P

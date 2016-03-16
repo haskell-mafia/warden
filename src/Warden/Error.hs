@@ -22,7 +22,6 @@ import           P
 
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           System.IO (FilePath)

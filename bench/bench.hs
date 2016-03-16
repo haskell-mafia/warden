@@ -12,7 +12,6 @@ import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.Binary as CB
 import qualified Data.Conduit.List as C
 import           Data.List.NonEmpty (NonEmpty)
-import           Data.Text (Text)
 import qualified Data.Vector as V
 
 import           P

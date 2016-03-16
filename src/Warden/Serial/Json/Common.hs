@@ -6,7 +6,6 @@ module Warden.Serial.Json.Common (
   ) where
 
 import           Data.Aeson.Types (Parser)
-import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           P

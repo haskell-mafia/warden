@@ -27,7 +27,6 @@ import           Data.Char (ord)
 import           Data.List.NonEmpty (NonEmpty)
 import           Data.Set (Set)
 import qualified Data.Set as S
-import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           Delorean.Local.Date (Date, renderDate)

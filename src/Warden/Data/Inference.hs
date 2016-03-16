@@ -16,7 +16,6 @@ module Warden.Data.Inference (
   , renderFieldMatchRatio
   ) where
 
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU

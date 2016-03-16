@@ -25,7 +25,6 @@ module Warden.Data.TextCounts (
 import           Data.Digest.CityHash (cityHash64)
 import           Data.Set (Set)
 import qualified Data.Set as S
-import           Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
 

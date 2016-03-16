@@ -15,7 +15,6 @@ import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
-import           Data.Text (Text)
 import qualified Data.Text as T
 
 import           Delorean.Local.Date (Date, renderDate, parseDate)

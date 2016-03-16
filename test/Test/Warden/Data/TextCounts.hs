@@ -6,7 +6,6 @@ module Test.Warden.Data.TextCounts where
 
 import qualified Data.Set as S
 import           Data.List (take)
-import           Data.Text (Text)
 import qualified Data.Vector as V
 
 import           Disorder.Core.Property (failWith)

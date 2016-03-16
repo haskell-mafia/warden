@@ -21,7 +21,6 @@ module Warden.Data.Field (
   ) where
 
 import           Data.Ix (Ix)
-import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Vector.Unboxed.Deriving (derivingUnbox)
 

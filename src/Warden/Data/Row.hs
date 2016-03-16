@@ -45,7 +45,6 @@ import           Data.Attoparsec.Text
 import           Data.Char (chr, ord)
 import           Data.Set (Set)
 import qualified Data.Set as S
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
