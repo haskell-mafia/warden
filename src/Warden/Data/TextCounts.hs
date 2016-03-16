@@ -17,6 +17,7 @@ module Warden.Data.TextCounts (
   , combineUniqueTextCounts
   , emptyUniqueTextCount
   , hashText
+  , textFreeformThreshold
   , updateUniqueTextCount
   ) where
 
