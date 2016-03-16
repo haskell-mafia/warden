@@ -32,6 +32,7 @@ module Warden.Data.Row (
   , renderParsedField
   , renderRowCount
   , resolveSVParseState
+  , textCounts
   , totalRows
   , updateFieldLooks
   , updateTextCounts

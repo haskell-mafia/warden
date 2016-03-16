@@ -11,9 +11,11 @@ module Warden.Inference (
   , countsForType
   , generateSchema
   , inferField
+  , inferForms
   , fieldCandidates
   , fieldLookSum
   , normalizeFieldHistogram
+  , textCountSum
   , totalViewRows
   , validateViewMarkers
   , viewMarkerMismatch
@@ -75,6 +77,25 @@ fieldLookSum :: NonEmpty ViewMarker -> FieldLookCount
 fieldLookSum =
   foldl' combineFieldLooks NoFieldLookCount . 
     fmap (view fieldLooks . vmViewCounts . vmMetadata)
+
+textCountSum :: NonEmpty ViewMarker -> TextCounts
+textCountSum =
+  foldl' combineTextCounts NoTextCounts .
+    fmap (view textCounts . vmViewCounts . vmMetadata)
+
+inferForms :: NonEmpty ViewMarker -> Either InferenceError TextCountSummary
+inferForms vms =
+  case textCountSum vms of
+    NoTextCounts -> Left NoTextCountError
+    TextCounts cs -> fmap TextCountSummary $ V.mapM (uncurry summarizeTextCount) $ V.indexed cs
+
+summarizeTextCount :: Int -> UniqueTextCount -> Either InferenceError FieldForm
+summarizeTextCount _ LooksFreeform =
+  pure FreeForm
+summarizeTextCount i (UniqueTextCount hashes) =
+  if S.null hashes
+    then Left $ NoTextCountForField i
+    else pure . CategoricalForm . FieldUniques $ S.size hashes
 
 countsForField :: VU.Vector ObservationCount -> FieldHistogram
 countsForField os =
@@ -147,9 +168,10 @@ inferField fmr totalRowCount h = do
     fts -> Left $ CannotResolveCandidates fts
 
 generateSchema :: FieldMatchRatio
+               -> TextCountSummary
                -> RowCount
                -> V.Vector FieldHistogram
                -> Either InferenceError Schema
-generateSchema fmr totalRowCount hs = do
+generateSchema fmr (TextCountSummary ffs) totalRowCount hs = do
   fts <- V.mapM (inferField fmr totalRowCount) hs
-  pure . Schema currentSchemaVersion $ (flip SchemaField UnknownForm) <$> fts
+  pure . Schema currentSchemaVersion $ V.zipWith SchemaField fts ffs

@@ -146,6 +146,8 @@ data InferenceError =
   | NoMinimalFieldTypes
   | CannotResolveCandidates [FieldType]
   | ZeroRowCountError
+  | NoTextCountError
+  | NoTextCountForField Int
   | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   deriving (Eq, Show)
 
@@ -166,6 +168,10 @@ renderInferenceError = ("inference error: " <>) . render'
       ]
     render' ZeroRowCountError =
       "Total row count reported by view markers is zero."
+    render' NoTextCountError =
+      "No text counts to use for form inference."
+    render' (NoTextCountForField i) =
+      "No text counts to use for form inference on field " <> renderIntegral i
     render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
         "Fields have observation counts higher than the total row count "
       , renderRowCount rc

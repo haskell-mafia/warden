@@ -12,6 +12,7 @@ module Warden.Data.Inference (
     FieldHistogram(..)
   , FieldMatchRatio(..)
   , NormalizedEntries(..)
+  , TextCountSummary(..)
   , renderFieldHistogram
   , renderFieldMatchRatio
   ) where
@@ -26,6 +27,7 @@ import           GHC.Generics (Generic)
 import           P
 
 import           Warden.Data.Field
+import           Warden.Data.Schema
 
 -- | Ratio of compatible observations with the total number of rows.
 newtype FieldMatchRatio =
@@ -63,3 +65,9 @@ $(derivingUnbox "NormalizedEntries"
   [| \x -> (NormalizedEntries x)  |])
 
 instance NFData NormalizedEntries
+
+data TextCountSummary =
+  TextCountSummary (V.Vector FieldForm)
+  deriving (Eq, Show, Generic)
+
+instance NFData TextCountSummary
