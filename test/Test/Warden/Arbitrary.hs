@@ -11,6 +11,7 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
+import qualified Data.IntSet as IS
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -33,6 +34,7 @@ import           Prelude (fromEnum)
 import           System.FilePath (joinPath)
 
 import           Test.Delorean.Arbitrary ()
+import           Test.QuickCheck (Small(..), NonNegative(..))
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
 import           Test.QuickCheck.Instances ()
@@ -68,7 +70,7 @@ newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
   deriving (Eq, Show, Ord, ToRecord)
 
 instance Arbitrary RowCount where
-  arbitrary = fmap (RowCount . fromIntegral . unNat) $ arbitrary
+  arbitrary = fmap (RowCount . getSmall . getNonNegative) $ arbitrary
 
 instance Arbitrary FieldCount where
   arbitrary = fmap FieldCount $ arbitrary `suchThat` (>= 2)
@@ -233,14 +235,6 @@ newtype NPlus =
 instance Arbitrary NPlus where
   arbitrary = NPlus <$> choose (1, 10000)
 
-newtype Nat =
-  Nat {
-    unNat :: Int
-  } deriving (Eq, Show, Ord, Num)
-
-instance Arbitrary Nat where
-  arbitrary = Nat <$> choose (0, 10000)
-
 newtype UnitReal =
   UnitReal {
     unUnitReal :: Double
@@ -348,8 +342,21 @@ genLooksVec = fmap V.fromList $ listOf1 genFieldLooks
 instance Arbitrary FieldLookCount where
   arbitrary = oneof [pure NoFieldLookCount, fmap FieldLookCount genLooksVec]
 
+instance Arbitrary UniqueTextCount where
+  arbitrary = oneof [
+      pure LooksFreeform
+   , (UniqueTextCount . IS.fromList) <$> arbitrary
+   ]
+
+instance Arbitrary TextCounts where
+  arbitrary = oneof [
+      pure NoTextCounts
+    , (TextCounts <$> arbitrary)
+    ]
+
 instance Arbitrary SVParseState where
   arbitrary = SVParseState <$> arbitrary
+                           <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
@@ -377,8 +384,18 @@ instance Arbitrary ChunkCount where
 instance Arbitrary FieldType where
   arbitrary = elements [minBound..maxBound]
 
+instance Arbitrary FieldForm where
+  arbitrary = oneof [
+      pure UnknownForm
+    , pure FreeForm
+    , CategoricalForm <$> arbitrary
+    ]
+
+instance Arbitrary FieldUniques where
+  arbitrary = fmap (FieldUniques . getSmall . getNonNegative) arbitrary
+
 instance Arbitrary SchemaField where
-  arbitrary = SchemaField <$> arbitrary
+  arbitrary = SchemaField <$> arbitrary <*> arbitrary
 
 instance Arbitrary SchemaVersion where
   arbitrary = elements [minBound..maxBound]
@@ -446,11 +463,11 @@ renderedBool =
   elements . nub $ reps <> (T.toUpper <$> reps)
 
 instance Arbitrary CompatibleEntries where
-  arbitrary = (CompatibleEntries . fromIntegral . unNat) <$> arbitrary
+  arbitrary = (CompatibleEntries . getSmall . getNonNegative) <$> arbitrary
 
 instance Arbitrary FieldHistogram where
   arbitrary = fmap (FieldHistogram . VU.fromList) $
-    vectorOf (length ([minBound..maxBound] :: [FieldType])) arbitrary
+    (vectorOf (length ([minBound..maxBound] :: [FieldType])) arbitrary) `suchThat` (any (> (CompatibleEntries 0)))
 
 -- No abnormalities, the happy case.
 validHistogramPair :: Gen (RowCount, FieldHistogram)
@@ -478,14 +495,11 @@ booleanHistogramPair :: Gen (RowCount, FieldHistogram)
 booleanHistogramPair = do
   (rc, FieldHistogram h) <- validHistogramPair
   let nBoolean = CompatibleEntries $ unRowCount rc
-  let nCategorical = CompatibleEntries $ unRowCount rc
   let h' = FieldHistogram . VU.update h $
              VU.fromList [
                  (fromEnum BooleanField, nBoolean)
-               , (fromEnum CategoricalField, nCategorical)
                ]
   pure (rc, h')
-
   
 instance Arbitrary FieldMatchRatio where
   arbitrary = fmap (FieldMatchRatio . unUnitReal) $ arbitrary

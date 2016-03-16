@@ -5,6 +5,7 @@ module Warden.Commands(
     check
   , fileCheck
   , infer
+  , sanity
 ) where
 
 import           Control.Monad.IO.Class (liftIO)
@@ -49,6 +50,12 @@ fileCheck wps vf ps = do
   vf' <- liftIO . makeAbsolute $ viewFilePath vf
   let view = View $ takeDirectory vf'
   checkViewFiles wps ps view $ vf :| []
+
+sanity :: WardenParams
+       -> View
+       -> SanityParams
+       -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
+sanity _wps _view _sps = left WardenNotImplementedError
 
 checkViewFiles :: WardenParams
                -> CheckParams

@@ -5,13 +5,14 @@
 {- This module will probably end up in brandix. -}
 
 module Warden.Data.Schema (
-    Schema(..)
+    FieldForm(..)
+  , FieldUniques(..)
+  , Schema(..)
   , SchemaField(..)
   , SchemaFile(..)
   , SchemaVersion(..)
   , currentSchemaVersion
   , renderSchemaFile
-  , schemaFieldType
   ) where
 
 import           Data.Text (Text)
@@ -32,6 +33,17 @@ newtype SchemaFile =
 renderSchemaFile :: SchemaFile -> Text
 renderSchemaFile = T.pack . unSchemaFile
 
+newtype FieldUniques =
+  FieldUniques {
+    unFieldUniques :: Int
+  } deriving (Eq, Show)
+
+data FieldForm =
+    FreeForm
+  | CategoricalForm !FieldUniques
+  | UnknownForm
+  deriving (Eq, Show)
+
 data SchemaVersion =
     SchemaV1
   deriving (Eq, Show, Enum, Bounded)
@@ -44,8 +56,7 @@ data Schema = Schema !SchemaVersion !(Vector SchemaField)
 
 -- | This will contain more data in the future, e.g., summary statistics for
 -- numeric types.
-data SchemaField = SchemaField !FieldType
-  deriving (Eq, Show)
-
-schemaFieldType :: SchemaField -> FieldType
-schemaFieldType (SchemaField ft) = ft
+data SchemaField = SchemaField {
+      schemaFieldType :: !FieldType
+    , schemaFieldForm :: !FieldForm
+  } deriving (Eq, Show)

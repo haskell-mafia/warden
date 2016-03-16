@@ -34,6 +34,7 @@ module Warden.Data.Row (
   , resolveSVParseState
   , totalRows
   , updateFieldLooks
+  , updateTextCounts
   , updateSVParseState
 ) where
 
@@ -58,6 +59,7 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Field
+import           Warden.Data.TextCounts
 
 newtype LineBound =
   LineBound {
@@ -141,7 +143,9 @@ combineFieldLooks (FieldLookCount !x) (FieldLookCount !y) = FieldLookCount . unc
 data FieldLookCount =
     FieldLookCount !(V.Vector (VU.Vector ObservationCount))
   | NoFieldLookCount
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData FieldLookCount
 
 data SVParseState =
   SVParseState {
@@ -149,6 +153,7 @@ data SVParseState =
   , _totalRows   :: {-# UNPACK #-} !RowCount
   , _numFields   :: !(Set FieldCount)
   , _fieldLooks  :: !FieldLookCount
+  , _textCounts  :: !TextCounts
   } deriving (Eq, Show, Generic)
 
 instance NFData SVParseState
@@ -163,6 +168,7 @@ resolveSVParseState = foldr update initialSVParseState
       . (totalRows %~ ((s ^. totalRows) +))
       . (numFields %~ ((s ^. numFields) `S.union`))
       . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+      . (textCounts %~ ((s ^. textCounts) `combineTextCounts`))
       $! acc
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
@@ -229,7 +235,17 @@ boolP = trueP <|> falseP
 {-# INLINE boolP #-}
 
 initialSVParseState :: SVParseState
-initialSVParseState = SVParseState 0 0 S.empty NoFieldLookCount
+initialSVParseState =
+  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts
+
+updateTextCounts :: Row -> TextCounts -> TextCounts
+updateTextCounts (SVFields vs) NoTextCounts =
+  TextCounts $!! V.zipWith updateUniqueTextCount vs $
+      V.replicate (V.length vs) emptyUniqueTextCount
+updateTextCounts (SVFields vs) (TextCounts tcs) =
+  TextCounts $!! V.zipWith updateUniqueTextCount vs tcs
+updateTextCounts _ tc = tc
+{-# INLINE updateTextCounts #-}
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: SVParseState
@@ -242,6 +258,7 @@ updateSVParseState !st row =
   . (badRows %~ (bad +))
   . (numFields %~ (updateNumFields row))
   . (fieldLooks %~ (updateFields row))
+  . (textCounts %~ (updateTextCounts row))
   $!! st
  where
   countGood (SVFields _)   = RowCount 1

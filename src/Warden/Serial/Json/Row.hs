@@ -30,7 +30,9 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Row
+import           Warden.Data.TextCounts
 import           Warden.Serial.Json.Field
+import           Warden.Serial.Json.TextCounts
 
 fromSeparator :: Separator -> Value
 fromSeparator (Separator s) = String . T.pack . pure . chr $ fromIntegral s
@@ -89,15 +91,23 @@ toFieldVector (Array os) = do
 toFieldVector x = typeMismatch "V.Vector Warden.Data.Row.FieldLooks Integer" x
 
 fromSVParseState :: SVParseState -> Value
-fromSVParseState (SVParseState br tr nfs fas) = object $ [
+fromSVParseState (SVParseState br tr nfs fas tcs) = object $ [
     "bad-rows" .= fromRowCount br
   , "total-rows" .= fromRowCount tr
   , "field-counts" .= (fmap fromFieldCount $ S.toList nfs)
-  ] <> case fas of
-         NoFieldLookCount ->
-           []
-         FieldLookCount fas' ->
-           ["field-looks" .= (fmap fromFieldVector $ V.toList fas')]
+  ] <> fieldLooks' <> textCounts'
+  where
+    fieldLooks' = case fas of
+      NoFieldLookCount ->
+        []
+      FieldLookCount fas' ->
+        ["field-looks" .= (fmap fromFieldVector $ V.toList fas')]
+
+    textCounts' = case tcs of
+      NoTextCounts ->
+        []
+      TextCounts tcs' ->
+        ["text-counts" .= (fmap fromUniqueTextCount $ V.toList tcs')]
 
 toSVParseState :: Value -> Parser SVParseState
 toSVParseState (Object o) = do
@@ -105,5 +115,6 @@ toSVParseState (Object o) = do
   tr <- toRowCount =<< (o .: "total-rows")
   nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
   fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldVector) =<< (o .:? "field-looks")
-  pure $ SVParseState br tr nfs fas
+  tcs <- maybe (pure NoTextCounts) (fmap TextCounts . mapM toUniqueTextCount) =<< (o .:? "text-counts")
+  pure $ SVParseState br tr nfs fas tcs
 toSVParseState x          = typeMismatch "Warden.Data.Row.SVParseState" x

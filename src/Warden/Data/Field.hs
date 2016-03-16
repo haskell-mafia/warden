@@ -35,7 +35,6 @@ import           Warden.Data.Poset
 
 data FieldType =
     TextField
-  | CategoricalField
   | BooleanField
   | IntegralField
   | RealField
@@ -43,6 +42,15 @@ data FieldType =
 
 instance NFData FieldType
 
+-- | Truth table for 'FieldType' set inclusion.
+--
+-- Looks like this:
+--
+-- Real+---------Text-------+ Boolean
+--     |
+--     |
+--     v
+-- Integral
 instance Poset FieldType where
   TextField        <=| TextField        = True
   TextField        <=| _                = False
@@ -51,17 +59,12 @@ instance Poset FieldType where
   RealField        <=| RealField        = True
   RealField        <=| _                = False
 
-  CategoricalField <=| TextField        = True
-  CategoricalField <=| CategoricalField = True
-  CategoricalField <=| _                = False
-
   IntegralField    <=| TextField        = True
   IntegralField    <=| RealField        = True
   IntegralField    <=| IntegralField    = True
   IntegralField    <=| _                = False
 
   BooleanField     <=| TextField        = True
-  BooleanField     <=| CategoricalField = True
   BooleanField     <=| BooleanField     = True
   BooleanField     <=| _                = False
 
@@ -72,14 +75,12 @@ $(derivingUnbox "fieldType"
 
 renderFieldType :: FieldType -> Text
 renderFieldType TextField = "text-field"
-renderFieldType CategoricalField = "categorical-field"
 renderFieldType BooleanField = "boolean-field"
 renderFieldType IntegralField = "integral-field"
 renderFieldType RealField = "real-field"
 
 parseFieldType :: Text -> Maybe FieldType
 parseFieldType "text-field" = pure TextField
-parseFieldType "categorical-field" = pure CategoricalField
 parseFieldType "boolean-field" = pure BooleanField
 parseFieldType "integral-field" = pure IntegralField
 parseFieldType "real-field" = pure RealField
@@ -90,7 +91,6 @@ data FieldLooks =
   | LooksIntegral
   | LooksReal
   | LooksText
-  | LooksCategorical
   | LooksBoolean
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
@@ -106,7 +106,6 @@ renderFieldLooks LooksEmpty = "looks-empty"
 renderFieldLooks LooksIntegral = "looks-integral"
 renderFieldLooks LooksReal = "looks-real"
 renderFieldLooks LooksText = "looks-text"
-renderFieldLooks LooksCategorical = "looks-categorical"
 renderFieldLooks LooksBoolean = "looks-boolean"
 
 parseFieldLooks :: Text -> Maybe FieldLooks
@@ -114,21 +113,17 @@ parseFieldLooks "looks-empty" = pure LooksEmpty
 parseFieldLooks "looks-integral" = pure LooksIntegral
 parseFieldLooks "looks-real" = pure LooksReal
 parseFieldLooks "looks-text" = pure LooksText
-parseFieldLooks "looks-categorical" = pure LooksCategorical
 parseFieldLooks "looks-boolean" = pure LooksBoolean
 parseFieldLooks _ = Nothing
 
 -- | Schema field types kinda look like a join semilattice under set
 -- inclusion. For example, if a given field is classified as a 
--- 'CategoricalField', it's not an anomaly (from the fairly limited
+-- 'RealField', it's not an anomaly (from the fairly limited
 -- perspective of schema inference) if some of its values are classified as
--- 'LooksBoolean' (e.g., from the set {"true", "false",
--- "undetermined"}). Likewise e.g., 'LooksIntegral' $$ \subseteq $$
--- 'RealField'.
+-- 'LooksIntegral' (e.g., from the set {1.3, 2.4, 5}).
 fieldTypeIncludes :: FieldType -> FieldLooks -> Bool
 fieldTypeIncludes ft fl = case ft of
   TextField -> True
-  CategoricalField -> fl == LooksCategorical || fl == LooksBoolean || fl == LooksEmpty
   BooleanField -> fl == LooksBoolean || fl == LooksEmpty
   IntegralField -> fl == LooksIntegral || fl == LooksEmpty
   RealField -> fl == LooksReal || fl == LooksIntegral || fl == LooksEmpty

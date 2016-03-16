@@ -97,7 +97,7 @@ prop_compatibleEntries_empty oc =
 
 prop_normalizeFieldHistogram :: FieldHistogram -> Property
 prop_normalizeFieldHistogram h =
-  forAll (arbitrary `suchThat` (>= histogramMax)) $ \rc ->
+  forAll (fmap (RowCount . getLarge) $ arbitrary `suchThat` ((>= histogramMax) . RowCount . getLarge)) $ \rc ->
     let normed = normalizeFieldHistogram rc h in
     case normed of
       Left e ->

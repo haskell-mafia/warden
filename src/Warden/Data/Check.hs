@@ -86,7 +86,6 @@ isCheckFailure (RowCheckResult _ s)    = checkStatusFailed s
 checkHasFailures :: NonEmpty CheckResult -> Bool
 checkHasFailures rs = any isCheckFailure $ NE.toList rs
 
--- FIXME: verbosity
 renderCheckResult :: CheckResult -> NonEmpty Text
 renderCheckResult (FileCheckResult cd vf st) =
   header <| (renderCheckStatus st)

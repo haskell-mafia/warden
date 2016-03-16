@@ -21,7 +21,7 @@ import           System.IO
 import           System.IO.Temp (withTempDirectory)
 
 import           Test.IO.Warden
-import           Test.QuickCheck (vectorOf)
+import           Test.QuickCheck (vectorOf, arbitrary)
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -51,6 +51,13 @@ prepareSVParse = do
     validSVRow (Separator . fromIntegral $ ord '|') (FieldCount 200)
   pure $ fmap (SVFields . V.fromList . getValidSVRow) ts
 
+prepareHashText :: IO [Text]
+prepareHashText =
+  generate' (Deterministic 54321) (GenSize 30) $ vectorOf 1000 arbitrary
+
+prepareFolds :: IO ([Row], [Text])
+prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
+
 benchConduitDecode :: NonEmpty ViewFile -> IO ()
 benchConduitDecode vfs = do
   bitbucket <- openFile "/dev/null" WriteMode
@@ -65,6 +72,12 @@ benchFieldParse = fmap parseField
 benchUpdateSVParseState :: [Row] -> SVParseState
 benchUpdateSVParseState rs = foldl' updateSVParseState initialSVParseState rs
 
+benchHashText :: [Text] -> [Int]
+benchHashText = fmap hashText
+
+benchUpdateTextCounts :: [Row] -> TextCounts
+benchUpdateTextCounts rs = foldl' (flip updateTextCounts) NoTextCounts rs
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -77,8 +90,10 @@ main = do
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
             ]
-        , env prepareSVParse $ \ ~(rs) ->
+        , env prepareFolds $ \ ~(rs,ts) ->
             bgroup "folds" $ [
                 bench "updateSVParseState/1000" $ nf benchUpdateSVParseState rs
+              , bench "hashText/1000" $ nf benchHashText ts
+              , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]
         ]
