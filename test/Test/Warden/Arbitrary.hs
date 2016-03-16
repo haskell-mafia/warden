@@ -474,7 +474,7 @@ instance Arbitrary CompatibleEntries where
 
 instance Arbitrary FieldHistogram where
   arbitrary = fmap (FieldHistogram . VU.fromList) $
-    vectorOf (length ([minBound..maxBound] :: [FieldType])) arbitrary
+    (vectorOf (length ([minBound..maxBound] :: [FieldType])) arbitrary) `suchThat` (any (> (CompatibleEntries 0)))
 
 -- No abnormalities, the happy case.
 validHistogramPair :: Gen (RowCount, FieldHistogram)
