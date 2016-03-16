@@ -40,7 +40,6 @@ newtype FieldUniques =
 data FieldForm =
     FreeForm
   | CategoricalForm !FieldUniques
-  | UnknownForm
   deriving (Eq, Show)
 
 data SchemaVersion =

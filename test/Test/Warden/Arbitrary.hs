@@ -398,8 +398,7 @@ instance Arbitrary FieldType where
 
 instance Arbitrary FieldForm where
   arbitrary = oneof [
-      pure UnknownForm
-    , pure FreeForm
+      pure FreeForm
     , CategoricalForm <$> arbitrary
     ]
 
