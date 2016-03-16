@@ -11,7 +11,7 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
-import qualified Data.IntSet as IS
+import qualified Data.Set as S
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -345,7 +345,7 @@ instance Arbitrary FieldLookCount where
 instance Arbitrary UniqueTextCount where
   arbitrary = oneof [
       pure LooksFreeform
-   , (UniqueTextCount . IS.fromList) <$> arbitrary
+   , (UniqueTextCount . S.fromList) <$> arbitrary
    ]
 
 instance Arbitrary TextCounts where

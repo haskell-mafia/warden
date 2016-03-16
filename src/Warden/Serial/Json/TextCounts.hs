@@ -9,7 +9,7 @@ module Warden.Serial.Json.TextCounts(
 
 import           Data.Aeson (parseJSON, toJSON, (.=), (.:), object)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
-import qualified Data.IntSet as IS
+import qualified Data.Set as S
 import qualified Data.Text as T
 
 import           P
@@ -20,7 +20,7 @@ fromUniqueTextCount :: UniqueTextCount -> Value
 fromUniqueTextCount LooksFreeform = object [ "type" .= String "looks-freeform" ]
 fromUniqueTextCount (UniqueTextCount cs) = object [
     "type" .= String "unique-text-count"
-  , "uniques" .= (toJSON $ IS.toList cs)
+  , "uniques" .= (toJSON $ S.toList cs)
   ]
 
 toUniqueTextCount :: Value -> Parser UniqueTextCount
@@ -34,6 +34,6 @@ toUniqueTextCount (Object o) = do
     toUniqueTextCount' =
       counts' =<< (o .: "uniques")
 
-    counts' (Array as) = (pure . UniqueTextCount . IS.fromList) =<< (parseJSON (Array as))
+    counts' (Array as) = (pure . UniqueTextCount . S.fromList) =<< (parseJSON (Array as))
     counts' x = typeMismatch "Warden.Data.UniqueTextCount.TextCount.uniques" x
 toUniqueTextCount x = typeMismatch "Warden.Data.TextCount.UniqueTextCount" x

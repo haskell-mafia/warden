@@ -4,7 +4,7 @@
 
 module Test.Warden.Data.TextCounts where
 
-import qualified Data.IntSet as IS
+import qualified Data.Set as S
 import           Data.List (take)
 import           Data.Text (Text)
 import qualified Data.Vector as V
@@ -33,8 +33,8 @@ prop_combineUniqueTextCounts =
   let n = (+) 1 $ (unTextFreeformThreshold textFreeformThreshold) `div` 2
       l1 = take n [1..]
       l2 = take n [(unTextFreeformThreshold textFreeformThreshold)..]
-      a = UniqueTextCount $ IS.fromList l1
-      b = UniqueTextCount $ IS.fromList l2 in
+      a = UniqueTextCount $ S.fromList l1
+      b = UniqueTextCount $ S.fromList l2 in
   (combineUniqueTextCounts a b) === LooksFreeform
 
 prop_combineTextCounts :: TextCounts -> TextCounts -> Property
@@ -59,7 +59,7 @@ prop_combineTextCounts a b =
     gte LooksFreeform _ = True
     gte (UniqueTextCount _) LooksFreeform = False
     gte (UniqueTextCount csc') (UniqueTextCount csa') =
-      IS.size csc' >= IS.size csa'
+      S.size csc' >= S.size csa'
 
 return []
 tests :: IO Bool

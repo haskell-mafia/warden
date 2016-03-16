@@ -4,7 +4,8 @@
 
 {-
 Keep track of the number of Text values we've seen in a field by hashing them
-and inserting into a Patricia tree.
+and inserting into a balanced binary tree (faster than the PATRICIA tree
+in Data.IntSet).
 
 Currently uses cityhash, which is a non-cryptographic hash function; if 
 DoS prevention becomes necessary, SipHash is a good alternative.
@@ -22,8 +23,8 @@ module Warden.Data.TextCounts (
   ) where
 
 import           Data.Digest.CityHash (cityHash64)
-import           Data.IntSet (IntSet)
-import qualified Data.IntSet as IS
+import           Data.Set (Set)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
@@ -33,14 +34,14 @@ import           GHC.Generics (Generic)
 import           P
 
 data UniqueTextCount =
-    UniqueTextCount !IntSet
+    UniqueTextCount !(Set Int)
   | LooksFreeform
   deriving (Eq, Show, Generic)
 
 instance NFData UniqueTextCount
 
 emptyUniqueTextCount :: UniqueTextCount
-emptyUniqueTextCount = UniqueTextCount IS.empty
+emptyUniqueTextCount = UniqueTextCount S.empty
 
 newtype TextFreeformThreshold =
   TextFreeformThreshold {
@@ -69,11 +70,11 @@ hashText t =
 updateUniqueTextCount :: Text -> UniqueTextCount -> UniqueTextCount
 updateUniqueTextCount _ LooksFreeform = LooksFreeform
 updateUniqueTextCount t (UniqueTextCount c)
-  | IS.size c >= (unTextFreeformThreshold textFreeformThreshold) =
+  | S.size c >= (unTextFreeformThreshold textFreeformThreshold) =
       LooksFreeform
   | otherwise =
       let h = hashText t in
-      UniqueTextCount $ IS.insert h c
+      UniqueTextCount $ S.insert h c
 {-# INLINE updateUniqueTextCount #-}
 
 combineTextCounts :: TextCounts -> TextCounts -> TextCounts
@@ -89,7 +90,7 @@ combineUniqueTextCounts LooksFreeform LooksFreeform = LooksFreeform
 combineUniqueTextCounts LooksFreeform (UniqueTextCount _) = LooksFreeform
 combineUniqueTextCounts (UniqueTextCount _) LooksFreeform = LooksFreeform
 combineUniqueTextCounts (UniqueTextCount a) (UniqueTextCount b) =
-  let c = IS.union a b in
-  if IS.size c >= (unTextFreeformThreshold textFreeformThreshold)
+  let c = S.union a b in
+  if S.size c >= (unTextFreeformThreshold textFreeformThreshold)
     then LooksFreeform
     else UniqueTextCount c
