@@ -4,9 +4,8 @@
 
 module Test.Warden.Data.TextCounts where
 
-import qualified Data.IntSet as IS
+import qualified Data.Set as S
 import           Data.List (take)
-import           Data.Text (Text)
 import qualified Data.Vector as V
 
 import           Disorder.Core.Property (failWith)
@@ -28,18 +27,18 @@ prop_hashText (UniquePair x y) =
       y' = hashText y in
   (x' /= y') === True
 
-prop_combineUniqueTextCounts :: Property
-prop_combineUniqueTextCounts =
-  let n = (+) 1 $ (unTextFreeformThreshold textFreeformThreshold) `div` 2
+prop_combineUniqueTextCounts :: TextFreeformThreshold -> Property
+prop_combineUniqueTextCounts fft =
+  let n = (+) 1 $ (unTextFreeformThreshold fft) `div` 2
       l1 = take n [1..]
-      l2 = take n [(unTextFreeformThreshold textFreeformThreshold)..]
-      a = UniqueTextCount $ IS.fromList l1
-      b = UniqueTextCount $ IS.fromList l2 in
-  (combineUniqueTextCounts a b) === LooksFreeform
+      l2 = take n [(unTextFreeformThreshold fft)..]
+      a = UniqueTextCount $ S.fromList l1
+      b = UniqueTextCount $ S.fromList l2 in
+  (combineUniqueTextCounts fft a b) === LooksFreeform
 
-prop_combineTextCounts :: TextCounts -> TextCounts -> Property
-prop_combineTextCounts a b =
-  case combineTextCounts a b of
+prop_combineTextCounts :: TextFreeformThreshold -> TextCounts -> TextCounts -> Property
+prop_combineTextCounts fft a b =
+  case combineTextCounts fft a b of
     NoTextCounts -> (noCounts a && noCounts b) === True
     TextCounts csc ->
       case (a, b) of
@@ -59,7 +58,7 @@ prop_combineTextCounts a b =
     gte LooksFreeform _ = True
     gte (UniqueTextCount _) LooksFreeform = False
     gte (UniqueTextCount csc') (UniqueTextCount csa') =
-      IS.size csc' >= IS.size csa'
+      S.size csc' >= S.size csa'
 
 return []
 tests :: IO Bool

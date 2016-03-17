@@ -18,7 +18,6 @@ module Warden.Data.Numeric (
 
 import           Data.Aeson
 import           Data.Aeson.Types
-import           Data.Text        (Text)
 
 import           P
 

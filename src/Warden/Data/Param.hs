@@ -7,24 +7,25 @@ module Warden.Data.Param (
   , NumCPUs(..)
   , RunId(..)
   , SanityParams(..)
+  , Verbosity(..)
   , WardenParams(..)
   , WardenVersion(..)
   , chunksForCPUs
   , parseRunId
+  , parseVerbosity
   , renderRunId
+  , renderVerbosity
   , runIdLength
   ) where
 
 import           P
 
-import           Data.Text (Text)
-
 import           Debruijn.Hex (Hex, unHex, parseHex)
 
-import           Warden.Data.Check
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
+import           Warden.Data.TextCounts
 
 -- | 'RunId' is unique across invocations of warden, and can be used to 
 -- correlate file markers with the associated view marker from the run.
@@ -57,6 +58,21 @@ newtype NumCPUs =
 chunksForCPUs :: NumCPUs -> ChunkCount
 chunksForCPUs = ChunkCount . unNumCPUs
 
+
+data Verbosity =
+    Verbose
+  | Quiet
+  deriving (Eq, Show)
+
+renderVerbosity :: Verbosity -> Text
+renderVerbosity Verbose = "verbose"
+renderVerbosity Quiet = "quiet"
+
+parseVerbosity :: Text -> Maybe Verbosity
+parseVerbosity "verbose" = pure Verbose
+parseVerbosity "quiet" = pure Quiet
+parseVerbosity _ = Nothing
+
 data Force =
     Force
   | NoForce
@@ -69,6 +85,7 @@ data CheckParams =
     , checkLineBound :: !LineBound
     , checkVerbosity :: !Verbosity
     , checkForce :: !Force
+    , checkFreeformThreshold :: !TextFreeformThreshold
     } deriving (Eq, Show)
 
 data SanityParams =

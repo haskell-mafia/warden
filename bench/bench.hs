@@ -12,7 +12,6 @@ import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.Binary as CB
 import qualified Data.Conduit.List as C
 import           Data.List.NonEmpty (NonEmpty)
-import           Data.Text (Text)
 import qualified Data.Vector as V
 
 import           P
@@ -70,13 +69,13 @@ benchFieldParse :: [Text] -> [FieldLooks]
 benchFieldParse = fmap parseField
 
 benchUpdateSVParseState :: [Row] -> SVParseState
-benchUpdateSVParseState rs = foldl' updateSVParseState initialSVParseState rs
+benchUpdateSVParseState rs = foldl' (updateSVParseState (TextFreeformThreshold 100)) initialSVParseState rs
 
 benchHashText :: [Text] -> [Int]
 benchHashText = fmap hashText
 
 benchUpdateTextCounts :: [Row] -> TextCounts
-benchUpdateTextCounts rs = foldl' (flip updateTextCounts) NoTextCounts rs
+benchUpdateTextCounts rs = foldl' (flip (updateTextCounts (TextFreeformThreshold 100))) NoTextCounts rs
 
 main :: IO ()
 main = do

@@ -15,7 +15,6 @@ module Warden.Data.Schema (
   , renderSchemaFile
   ) where
 
-import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Vector (Vector)
 
@@ -41,7 +40,6 @@ newtype FieldUniques =
 data FieldForm =
     FreeForm
   | CategoricalForm !FieldUniques
-  | UnknownForm
   deriving (Eq, Show)
 
 data SchemaVersion =

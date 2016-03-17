@@ -23,6 +23,7 @@ import           System.IO (IO)
 import           System.Posix.Files (isRegularFile, getSymbolicLinkStatus, fileSize)
 import           System.Posix.Files (FileStatus)
 
+import           Warden.Check
 import           Warden.Data
 import           Warden.Debug
 import           Warden.Error

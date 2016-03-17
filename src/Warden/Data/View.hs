@@ -31,7 +31,6 @@ import           Data.Attoparsec.Text (parse, anyChar, char)
 import           Data.List (stripPrefix)
 import           Data.String (IsString)
 import qualified Data.Text as T
-import           Data.Text (Text)
 
 import           Delorean.Local.Date (Date)
 

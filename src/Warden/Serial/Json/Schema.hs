@@ -62,7 +62,6 @@ toSchemaFile x = typeMismatch "Warden.Data.Schema.SchemaFile" x
 
 fromFieldForm :: FieldForm -> Value
 fromFieldForm FreeForm = object [ "form-type" .= String "freeform" ]
-fromFieldForm UnknownForm = object [ "form-type" .= String "unknown" ]
 fromFieldForm (CategoricalForm c) = object [
     "form-type" .= String "categorical"
   , "uniques" .= toJSON (unFieldUniques c)
@@ -72,7 +71,6 @@ toFieldForm :: Value -> Parser FieldForm
 toFieldForm (Object o) =
   o .: "form-type" >>= \case
     String "freeform" -> pure FreeForm
-    String "unknown" -> pure UnknownForm
     String "categorical" -> toCategorical'
     x -> fail $ "Invalid FieldForm: " <> show x
   where
@@ -80,4 +78,3 @@ toFieldForm (Object o) =
       c <- fmap FieldUniques $ parseJSON =<< (o .: "uniques")
       pure $ CategoricalForm c
 toFieldForm x = typeMismatch "Warden.Data.Schema.FieldForm" x
-  

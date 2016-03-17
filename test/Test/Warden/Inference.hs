@@ -9,6 +9,7 @@ import           Control.Lens (view)
 import           Data.List (take, repeat)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import           Data.Semigroup ((<>))
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Vector.Unboxed as VU
@@ -17,7 +18,7 @@ import           Disorder.Core.Property (failWith)
 import           Disorder.Core.UniquePair (UniquePair(..))
 import           Disorder.Corpus (muppets)
 
-import           P
+import           P hiding ((<>))
 
 import           System.IO (IO)
 
@@ -45,10 +46,26 @@ prop_viewMarkerMismatch_different vm (UniquePair va vb) =
       vmb = vm { vmView = vb } in
   (isRight $ viewMarkerMismatch vma vmb) === False
 
-prop_validateViewMarkers_same :: ViewMarker -> Property
-prop_validateViewMarkers_same vm = forAll (choose (1, 100)) $ \n ->
+prop_viewMarkerMismatch_different_fft :: ViewMarker -> UniquePair TextFreeformThreshold -> Property
+prop_viewMarkerMismatch_different_fft vm (UniquePair ta tb) =
+  let ps = vmCheckParams $ vmMetadata vm
+      psa = ps { checkFreeformThreshold = ta }
+      psb = ps { checkFreeformThreshold = tb }
+      vma = vm { vmMetadata = ((vmMetadata vm) { vmCheckParams = psa }) }
+      vmb = vm { vmMetadata = ((vmMetadata vm) { vmCheckParams = psb }) } in
+  (isRight $ viewMarkerMismatch vma vmb) === False
+
+
+prop_validateViewMarkers_same :: Property
+prop_validateViewMarkers_same = forAll ((,) <$> passedViewMarker <*> choose (1, 100)) $ \(vm, n) ->
   let vms = NE.fromList . take n $ repeat vm in
   (validateViewMarkers vms) === (Right ())
+
+prop_validateViewMarkers_failed :: NonEmpty ViewMarker -> Property
+prop_validateViewMarkers_failed vms = forAll (fmap NE.fromList $ listOf1 failedViewMarker) $ \fvms ->
+  let vms1 = vms <> fvms
+      vms2 = fvms <> vms in
+  (isLeft (validateViewMarkers vms1), isLeft (validateViewMarkers vms2)) === (True, True)
 
 prop_compatibleEntries_text :: ObservationCount -> Property
 prop_compatibleEntries_text oc = forAll (elements muppets) $ \t ->

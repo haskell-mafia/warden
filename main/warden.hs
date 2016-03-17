@@ -99,10 +99,18 @@ checkParamsP = CheckParams <$> separatorP
                            <*> lineBoundP
                            <*> verbosityP
                            <*> forceP
+                           <*> textFreeformThresholdP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
                              <*> forceP
+
+textFreeformThresholdP :: Parser TextFreeformThreshold
+textFreeformThresholdP = TextFreeformThreshold <$> (option auto $
+     long "text-freeform-threshold"
+  <> metavar "FREEFORM-THRESHOLD"
+  <> help "Number of unique text hashes to store before deciding a field is freeform (affects memory usage and check performance). Defaults to 100."
+  <> value 100)
 
 markerFileP :: Parser FilePath
 markerFileP = strArgument $

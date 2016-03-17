@@ -20,12 +20,14 @@ module Warden.Error (
 
 import           P
 
-import           Data.Text (Text)
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 
 import           System.IO (FilePath)
 
 import           Warden.Data.Field
+import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.Schema
 import           Warden.Data.View
@@ -144,6 +146,8 @@ data InferenceError =
   | NoMinimalFieldTypes
   | CannotResolveCandidates [FieldType]
   | ZeroRowCountError
+  | NoTextCountError
+  | NoTextCountForField Int
   | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   deriving (Eq, Show)
 
@@ -164,6 +168,10 @@ renderInferenceError = ("inference error: " <>) . render'
       ]
     render' ZeroRowCountError =
       "Total row count reported by view markers is zero."
+    render' NoTextCountError =
+      "No text counts to use for form inference."
+    render' (NoTextCountForField i) =
+      "No text counts to use for form inference on field " <> renderIntegral i
     render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
         "Fields have observation counts higher than the total row count "
       , renderRowCount rc
@@ -174,6 +182,7 @@ renderInferenceError = ("inference error: " <>) . render'
 data ValidationFailure =
     ViewMarkerMismatch Text Text Text
   | NoFieldCounts
+  | ChecksMarkedFailed (NonEmpty RunId)
   deriving (Eq, Show)
 
 renderValidationFailure :: ValidationFailure -> Text
@@ -188,3 +197,4 @@ renderValidationFailure f = "Validation failure: " <> render' f
       , y
       ]
     render' NoFieldCounts = "No field counts to perform inference on."
+    render' (ChecksMarkedFailed rids) = "Some markers recorded a failed check status and cannot be used in inference: " <> (T.intercalate ", " . NE.toList $ renderRunId <$> rids)

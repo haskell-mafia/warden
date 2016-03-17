@@ -11,11 +11,10 @@ import           Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
-import qualified Data.IntSet as IS
+import qualified Data.Set as S
 import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import           Data.Text            (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
 import qualified Data.Vector          as V
@@ -345,7 +344,7 @@ instance Arbitrary FieldLookCount where
 instance Arbitrary UniqueTextCount where
   arbitrary = oneof [
       pure LooksFreeform
-   , (UniqueTextCount . IS.fromList) <$> arbitrary
+   , (UniqueTextCount . S.fromList) <$> arbitrary
    ]
 
 instance Arbitrary TextCounts where
@@ -378,6 +377,19 @@ instance Arbitrary ViewMarker where
                          <*> arbitrary
                          <*> arbitrary
 
+passedViewMarker :: Gen ViewMarker
+passedViewMarker = do
+  results <- listOf1 arbitrary
+  let results' = fmap (\r -> r { summaryStatus = MarkerPass }) results
+  mark <- arbitrary
+  pure $ mark { vmCheckResults = results' }
+
+failedViewMarker :: Gen ViewMarker
+failedViewMarker = do
+  results <- listOf1 arbitrary `suchThat` (not . all ((== MarkerPass) . summaryStatus))
+  mark <- arbitrary
+  pure $ mark { vmCheckResults = results }
+
 instance Arbitrary ChunkCount where
   arbitrary = (ChunkCount . unNPlus) <$> (arbitrary `suchThat` ((< 1000) . unNPlus))
 
@@ -386,8 +398,7 @@ instance Arbitrary FieldType where
 
 instance Arbitrary FieldForm where
   arbitrary = oneof [
-      pure UnknownForm
-    , pure FreeForm
+      pure FreeForm
     , CategoricalForm <$> arbitrary
     ]
 
@@ -423,6 +434,7 @@ instance Arbitrary LineBound where
 
 instance Arbitrary CheckParams where
   arbitrary = CheckParams <$> arbitrary
+                          <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
@@ -502,4 +514,7 @@ booleanHistogramPair = do
   pure (rc, h')
   
 instance Arbitrary FieldMatchRatio where
-  arbitrary = fmap (FieldMatchRatio . unUnitReal) $ arbitrary
+  arbitrary = fmap (FieldMatchRatio . unUnitReal) arbitrary
+
+instance Arbitrary TextFreeformThreshold where
+  arbitrary = fmap (TextFreeformThreshold . unNPlus) arbitrary

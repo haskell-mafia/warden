@@ -47,7 +47,7 @@ runRowCheck :: WardenParams
             -> View
             -> NonEmpty ViewFile
             -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck wps ps@(CheckParams _s _sf _lb verb _fce) sch v vfs = do
+runRowCheck wps ps@(CheckParams _s _sf _lb verb _fce _fft) sch v vfs = do
   liftIO . debugPrintLn verb $ T.concat [
       "Running row checks on "
     , renderView v
@@ -63,28 +63,29 @@ parseCheck :: NumCPUs
            -> Maybe Schema
            -> NonEmpty ViewFile
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
-parseCheck caps ps@(CheckParams s _sf lb verb _fce) sch vfs =
+parseCheck caps ps@(CheckParams s _sf lb verb _fce fft) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
-  fmap (finalizeSVParseState ps sch dates vfs . resolveSVParseState . join) $
-    mapM (parseViewFile caps verb s lb) (NE.toList vfs)
+  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft) . join) $
+    mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
               -> Verbosity
               -> Separator
               -> LineBound
+              -> TextFreeformThreshold
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) [SVParseState]
-parseViewFile caps verb s lb vf = do
+parseViewFile caps verb s lb fft vf = do
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
     , renderViewFile vf
     , "."
     ]
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
-  mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize parseViewFile')) $ NE.toList cs
+  mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
 
-parseViewFile' :: Fold Row SVParseState
-parseViewFile' = Fold updateSVParseState initialSVParseState id
+parseViewFile' :: TextFreeformThreshold -> Fold Row SVParseState
+parseViewFile' fft = Fold (updateSVParseState fft) initialSVParseState id
 
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema

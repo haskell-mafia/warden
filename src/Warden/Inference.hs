@@ -11,9 +11,11 @@ module Warden.Inference (
   , countsForType
   , generateSchema
   , inferField
+  , inferForms
   , fieldCandidates
   , fieldLookSum
   , normalizeFieldHistogram
+  , textCountSum
   , totalViewRows
   , validateViewMarkers
   , viewMarkerMismatch
@@ -21,7 +23,9 @@ module Warden.Inference (
 
 import           Control.Lens ((^.), view)
 
-import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.List (zip)
+import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -39,12 +43,15 @@ viewMarkerMismatch a b = do
   validateVersion (vmVersion a) (vmVersion b)
   validateView (vmView a) (vmView b)
   validateTotalFields (fields' a) (fields' b)
+  validateFreeformThreshold (fft' a) (fft' b)
   where
     validateVersion = validateEq "vmVersion"
 
     validateView = validateEq "vmView"
 
     validateTotalFields = validateEq "numFields"
+
+    validateFreeformThreshold = validateEq "checkFreeformThresholds"
 
     validateEq ctx x y =
       if x == y
@@ -53,20 +60,51 @@ viewMarkerMismatch a b = do
 
     fields' vm' = (vmViewCounts $ vmMetadata vm') ^. numFields
 
+    fft' = checkFreeformThreshold . vmCheckParams . vmMetadata
+
 -- | Sanity-check view markers to prevent human error, e.g., trying to run
 -- `infer` on markers from multiple views.
 validateViewMarkers :: NonEmpty ViewMarker -> Either InferenceError ()
-validateViewMarkers (m:|ms) = go m ms
+validateViewMarkers (m:|ms) = go m ms >> checkFails
   where
     go _ [] = pure ()
     go prev !(m':ms') = case viewMarkerMismatch prev m' of
       Right () -> go m' ms'
       Left f -> Left $ MarkerValidationFailure f
 
+    checkFails =
+      let markers = m:ms
+          stati = join $ (fmap summaryStatus . vmCheckResults) <$> markers in
+      case nonEmpty (filter ((/= MarkerPass) . snd) $ zip markers stati) of
+        Nothing -> pure ()
+        Just fs -> Left . MarkerValidationFailure . ChecksMarkedFailed $ (wpRunId . vmWardenParams . fst) <$> fs
+
 fieldLookSum :: NonEmpty ViewMarker -> FieldLookCount
 fieldLookSum =
   foldl' combineFieldLooks NoFieldLookCount . 
     fmap (view fieldLooks . vmViewCounts . vmMetadata)
+
+textCountSum :: NonEmpty ViewMarker -> TextCounts
+textCountSum vms =
+  -- FFTs already validated as the same
+  -- TODO: enforce this with types
+  let fft = checkFreeformThreshold . vmCheckParams . vmMetadata $ NE.head vms in
+  foldl' (combineTextCounts fft) NoTextCounts $
+    fmap (view textCounts . vmViewCounts . vmMetadata) vms
+
+inferForms :: NonEmpty ViewMarker -> Either InferenceError TextCountSummary
+inferForms vms =
+  case textCountSum vms of
+    NoTextCounts -> Left NoTextCountError
+    TextCounts cs -> fmap TextCountSummary $ V.mapM (uncurry summarizeTextCount) $ V.indexed cs
+
+summarizeTextCount :: Int -> UniqueTextCount -> Either InferenceError FieldForm
+summarizeTextCount _ LooksFreeform =
+  pure FreeForm
+summarizeTextCount i (UniqueTextCount hashes) =
+  if S.null hashes
+    then Left $ NoTextCountForField i
+    else pure . CategoricalForm . FieldUniques $ S.size hashes
 
 countsForField :: VU.Vector ObservationCount -> FieldHistogram
 countsForField os =
@@ -139,9 +177,10 @@ inferField fmr totalRowCount h = do
     fts -> Left $ CannotResolveCandidates fts
 
 generateSchema :: FieldMatchRatio
+               -> TextCountSummary
                -> RowCount
                -> V.Vector FieldHistogram
                -> Either InferenceError Schema
-generateSchema fmr totalRowCount hs = do
+generateSchema fmr (TextCountSummary ffs) totalRowCount hs = do
   fts <- V.mapM (inferField fmr totalRowCount) hs
-  pure . Schema currentSchemaVersion $ (flip SchemaField UnknownForm) <$> fts
+  pure . Schema currentSchemaVersion $ V.zipWith SchemaField fts ffs
