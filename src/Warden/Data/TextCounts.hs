@@ -5,7 +5,7 @@
 {-
 Keep track of the number of Text values we've seen in a field by hashing them
 and inserting into a balanced binary tree (faster than the PATRICIA tree
-in Data.IntSet).
+in Data.IntSet, possibly due to sparse population of the hash space).
 
 Currently uses cityhash, which is a non-cryptographic hash function; if 
 DoS prevention becomes necessary, SipHash is a good alternative.
