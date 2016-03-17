@@ -160,16 +160,18 @@ instance NFData SVParseState
 
 makeLenses ''SVParseState
 
-resolveSVParseState :: [SVParseState] -> SVParseState
-resolveSVParseState = foldr update initialSVParseState
+resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
+resolveSVParseState fft = foldr update initialSVParseState
   where
     update s !acc =
         (badRows %~ ((s ^. badRows) +))
       . (totalRows %~ ((s ^. totalRows) +))
       . (numFields %~ ((s ^. numFields) `S.union`))
       . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-      . (textCounts %~ ((s ^. textCounts) `combineTextCounts`))
+      . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
       $! acc
+
+    combineTextCounts' = combineTextCounts fft
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
 -- the parser.
@@ -238,27 +240,28 @@ initialSVParseState :: SVParseState
 initialSVParseState =
   SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts
 
-updateTextCounts :: Row -> TextCounts -> TextCounts
-updateTextCounts (SVFields vs) NoTextCounts =
-  TextCounts $!! V.zipWith updateUniqueTextCount vs $
+updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
+updateTextCounts fft (SVFields vs) NoTextCounts =
+  TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs $
       V.replicate (V.length vs) emptyUniqueTextCount
-updateTextCounts (SVFields vs) (TextCounts tcs) =
-  TextCounts $!! V.zipWith updateUniqueTextCount vs tcs
-updateTextCounts _ tc = tc
+updateTextCounts fft (SVFields vs) (TextCounts tcs) =
+  TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs tcs
+updateTextCounts _ _ tc = tc
 {-# INLINE updateTextCounts #-}
 
 -- | Accumulator for field/row counts on tokenized raw data.
-updateSVParseState :: SVParseState
+updateSVParseState :: TextFreeformThreshold
+                   -> SVParseState
                    -> Row
                    -> SVParseState
-updateSVParseState !st row =
+updateSVParseState fft !st row =
   let good = countGood row
       bad  = countBad row  in
     (totalRows %~ ((good + bad) +))
   . (badRows %~ (bad +))
   . (numFields %~ (updateNumFields row))
   . (fieldLooks %~ (updateFields row))
-  . (textCounts %~ (updateTextCounts row))
+  . (textCounts %~ (updateTextCounts fft row))
   $!! st
  where
   countGood (SVFields _)   = RowCount 1

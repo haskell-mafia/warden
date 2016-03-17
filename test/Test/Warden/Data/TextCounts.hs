@@ -27,18 +27,18 @@ prop_hashText (UniquePair x y) =
       y' = hashText y in
   (x' /= y') === True
 
-prop_combineUniqueTextCounts :: Property
-prop_combineUniqueTextCounts =
-  let n = (+) 1 $ (unTextFreeformThreshold textFreeformThreshold) `div` 2
+prop_combineUniqueTextCounts :: TextFreeformThreshold -> Property
+prop_combineUniqueTextCounts fft =
+  let n = (+) 1 $ (unTextFreeformThreshold fft) `div` 2
       l1 = take n [1..]
-      l2 = take n [(unTextFreeformThreshold textFreeformThreshold)..]
+      l2 = take n [(unTextFreeformThreshold fft)..]
       a = UniqueTextCount $ S.fromList l1
       b = UniqueTextCount $ S.fromList l2 in
-  (combineUniqueTextCounts a b) === LooksFreeform
+  (combineUniqueTextCounts fft a b) === LooksFreeform
 
-prop_combineTextCounts :: TextCounts -> TextCounts -> Property
-prop_combineTextCounts a b =
-  case combineTextCounts a b of
+prop_combineTextCounts :: TextFreeformThreshold -> TextCounts -> TextCounts -> Property
+prop_combineTextCounts fft a b =
+  case combineTextCounts fft a b of
     NoTextCounts -> (noCounts a && noCounts b) === True
     TextCounts csc ->
       case (a, b) of

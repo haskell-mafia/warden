@@ -46,6 +46,16 @@ prop_viewMarkerMismatch_different vm (UniquePair va vb) =
       vmb = vm { vmView = vb } in
   (isRight $ viewMarkerMismatch vma vmb) === False
 
+prop_viewMarkerMismatch_different_fft :: ViewMarker -> UniquePair TextFreeformThreshold -> Property
+prop_viewMarkerMismatch_different_fft vm (UniquePair ta tb) =
+  let ps = vmCheckParams $ vmMetadata vm
+      psa = ps { checkFreeformThreshold = ta }
+      psb = ps { checkFreeformThreshold = tb }
+      vma = vm { vmMetadata = ((vmMetadata vm) { vmCheckParams = psa }) }
+      vmb = vm { vmMetadata = ((vmMetadata vm) { vmCheckParams = psb }) } in
+  (isRight $ viewMarkerMismatch vma vmb) === False
+
+
 prop_validateViewMarkers_same :: Property
 prop_validateViewMarkers_same = forAll ((,) <$> passedViewMarker <*> choose (1, 100)) $ \(vm, n) ->
   let vms = NE.fromList . take n $ repeat vm in

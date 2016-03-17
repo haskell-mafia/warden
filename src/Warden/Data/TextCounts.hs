@@ -18,7 +18,6 @@ module Warden.Data.TextCounts (
   , combineUniqueTextCounts
   , emptyUniqueTextCount
   , hashText
-  , textFreeformThreshold
   , updateUniqueTextCount
   ) where
 
@@ -54,10 +53,6 @@ data TextCounts =
 
 instance NFData TextCounts
 
--- Probably want to make this configurable.
-textFreeformThreshold :: TextFreeformThreshold
-textFreeformThreshold = TextFreeformThreshold 100
-
 -- | Don't use this on 32-bit platforms.
 --
 -- Speed this up by replacing 'encodeUtf8' with a straight memcpy.
@@ -66,30 +61,30 @@ hashText t =
   fromIntegral . cityHash64 $ T.encodeUtf8 t
 {-# INLINE hashText #-}
 
-updateUniqueTextCount :: Text -> UniqueTextCount -> UniqueTextCount
-updateUniqueTextCount _ LooksFreeform = LooksFreeform
-updateUniqueTextCount t (UniqueTextCount c)
-  | S.size c >= (unTextFreeformThreshold textFreeformThreshold) =
+updateUniqueTextCount :: TextFreeformThreshold -> Text -> UniqueTextCount -> UniqueTextCount
+updateUniqueTextCount _ _ LooksFreeform = LooksFreeform
+updateUniqueTextCount fft t (UniqueTextCount c)
+  | S.size c >= (unTextFreeformThreshold fft) =
       LooksFreeform
   | otherwise =
       let h = hashText t in
       UniqueTextCount $ S.insert h c
 {-# INLINE updateUniqueTextCount #-}
 
-combineTextCounts :: TextCounts -> TextCounts -> TextCounts
-combineTextCounts NoTextCounts NoTextCounts = NoTextCounts
-combineTextCounts NoTextCounts (TextCounts b) = TextCounts b
-combineTextCounts (TextCounts a) NoTextCounts = TextCounts a
-combineTextCounts (TextCounts a) (TextCounts b) = TextCounts $ combine'
+combineTextCounts :: TextFreeformThreshold -> TextCounts -> TextCounts -> TextCounts
+combineTextCounts _ NoTextCounts NoTextCounts = NoTextCounts
+combineTextCounts _ NoTextCounts (TextCounts b) = TextCounts b
+combineTextCounts _ (TextCounts a) NoTextCounts = TextCounts a
+combineTextCounts fft (TextCounts a) (TextCounts b) = TextCounts $ combine'
   where
-    combine' = V.zipWith combineUniqueTextCounts a b
+    combine' = V.zipWith (combineUniqueTextCounts fft) a b
 
-combineUniqueTextCounts :: UniqueTextCount -> UniqueTextCount -> UniqueTextCount
-combineUniqueTextCounts LooksFreeform LooksFreeform = LooksFreeform
-combineUniqueTextCounts LooksFreeform (UniqueTextCount _) = LooksFreeform
-combineUniqueTextCounts (UniqueTextCount _) LooksFreeform = LooksFreeform
-combineUniqueTextCounts (UniqueTextCount a) (UniqueTextCount b) =
+combineUniqueTextCounts :: TextFreeformThreshold -> UniqueTextCount -> UniqueTextCount -> UniqueTextCount
+combineUniqueTextCounts _ LooksFreeform LooksFreeform = LooksFreeform
+combineUniqueTextCounts _ LooksFreeform (UniqueTextCount _) = LooksFreeform
+combineUniqueTextCounts _ (UniqueTextCount _) LooksFreeform = LooksFreeform
+combineUniqueTextCounts fft (UniqueTextCount a) (UniqueTextCount b) =
   let c = S.union a b in
-  if S.size c >= (unTextFreeformThreshold textFreeformThreshold)
+  if S.size c >= (unTextFreeformThreshold fft)
     then LooksFreeform
     else UniqueTextCount c

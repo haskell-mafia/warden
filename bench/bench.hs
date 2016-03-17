@@ -69,13 +69,13 @@ benchFieldParse :: [Text] -> [FieldLooks]
 benchFieldParse = fmap parseField
 
 benchUpdateSVParseState :: [Row] -> SVParseState
-benchUpdateSVParseState rs = foldl' updateSVParseState initialSVParseState rs
+benchUpdateSVParseState rs = foldl' (updateSVParseState (TextFreeformThreshold 100)) initialSVParseState rs
 
 benchHashText :: [Text] -> [Int]
 benchHashText = fmap hashText
 
 benchUpdateTextCounts :: [Row] -> TextCounts
-benchUpdateTextCounts rs = foldl' (flip updateTextCounts) NoTextCounts rs
+benchUpdateTextCounts rs = foldl' (flip (updateTextCounts (TextFreeformThreshold 100))) NoTextCounts rs
 
 main :: IO ()
 main = do

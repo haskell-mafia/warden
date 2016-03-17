@@ -25,6 +25,7 @@ import           Control.Lens ((^.), view)
 
 import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -42,6 +43,7 @@ viewMarkerMismatch a b = do
   validateVersion (vmVersion a) (vmVersion b)
   validateView (vmView a) (vmView b)
   validateTotalFields (fields' a) (fields' b)
+  validateFreeformThreshold (fft' a) (fft' b)
   where
     validateVersion = validateEq "vmVersion"
 
@@ -49,12 +51,16 @@ viewMarkerMismatch a b = do
 
     validateTotalFields = validateEq "numFields"
 
+    validateFreeformThreshold = validateEq "checkFreeformThresholds"
+
     validateEq ctx x y =
       if x == y
         then pure ()
         else Left $ ViewMarkerMismatch ctx (T.pack $ show x) (T.pack $ show y)
 
     fields' vm' = (vmViewCounts $ vmMetadata vm') ^. numFields
+
+    fft' = checkFreeformThreshold . vmCheckParams . vmMetadata
 
 -- | Sanity-check view markers to prevent human error, e.g., trying to run
 -- `infer` on markers from multiple views.
@@ -79,9 +85,12 @@ fieldLookSum =
     fmap (view fieldLooks . vmViewCounts . vmMetadata)
 
 textCountSum :: NonEmpty ViewMarker -> TextCounts
-textCountSum =
-  foldl' combineTextCounts NoTextCounts .
-    fmap (view textCounts . vmViewCounts . vmMetadata)
+textCountSum vms =
+  -- FFTs already validated as the same
+  -- TODO: enforce this with types
+  let fft = checkFreeformThreshold . vmCheckParams . vmMetadata $ NE.head vms in
+  foldl' (combineTextCounts fft) NoTextCounts $
+    fmap (view textCounts . vmViewCounts . vmMetadata) vms
 
 inferForms :: NonEmpty ViewMarker -> Either InferenceError TextCountSummary
 inferForms vms =
