@@ -3,7 +3,9 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Serial.Json.TextCounts(
-    fromUniqueTextCount
+    fromTextFreeformThreshold
+  , toTextFreeformThreshold
+  , fromUniqueTextCount
   , toUniqueTextCount
   ) where
 
@@ -37,3 +39,10 @@ toUniqueTextCount (Object o) = do
     counts' (Array as) = (pure . UniqueTextCount . S.fromList) =<< (parseJSON (Array as))
     counts' x = typeMismatch "Warden.Data.UniqueTextCount.TextCount.uniques" x
 toUniqueTextCount x = typeMismatch "Warden.Data.TextCount.UniqueTextCount" x
+
+fromTextFreeformThreshold :: TextFreeformThreshold -> Value
+fromTextFreeformThreshold = toJSON . unTextFreeformThreshold
+
+toTextFreeformThreshold :: Value -> Parser TextFreeformThreshold
+toTextFreeformThreshold (Number n) = TextFreeformThreshold <$> (parseJSON (Number n))
+toTextFreeformThreshold x = typeMismatch "Warden.Data.TextCounts.TextFreeformThreshold" x

@@ -18,6 +18,7 @@ import           Warden.Data
 import           Warden.Serial.Json.Common
 import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Schema
+import           Warden.Serial.Json.TextCounts
 
 fromForce :: Force -> Value
 fromForce Force = String "force"
@@ -30,12 +31,13 @@ toForce (String s) = fail $ "invalid Force parameter: " <> T.unpack s
 toForce x = typeMismatch "Warden.Data.Param.Force" x
 
 fromCheckParams :: CheckParams -> Value
-fromCheckParams (CheckParams sep sf lb verb fce) = object [
+fromCheckParams (CheckParams sep sf lb verb fce fft) = object [
     "separator" .= fromSeparator sep
   , "line-bound" .= fromLineBound lb
   , "verbosity" .= fromVerbosity verb
   , "force" .= fromForce fce
   , "schema-file" .= maybe Null fromSchemaFile sf
+  , "freeform-text-threshold" .= fromTextFreeformThreshold fft
   ]
 
 toCheckParams :: Value -> Parser CheckParams
@@ -45,7 +47,8 @@ toCheckParams (Object o) = do
   verb <- toVerbosity =<< (o .: "verbosity")
   fce <- toForce =<< (o .: "force")
   sf <- maybe (pure Nothing) (fmap Just . toSchemaFile) =<< (o .:? "schema-file")
-  pure $ CheckParams sep sf lb verb fce
+  fft <- toTextFreeformThreshold =<< (o .: "freeform-text-threshold")
+  pure $ CheckParams sep sf lb verb fce fft
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
 
 fromWardenVersion :: WardenVersion -> Value

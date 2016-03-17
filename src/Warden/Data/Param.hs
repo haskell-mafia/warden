@@ -25,6 +25,7 @@ import           Debruijn.Hex (Hex, unHex, parseHex)
 import           Warden.Data.Chunk
 import           Warden.Data.Row
 import           Warden.Data.Schema
+import           Warden.Data.TextCounts
 
 -- | 'RunId' is unique across invocations of warden, and can be used to 
 -- correlate file markers with the associated view marker from the run.
@@ -84,6 +85,7 @@ data CheckParams =
     , checkLineBound :: !LineBound
     , checkVerbosity :: !Verbosity
     , checkForce :: !Force
+    , checkFreeformThreshold :: !TextFreeformThreshold
     } deriving (Eq, Show)
 
 data SanityParams =

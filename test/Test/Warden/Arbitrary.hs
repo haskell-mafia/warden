@@ -438,6 +438,7 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
@@ -513,4 +514,7 @@ booleanHistogramPair = do
   pure (rc, h')
   
 instance Arbitrary FieldMatchRatio where
-  arbitrary = fmap (FieldMatchRatio . unUnitReal) $ arbitrary
+  arbitrary = fmap (FieldMatchRatio . unUnitReal) arbitrary
+
+instance Arbitrary TextFreeformThreshold where
+  arbitrary = fmap (TextFreeformThreshold . unNPlus) arbitrary
