@@ -65,7 +65,7 @@ parseCheck :: NumCPUs
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce fft) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
-  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft) . join) $
+  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
     mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
@@ -74,7 +74,7 @@ parseViewFile :: NumCPUs
               -> LineBound
               -> TextFreeformThreshold
               -> ViewFile
-              -> EitherT WardenError (ResourceT IO) [SVParseState]
+              -> EitherT WardenError (ResourceT IO) SVParseState
 parseViewFile caps verb s lb fft vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
@@ -84,7 +84,8 @@ parseViewFile caps verb s lb fft vf = do
     , renderIntegral (NE.length cs)
     , " chunks."
     ]
-  mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
+  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
+  pure $ resolveSVParseState fft ss
 
 parseViewFile' :: TextFreeformThreshold -> Fold Row SVParseState
 parseViewFile' fft = Fold (updateSVParseState fft) initialSVParseState id
