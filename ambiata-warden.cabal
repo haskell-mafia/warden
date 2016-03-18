@@ -146,6 +146,7 @@ executable             warden-gen
                      , resourcet                       == 1.1.*
                      , semigroups
                      , temporary                       == 1.2.*
+                     , transformers                    >= 0.3 && < 5
                      , text
                      , unix                            == 2.7.*
                      , vector                          == 0.10.*

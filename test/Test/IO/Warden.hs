@@ -3,12 +3,13 @@
 module Test.IO.Warden where
 
 import           Control.Concurrent.Async (mapConcurrently)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT, runResourceT)
 
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char (ord)
 import           Data.Csv (EncodeOptions(..), defaultEncodeOptions, encodeWith)
-import           Data.List (nub)
+import           Data.List (nub, zip)
 import qualified Data.Text as T
 
 import           Disorder.Core.IO (testIO)
@@ -18,11 +19,12 @@ import           Lane.Data (dateAsPartition)
 
 import           P
 
-import           System.Directory (createDirectoryIfMissing)
+import           System.Directory (createDirectoryIfMissing, getDirectoryContents)
 import           System.FilePath ((</>), takeDirectory)
 import           System.IO
 import           System.IO.Temp (withTempFile, withTempDirectory)
 import           System.Posix.Directory (getWorkingDirectory)
+import           System.Posix.Files (getSymbolicLinkStatus, isDirectory, isRegularFile)
 
 import           Test.QuickCheck (Gen, Testable, Property, forAll, arbitrary)
 import           Test.QuickCheck (suchThat, elements, generate, resize)
@@ -32,6 +34,7 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.View
 
 import           X.Control.Monad.Trans.Either
 
@@ -145,3 +148,25 @@ wardenEncodeOpts :: Separator -> EncodeOptions
 wardenEncodeOpts sep = defaultEncodeOptions {
     encDelimiter = unSeparator sep
   }
+
+traverseTestDirectory :: DirName -> EitherT WardenError (ResourceT IO) [FilePath]
+traverseTestDirectory dn =
+  fmap directoryFiles $ traverseTestDirectory' (MaxDepth 10) [] dn
+
+traverseTestDirectory' :: MaxDepth -> [DirName] -> DirName -> EitherT WardenError (ResourceT IO) DirTree
+traverseTestDirectory' (MaxDepth 0) _ _ = left $ WardenTraversalError MaxDepthExceeded
+traverseTestDirectory' (MaxDepth depth) preds dn =
+  let preds' = preds <> [dn] in do
+  ls <- liftIO . getDirectoryContents $ joinDir preds'
+  sts <- liftIO . mapM getSymbolicLinkStatus $ (joinFile preds') <$> ls
+  let branches = fmap (DirName . fst) $
+                   filter (uncurry visitable) $ zip ls sts
+  let leaves = fmap (FileName . fst) $ filter (uncurry validLeaf) $ zip ls sts
+  subtrees <- mapM (traverseDirectory (MaxDepth $ depth - 1) preds') branches
+  pure $ DirTree dn subtrees leaves
+  where
+    visitable ('.':_) _ = False
+    visitable _ st      = isDirectory st
+
+    validLeaf _ st      = isRegularFile st
+

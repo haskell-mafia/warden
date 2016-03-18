@@ -22,6 +22,7 @@ module Warden.Data.Row (
   , Separator(..)
   , asciiToLower
   , badRows
+  , charToSeparator
   , combineFieldLooks
   , fieldP
   , fieldLooks
@@ -94,6 +95,9 @@ newtype Separator =
   } deriving (Eq, Show, Generic)
 
 instance NFData Separator
+
+charToSeparator :: Char -> Separator
+charToSeparator = Separator . fromIntegral . ord
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
