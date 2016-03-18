@@ -176,6 +176,7 @@ resolveSVParseState fft = foldr update initialSVParseState
       $! acc
 
     combineTextCounts' = combineTextCounts fft
+{-# INLINE resolveSVParseState #-}
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
 -- the parser.
