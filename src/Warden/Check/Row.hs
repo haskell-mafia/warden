@@ -76,12 +76,14 @@ parseViewFile :: NumCPUs
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) [SVParseState]
 parseViewFile caps verb s lb fft vf = do
+  cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
     , renderViewFile vf
-    , "."
+    , " in "
+    , renderIntegral (NE.length cs)
+    , " chunks."
     ]
-  cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
 
 parseViewFile' :: TextFreeformThreshold -> Fold Row SVParseState
