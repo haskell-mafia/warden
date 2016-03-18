@@ -22,16 +22,16 @@ data FieldAnomaly =
   deriving (Eq, Show)
 
 data AnomalousField =
-    AnomalousField !FieldType !(NonEmpty FieldAnomaly)
+    AnomalousField !FieldIndex !FieldType !(NonEmpty FieldAnomaly)
   deriving (Eq, Show)
 
 -- | For a given field type and set of value observations of that field, find
 -- any which look anomalous.
-fieldAnomalies :: FieldType -> VU.Vector ObservationCount -> Maybe AnomalousField
-fieldAnomalies ft obs = do
+fieldAnomalies :: FieldType -> VU.Vector ObservationCount -> FieldIndex -> Maybe AnomalousField
+fieldAnomalies ft obs idx = do
   as <- nonEmpty . catMaybes . V.toList . V.map (uncurry (checkFieldType ft)) $
     V.zip (V.fromList [minBound..maxBound]) $ VU.convert obs
-  pure $ AnomalousField ft as
+  pure $ AnomalousField idx ft as
 
 checkFieldType :: FieldType -> FieldLooks -> ObservationCount -> Maybe FieldAnomaly
 checkFieldType ft looks cnt

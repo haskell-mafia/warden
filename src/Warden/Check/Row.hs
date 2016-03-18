@@ -65,7 +65,7 @@ parseCheck :: NumCPUs
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
 parseCheck caps ps@(CheckParams s _sf lb verb _fce fft) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
-  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft) . join) $
+  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
     mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
@@ -74,15 +74,18 @@ parseViewFile :: NumCPUs
               -> LineBound
               -> TextFreeformThreshold
               -> ViewFile
-              -> EitherT WardenError (ResourceT IO) [SVParseState]
+              -> EitherT WardenError (ResourceT IO) SVParseState
 parseViewFile caps verb s lb fft vf = do
+  cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
     , renderViewFile vf
-    , "."
+    , " in "
+    , renderIntegral (NE.length cs)
+    , " chunks."
     ]
-  cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
-  mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
+  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
+  pure $ resolveSVParseState fft ss
 
 parseViewFile' :: TextFreeformThreshold -> Fold Row SVParseState
 parseViewFile' fft = Fold (updateSVParseState fft) initialSVParseState id
@@ -121,7 +124,7 @@ checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
     then
       CheckFailed $ NE.fromList [SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount]
     else
-      let rs = V.zipWith fieldAnomalies (schemaFieldType `V.map` fs) as
+      let rs = V.zipWith (\t' (idx',oc') -> fieldAnomalies t' oc' (FieldIndex idx')) (schemaFieldType `V.map` fs) (V.indexed as)
           anoms = catMaybes $ V.toList rs in
       case nonEmpty anoms of
         Nothing ->

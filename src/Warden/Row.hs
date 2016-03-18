@@ -14,7 +14,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import           Data.Conduit (Source, Conduit, (=$=), await, yield)
+import           Data.Conduit (Source, Conduit, (=$=), await, awaitForever, yield)
 import           Data.Csv ()
 import           Data.Csv (DecodeOptions(..), HasHeader(..))
 import           Data.Csv (defaultDecodeOptions)
@@ -75,9 +75,8 @@ readViewChunk (Separator sep) (LineBound lb) vf (Chunk offset size) =
 
 interpLines :: Conduit ByteString (EitherT WardenError (ResourceT IO)) ByteString
 interpLines =
-  await >>= \case
-    Just v' -> yield (BS.snoc v' newline) >> interpLines
-    Nothing -> pure ()
+  awaitForever $ \v -> yield (BS.snoc v newline)
+{-# INLINE interpLines #-}
 
 decodeRows :: ViewFile -> Parser (Vector Text) -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeRows vf (Fail _ e) =
@@ -88,6 +87,7 @@ decodeRows vf (Many rs cont) = do
   maybe (pure ()) (decodeRows vf . cont) more
 decodeRows _ (Done rs) =
   mapM_ yield $ toRow <$> rs
+{-# INLINE decodeRows #-}
 
 toRow :: Either String (Vector Text) -> Row
 toRow (Right !r) = SVFields r

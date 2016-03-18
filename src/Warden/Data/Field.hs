@@ -10,6 +10,7 @@
 
 module Warden.Data.Field (
     CompatibleEntries(..)
+  , FieldIndex(..)
   , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
@@ -142,3 +143,15 @@ $(derivingUnbox "CompatibleEntries"
   [t| CompatibleEntries -> Int64 |]
   [| \(CompatibleEntries x) -> x |]
   [| \x -> (CompatibleEntries x) |])
+
+newtype FieldIndex =
+  FieldIndex {
+    unFieldIndex :: Int
+  } deriving (Eq, Show, Ord, Generic)
+
+instance NFData FieldIndex
+
+$(derivingUnbox "FieldIndex"
+  [t| FieldIndex -> Int |]
+  [| \(FieldIndex x) -> x |]
+  [| \x -> (FieldIndex x) |])
