@@ -124,7 +124,7 @@ checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
     then
       CheckFailed $ NE.fromList [SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount]
     else
-      let rs = V.zipWith fieldAnomalies (schemaFieldType `V.map` fs) as
+      let rs = V.zipWith (\t' (idx',oc') -> fieldAnomalies t' oc' (FieldIndex idx')) (schemaFieldType `V.map` fs) (V.indexed as)
           anoms = catMaybes $ V.toList rs in
       case nonEmpty anoms of
         Nothing ->
