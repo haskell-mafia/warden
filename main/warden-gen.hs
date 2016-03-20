@@ -73,4 +73,5 @@ genTypeP :: Parser GenType
 genTypeP = (maybe NonDeterministic Deterministic) <$> (optional . option auto $
      long "deterministic"
   <> short 'd'
+  <> metavar "SEED"
   <> help "Use a deterministic generator with specified seed (default is nondeterministic).")
