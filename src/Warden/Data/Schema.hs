@@ -35,7 +35,7 @@ renderSchemaFile = T.pack . unSchemaFile
 newtype FieldUniques =
   FieldUniques {
     unFieldUniques :: Int
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 
 data FieldForm =
     FreeForm

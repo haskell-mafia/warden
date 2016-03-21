@@ -124,7 +124,7 @@ data RowFailure =
 data SchemaFailure =
     IncorrectFieldCount FieldCount !(Set FieldCount)
   | FieldCountObservationMismatch FieldCount FieldCount
-  | FieldTypeAnomaly AnomalousField
+  | FieldAnomalyFailure AnomalousField
   deriving (Eq, Show)
 
 renderFailure :: Failure -> Text
@@ -160,7 +160,7 @@ renderSchemaFailure (FieldCountObservationMismatch a b) = T.concat [
   , ", observed "
   , renderFieldCount b
   ]
-renderSchemaFailure (FieldTypeAnomaly a) = T.concat [
-    "Field type differs from that specified in schema: "
+renderSchemaFailure (FieldAnomalyFailure a) = T.concat [
+    "Field characteristics differ from those specified in schema: "
   , T.pack (show a)
   ]

@@ -6,9 +6,11 @@ module Warden.Data.FieldAnomaly (
   , FieldAnomaly(..)
   , checkFieldType
   , fieldAnomalies
+  , formAnomalies
   ) where
 
 import           Data.List.NonEmpty (NonEmpty, nonEmpty)
+import qualified Data.Set as S
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 
@@ -16,6 +18,8 @@ import           P
 
 import           Warden.Data.Field
 import           Warden.Data.Row
+import           Warden.Data.Schema
+import           Warden.Data.TextCounts
 
 data FieldAnomaly =
     FieldAnomaly !FieldLooks !ObservationCount
@@ -23,6 +27,7 @@ data FieldAnomaly =
 
 data AnomalousField =
     AnomalousField !FieldIndex !FieldType !(NonEmpty FieldAnomaly)
+  | AnomalousForm !FieldIndex !FieldUniques !UniqueTextCount
   deriving (Eq, Show)
 
 -- | For a given field type and set of value observations of that field, find
@@ -39,3 +44,16 @@ checkFieldType ft looks cnt
   | otherwise = if cnt > (ObservationCount 0)
                   then Just $ FieldAnomaly looks cnt
                   else Nothing
+
+
+formAnomalies :: FieldForm -> UniqueTextCount -> FieldIndex -> Maybe AnomalousField
+-- It's not considered an error if a freeform field occasionally looks
+-- categorical.
+formAnomalies FreeForm _ _ =
+  Nothing
+formAnomalies (CategoricalForm expected) LooksFreeform idx =
+  Just $ AnomalousForm idx expected LooksFreeform
+formAnomalies (CategoricalForm expected) (UniqueTextCount tc) idx =
+  if (S.size tc) > (unFieldUniques expected)
+    then Just $ AnomalousForm idx expected (UniqueTextCount tc)
+    else Nothing

@@ -99,6 +99,7 @@ finalizeSVParseState :: CheckParams
 finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkFieldAnomalies sch (sv ^. fieldLooks)
+             , checkFormAnomalies sch (sv ^. textCounts)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
@@ -114,6 +115,8 @@ checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
 checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
 
+-- FIXME: model check dependencies better, e.g., the field types shouldn't
+-- be compared if the field counts don't match.
 checkFieldAnomalies :: Maybe Schema -> FieldLookCount -> CheckStatus
 checkFieldAnomalies Nothing _ = CheckPassed
 checkFieldAnomalies _ NoFieldLookCount = CheckPassed
@@ -130,4 +133,16 @@ checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
         Nothing ->
           CheckPassed
         Just anoms' ->
-          CheckFailed $ (SchemaCheckFailure . FieldTypeAnomaly) <$> anoms'
+          CheckFailed $ (SchemaCheckFailure . FieldAnomalyFailure) <$> anoms'
+
+checkFormAnomalies :: Maybe Schema -> TextCounts -> CheckStatus
+checkFormAnomalies Nothing _ = CheckPassed
+checkFormAnomalies _ NoTextCounts = CheckPassed
+checkFormAnomalies (Just (Schema SchemaV1 fs)) (TextCounts cs) =
+  let rs = V.zipWith (\f' (idx',tc') -> formAnomalies f' tc' (FieldIndex idx')) (schemaFieldForm `V.map` fs) (V.indexed cs)
+      anoms = catMaybes $ V.toList rs in
+  case nonEmpty anoms of
+    Nothing ->
+      CheckPassed
+    Just anoms' ->
+      CheckFailed $ (SchemaCheckFailure . FieldAnomalyFailure) <$> anoms'
