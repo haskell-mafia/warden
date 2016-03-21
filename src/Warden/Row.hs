@@ -6,15 +6,19 @@
 module Warden.Row (
     readView
   , readViewChunk
+  , readViewChunkText
+  , readViewChunkCassava
   , readViewFile
   ) where
 
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Resource (ResourceT)
 
+import qualified Data.Attoparsec.Text as AT
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Conduit (Source, Conduit, (=$=), await, awaitForever, yield)
+import           Data.Conduit.Text (linesBounded, decodeUtf8)
 import           Data.Csv ()
 import           Data.Csv (DecodeOptions(..), HasHeader(..))
 import           Data.Csv (defaultDecodeOptions)
@@ -32,6 +36,7 @@ import           System.IO
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Row.Parser
 
 import           X.Control.Monad.Trans.Either (EitherT, left)
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -59,12 +64,12 @@ readViewFile (Separator sep) (LineBound lb) vf =
   where
     opts = defaultDecodeOptions { decDelimiter = sep }
 
-readViewChunk :: Separator
-              -> LineBound
-              -> ViewFile
-              -> Chunk
-              -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewChunk (Separator sep) (LineBound lb) vf (Chunk offset size) =
+readViewChunkCassava :: Separator
+                     -> LineBound
+                     -> ViewFile
+                     -> Chunk
+                     -> Source (EitherT WardenError (ResourceT IO)) Row
+readViewChunkCassava (Separator sep) (LineBound lb) vf (Chunk offset size) =
   let fp = viewFilePath vf in
   slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
     =$= sepByByteBounded newline lb
@@ -72,6 +77,28 @@ readViewChunk (Separator sep) (LineBound lb) vf (Chunk offset size) =
     =$= decodeRows vf (decodeWith opts NoHeader)
   where
     opts = defaultDecodeOptions { decDelimiter = sep }
+
+readViewChunkText :: Separator
+                  -> LineBound
+                  -> ViewFile
+                  -> Chunk
+                  -> Source (EitherT WardenError (ResourceT IO)) Row
+readViewChunkText sep (LineBound lb) vf (Chunk offset size) =
+  let fp = viewFilePath vf in
+  slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
+    =$= decodeUtf8
+    =$= linesBounded lb
+    =$= decodeText
+  where
+    decodeText = awaitForever $ \l ->
+      yield . toRow . second unRawRecord $ AT.parseOnly (rawRecordP sep) l
+
+readViewChunk :: Separator
+              -> LineBound
+              -> ViewFile
+              -> Chunk
+              -> Source (EitherT WardenError (ResourceT IO)) Row
+readViewChunk = readViewChunkCassava
 
 interpLines :: Conduit ByteString (EitherT WardenError (ResourceT IO)) ByteString
 interpLines =

@@ -67,7 +67,7 @@ import           Warden.Data.TextCounts
 
 newtype RawRecord =
   RawRecord {
-    unRecord :: V.Vector Text
+    unRawRecord :: V.Vector Text
   } deriving (Eq, Show)
 
 newtype LineBound =
