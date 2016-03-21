@@ -57,16 +57,6 @@ prepareHashText =
 prepareFolds :: IO ([Row], [Text])
 prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
 
-benchCassavaDecode :: NonEmpty ViewFile -> IO ()
-benchCassavaDecode vfs =
-  let sep = Separator . fromIntegral $ ord '|'
-      lb = LineBound 65536 in do
-  bitbucket <- openFile "/dev/null" WriteMode
-  unsafeWarden $
-        readView' (decodeCassava sep lb) vfs
-    =$= C.map (BS.pack . show)
-    $$  CB.sinkHandle bitbucket
-
 benchATDecode :: NonEmpty ViewFile -> IO ()
 benchATDecode vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -95,8 +85,7 @@ main = do
     wardenBench [
           env (prepareView root) $ \ ~(vfs) ->
             bgroup "decoding" $ [
-                bench "decode/conduit+cassava/1000" $ nfIO (benchCassavaDecode vfs)
-              , bench "decode/conduit+attoparsec-text/1000" $ nfIO (benchATDecode vfs)
+                bench "decode/conduit+attoparsec-text/1000" $ nfIO (benchATDecode vfs)
             ]
         , env prepareRow $ \ ~(rs) ->
             bgroup "field-parsing" $ [
