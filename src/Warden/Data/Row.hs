@@ -16,6 +16,7 @@ module Warden.Data.Row (
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
+  , RawRecord(..)
   , Row(..)
   , RowCount(..)
   , SVParseState(..)
@@ -34,6 +35,7 @@ module Warden.Data.Row (
   , renderParsedField
   , renderRowCount
   , resolveSVParseState
+  , separatorToChar
   , textCounts
   , totalRows
   , updateFieldLooks
@@ -62,6 +64,11 @@ import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 import           Warden.Data.TextCounts
+
+newtype RawRecord =
+  RawRecord {
+    unRecord :: V.Vector Text
+  } deriving (Eq, Show)
 
 newtype LineBound =
   LineBound {
@@ -102,6 +109,9 @@ instance NFData Separator
 
 charToSeparator :: Char -> Separator
 charToSeparator = Separator . fromIntegral . ord
+
+separatorToChar :: Separator -> Char
+separatorToChar = chr . fromIntegral . unSeparator
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
