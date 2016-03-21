@@ -29,12 +29,12 @@ prop_formAnomalies_pass ff fi = case ff of
       forAll (fmap (UniqueTextCount . S.fromList) $ vectorOf n arbitrary) $ \c ->
       (formAnomalies ff c fi) === Nothing
 
-prop_formAnomalies_fail :: FieldUniques -> FieldIndex -> Property
-prop_formAnomalies_fail fu fi =
-  let ff = CategoricalForm fu in
-  forAll (choose ((unFieldUniques fu) + 1, 100000)) $ \n ->
-    forAll (fmap (UniqueTextCount . S.fromList) $ vectorOf n arbitrary) $ \c ->
-    (isJust $ formAnomalies ff c fi, isJust $ formAnomalies ff LooksFreeform fi) === (True, True)
+prop_formAnomalies_fail :: FieldIndex -> Property
+prop_formAnomalies_fail fi =
+  forAll (choose (2, 50)) $ \n -> 
+    forAll (fmap S.fromList $ vectorOf n arbitrary) $ \c ->
+      forAll (fmap FieldUniques $ choose (0, (S.size c) - 1)) $ \fu ->
+        (isJust $ formAnomalies (CategoricalForm fu) (UniqueTextCount c) fi, isJust $ formAnomalies (CategoricalForm fu) LooksFreeform fi) === (True, True)
 
 return []
 tests :: IO Bool
