@@ -72,7 +72,8 @@ decodeRecord :: Separator
              -> LineBound
              -> ViewFile
              -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeRecord = decodeCassava
+decodeRecord = decodeText
+{-# INLINE decodeRecord #-}
 
 readView :: Separator
          -> LineBound
