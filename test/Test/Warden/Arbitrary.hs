@@ -518,3 +518,6 @@ instance Arbitrary FieldMatchRatio where
 
 instance Arbitrary TextFreeformThreshold where
   arbitrary = fmap (TextFreeformThreshold . unNPlus) arbitrary
+
+instance Arbitrary FieldIndex where
+  arbitrary = fmap (FieldIndex . getSmall . getNonNegative) $ arbitrary

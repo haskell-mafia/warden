@@ -101,7 +101,7 @@ library
                        Warden.View
 
 executable             warden
-    ghc-options:       -Wall -threaded -O2 -with-rtsopts=-N
+    ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
     main-is:           main/warden.hs
     build-depends:     base
                      , ambiata-p
@@ -114,7 +114,7 @@ executable             warden
                      , text
 
 executable             warden-gen
-    ghc-options:       -Wall -threaded -O2 -with-rtsopts=-N
+    ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
     main-is:           warden-gen.hs
     hs-source-dirs:    main
                      , test

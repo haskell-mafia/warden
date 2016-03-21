@@ -12,6 +12,7 @@ module Warden.Data.Schema (
   , SchemaFile(..)
   , SchemaVersion(..)
   , currentSchemaVersion
+  , renderFieldUniques
   , renderSchemaFile
   ) where
 
@@ -35,7 +36,10 @@ renderSchemaFile = T.pack . unSchemaFile
 newtype FieldUniques =
   FieldUniques {
     unFieldUniques :: Int
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
+
+renderFieldUniques :: FieldUniques -> Text
+renderFieldUniques = renderIntegral . unFieldUniques
 
 data FieldForm =
     FreeForm

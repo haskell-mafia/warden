@@ -23,6 +23,7 @@ module Warden.Data.Check (
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 
 import           P
@@ -124,7 +125,7 @@ data RowFailure =
 data SchemaFailure =
     IncorrectFieldCount FieldCount !(Set FieldCount)
   | FieldCountObservationMismatch FieldCount FieldCount
-  | FieldTypeAnomaly AnomalousField
+  | FieldAnomalyFailure AnomalousField
   deriving (Eq, Show)
 
 renderFailure :: Failure -> Text
@@ -140,19 +141,23 @@ renderInsanity EmptyFile = "file of zero size"
 renderInsanity IrregularFile = "not a regular file"
 
 renderRowFailure :: RowFailure -> Text
-renderRowFailure (FieldCountMismatch cs) =
-  "differing field counts: " <> T.pack (show cs)
+renderRowFailure (FieldCountMismatch cs) = T.concat [
+    "differing field counts: "
+  , T.intercalate "," (fmap renderFieldCount $ S.toList cs)
+  ]
 renderRowFailure ZeroRows =
   "no rows in xSV document"
-renderRowFailure c =
-  T.pack (show c) <> " rows failed to parse"
+renderRowFailure (HasBadRows c) = T.concat [
+    renderRowCount c
+  , " rows failed to parse"
+  ]
 
 renderSchemaFailure :: SchemaFailure -> Text
 renderSchemaFailure (IncorrectFieldCount c ds) = T.concat [
     "incorrect field count: expected "
-  , T.pack (show c)
+  , renderFieldCount c
   , ", got "
-  , T.pack (show ds)
+  , T.intercalate ", " (fmap renderFieldCount $ S.toList ds)
   ]
 renderSchemaFailure (FieldCountObservationMismatch a b) = T.concat [
     "Field count in schema differs from unique field observations. schema count is "
@@ -160,7 +165,7 @@ renderSchemaFailure (FieldCountObservationMismatch a b) = T.concat [
   , ", observed "
   , renderFieldCount b
   ]
-renderSchemaFailure (FieldTypeAnomaly a) = T.concat [
-    "Field type differs from that specified in schema: "
-  , T.pack (show a)
+renderSchemaFailure (FieldAnomalyFailure a) = T.concat [
+    "Field characteristics differ from those specified in schema: "
+  , renderAnomalousField a
   ]
