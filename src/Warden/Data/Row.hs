@@ -30,6 +30,7 @@ module Warden.Data.Row (
   , numFields
   , parseField
   , renderFieldCount
+  , renderObservationCount
   , renderParsedField
   , renderRowCount
   , resolveSVParseState
@@ -75,7 +76,7 @@ newtype FieldCount =
 instance NFData FieldCount
 
 renderFieldCount :: FieldCount -> Text
-renderFieldCount = T.pack . show . unFieldCount
+renderFieldCount = renderIntegral . unFieldCount
 
 newtype ObservationCount =
   ObservationCount {
@@ -88,6 +89,9 @@ $(derivingUnbox "ObservationCount"
   [| \x -> (ObservationCount x) |])
 
 instance NFData ObservationCount
+
+renderObservationCount :: ObservationCount -> Text
+renderObservationCount (ObservationCount n) = renderIntegral n
 
 newtype Separator =
   Separator {

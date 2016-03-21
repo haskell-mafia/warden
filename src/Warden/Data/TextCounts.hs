@@ -18,12 +18,14 @@ module Warden.Data.TextCounts (
   , combineUniqueTextCounts
   , emptyUniqueTextCount
   , hashText
+  , renderUniqueTextCount
   , updateUniqueTextCount
   ) where
 
 import           Data.Digest.CityHash (cityHash64)
 import           Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
 
@@ -40,6 +42,14 @@ instance NFData UniqueTextCount
 
 emptyUniqueTextCount :: UniqueTextCount
 emptyUniqueTextCount = UniqueTextCount S.empty
+
+-- human-readable for failure summaries
+renderUniqueTextCount :: UniqueTextCount -> Text
+renderUniqueTextCount LooksFreeform = "above freeform threshold"
+renderUniqueTextCount (UniqueTextCount us) = T.concat [
+    renderIntegral (S.size us)
+  , " uniques"
+  ]
 
 newtype TextFreeformThreshold =
   TextFreeformThreshold {

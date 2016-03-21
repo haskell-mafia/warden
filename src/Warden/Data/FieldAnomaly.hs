@@ -7,10 +7,13 @@ module Warden.Data.FieldAnomaly (
   , checkFieldType
   , fieldAnomalies
   , formAnomalies
+  , renderAnomalousField
   ) where
 
 import           Data.List.NonEmpty (NonEmpty, nonEmpty)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
+import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 
@@ -25,10 +28,37 @@ data FieldAnomaly =
     FieldAnomaly !FieldLooks !ObservationCount
   deriving (Eq, Show)
 
+renderFieldAnomaly :: FieldAnomaly -> Text
+renderFieldAnomaly (FieldAnomaly obs cnt) = T.concat [
+    "parsed type "
+  , renderFieldLooks obs
+  , ": "
+  , renderObservationCount cnt
+  , " observations"
+  ]
+
 data AnomalousField =
-    AnomalousField !FieldIndex !FieldType !(NonEmpty FieldAnomaly)
+    AnomalousType !FieldIndex !FieldType !(NonEmpty FieldAnomaly)
   | AnomalousForm !FieldIndex !FieldUniques !UniqueTextCount
   deriving (Eq, Show)
+
+renderAnomalousField :: AnomalousField -> Text
+renderAnomalousField (AnomalousType idx typ anoms) = T.concat [
+    "field type (field "
+  , renderIntegral (unFieldIndex idx)
+  , "): expected "
+  , renderFieldType typ
+  , ", saw "
+  , T.intercalate ", " (fmap renderFieldAnomaly $ NE.toList  anoms)
+  ]
+renderAnomalousField (AnomalousForm idx form observed) = T.concat [
+    "categorical field form (field "
+  , renderIntegral (unFieldIndex idx)
+  , "): expected "
+  , renderFieldUniques form
+  , ", saw "
+  , renderUniqueTextCount observed
+  ]
 
 -- | For a given field type and set of value observations of that field, find
 -- any which look anomalous.
@@ -36,7 +66,7 @@ fieldAnomalies :: FieldType -> VU.Vector ObservationCount -> FieldIndex -> Maybe
 fieldAnomalies ft obs idx = do
   as <- nonEmpty . catMaybes . V.toList . V.map (uncurry (checkFieldType ft)) $
     V.zip (V.fromList [minBound..maxBound]) $ VU.convert obs
-  pure $ AnomalousField idx ft as
+  pure $ AnomalousType idx ft as
 
 checkFieldType :: FieldType -> FieldLooks -> ObservationCount -> Maybe FieldAnomaly
 checkFieldType ft looks cnt
