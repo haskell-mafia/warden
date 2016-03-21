@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Row (
-    decodeText
+    decodeByteString
   , readView
   , readView'
   , readViewChunk
@@ -14,13 +14,16 @@ module Warden.Row (
 
 import           Control.Monad.Trans.Resource (ResourceT)
 
-import qualified Data.Attoparsec.Text as AT
+import qualified Data.Attoparsec.ByteString as AB
 import           Data.ByteString (ByteString)
+import           Data.Char (ord)
 import           Data.Conduit (Source, Conduit, (=$=), awaitForever, yield)
-import           Data.Conduit.Text (linesBounded, decodeUtf8)
+import qualified Data.Conduit.List as DC
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import           Data.Vector (Vector)
+import qualified Data.Vector as V
 
 import           Data.String (String)
 
@@ -32,27 +35,27 @@ import           Warden.Data
 import           Warden.Error
 import           Warden.Row.Parser
 
-import           X.Data.Conduit.Binary (slurp)
+import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
 import           X.Control.Monad.Trans.Either (EitherT)
 
-decodeText :: Separator
+decodeByteString :: Separator
            -> LineBound
            -> ViewFile
            -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeText sep (LineBound lb) _vf =
-      decodeUtf8
-  =$= linesBounded lb
-  =$= decodeText'
+decodeByteString sep (LineBound lb) _vf =
+      sepByByteBounded (fromIntegral $ ord '\n') lb
+  =$= decodeByteString'
+  =$= DC.map (toRow . second (V.map T.decodeUtf8))
   where
-    decodeText' = awaitForever $ \l ->
-      yield . toRow . second unRawRecord $ AT.parseOnly (rawRecordP sep) l
-{-# INLINE decodeText #-}
+    decodeByteString' = awaitForever $ \l ->
+      yield . second unRawRecord $ AB.parseOnly (rawRecordP sep) l
+{-# INLINE decodeByteString #-}
 
 decodeRecord :: Separator
              -> LineBound
              -> ViewFile
              -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeRecord = decodeText
+decodeRecord = decodeByteString
 {-# INLINE decodeRecord #-}
 
 readView :: Separator

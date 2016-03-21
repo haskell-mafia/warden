@@ -47,6 +47,7 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -67,7 +68,7 @@ import           Warden.Data.TextCounts
 
 newtype RawRecord =
   RawRecord {
-    unRawRecord :: V.Vector Text
+    unRawRecord :: V.Vector ByteString
   } deriving (Eq, Show)
 
 newtype LineBound =
