@@ -22,6 +22,7 @@ import           Control.Lens ((%~))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
+import           Data.Bits ((.|.))
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Char (ord)
@@ -124,15 +125,7 @@ toRow (Left !e) =
 -- and converting unicode to lowercase is really expensive, so just
 -- add 32 to the character if it's in the ASCII uppercase range.
 asciiToLower :: ByteString -> ByteString
-asciiToLower = BS.map charToLower
-  where
-    charToLower c
-      | c >= a && c <= z = c + 0x20
-      | otherwise            = c
-
-    a = fromIntegral $ ord 'A'
-
-    z = fromIntegral $ ord 'Z'
+asciiToLower = BS.map (flip (.|.) 0x20)
 {-# INLINE asciiToLower #-}
 
 parseField :: ByteString -> FieldLooks
