@@ -22,15 +22,14 @@ import           Control.Lens ((%~))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
-import qualified Data.Attoparsec.Text as AT
 import           Data.ByteString (ByteString)
-import           Data.Char (ord, chr)
+import qualified Data.ByteString as BS
+import           Data.Char (ord)
 import           Data.Conduit (Source, Conduit, (=$=), awaitForever, yield)
 import qualified Data.Conduit.List as DC
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import           Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -51,9 +50,9 @@ import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
 import           X.Control.Monad.Trans.Either (EitherT)
 
 decodeByteString :: Separator
-           -> LineBound
-           -> ViewFile
-           -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
+                 -> LineBound
+                 -> ViewFile
+                 -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeByteString sep (LineBound lb) _vf =
       sepByByteBounded (fromIntegral $ ord '\n') lb
   =$= decodeByteString'
@@ -114,19 +113,9 @@ readViewChunk' c vf (Chunk offset size) =
   slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
     =$= c vf
 
--- FIXME: slow
 toRow :: Either String (Vector ByteString) -> Row
 toRow (Right !r) =
-  let ts = V.map T.decodeUtf8' r
-      (bads, goods) = partitionEithers $ V.toList ts in
-  if null bads
-    then
-      SVFields $ V.fromList goods
-    else
-      RowFailure $ T.concat [
-          "could not decode fields: "
-        , T.intercalate ", " (fmap (T.pack . show) $ bads)
-        ]
+  SVFields r
 toRow (Left !e) =
   RowFailure $ T.pack e
 {-# INLINE toRow #-}
@@ -134,28 +123,31 @@ toRow (Left !e) =
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
 -- add 32 to the character if it's in the ASCII uppercase range.
-asciiToLower :: Text -> Text
-asciiToLower = T.map charToLower
+asciiToLower :: ByteString -> ByteString
+asciiToLower = BS.map charToLower
   where
     charToLower c
-      | c >= 'A' && c <= 'Z' = chr $ ord c + 0x20
+      | c >= a && c <= z = c + 0x20
       | otherwise            = c
+
+    a = fromIntegral $ ord 'A'
+
+    z = fromIntegral $ ord 'Z'
 {-# INLINE asciiToLower #-}
 
-parseField :: Text -> FieldLooks
+parseField :: ByteString -> FieldLooks
 parseField "" = LooksEmpty
-parseField t = case AT.parseOnly fieldP (asciiToLower t) of
+parseField t = case AB.parseOnly fieldP (asciiToLower t) of
   Left _ -> LooksText
   Right ParsedIntegral -> LooksIntegral
   Right ParsedReal -> LooksReal
   Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
 
-updateFieldLooks :: Text -> VU.Vector ObservationCount -> VU.Vector ObservationCount
+updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
 updateFieldLooks !t !a =
   VU.accum (+) a [(fromEnum (parseField t), 1)]
 {-# INLINE updateFieldLooks #-}
-
 
 updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
 updateTextCounts fft (SVFields vs) NoTextCounts =

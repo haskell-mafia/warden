@@ -22,11 +22,11 @@ module Warden.Data.TextCounts (
   , updateUniqueTextCount
   ) where
 
+import           Data.ByteString (ByteString)
 import           Data.Digest.CityHash (cityHash64)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
 
 import           GHC.Generics (Generic)
@@ -64,14 +64,12 @@ data TextCounts =
 instance NFData TextCounts
 
 -- | Don't use this on 32-bit platforms.
---
--- Speed this up by replacing 'encodeUtf8' with a straight memcpy.
-hashText :: Text -> Int
-hashText t =
-  fromIntegral . cityHash64 $ T.encodeUtf8 t
+hashText :: ByteString -> Int
+hashText =
+  fromIntegral . cityHash64
 {-# INLINE hashText #-}
 
-updateUniqueTextCount :: TextFreeformThreshold -> Text -> UniqueTextCount -> UniqueTextCount
+updateUniqueTextCount :: TextFreeformThreshold -> ByteString -> UniqueTextCount -> UniqueTextCount
 updateUniqueTextCount _ _ LooksFreeform = LooksFreeform
 updateUniqueTextCount fft t (UniqueTextCount c)
   | S.size c >= (unTextFreeformThreshold fft) =

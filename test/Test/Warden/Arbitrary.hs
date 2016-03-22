@@ -6,8 +6,8 @@
 module Test.Warden.Arbitrary where
 
 import           Data.AEq (AEq, (===), (~==))
-import qualified Data.ByteString      as BS
-import           Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
@@ -16,14 +16,14 @@ import           Data.List (nub)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import           Data.Text.Encoding   (decodeUtf8, decodeUtf8')
+import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 import qualified Data.Vector          as V
 import qualified Data.Vector.Unboxed as VU
 import           Data.Word
 
 import           Debruijn.Hex (parseHex)
 
-import           Disorder.Core (utf8BS, genValidUtf8)
+import           Disorder.Core (utf8BS)
 import           Disorder.Corpus
 
 import           P
@@ -59,13 +59,13 @@ newtype ValidRow =
 instance Arbitrary ValidRow where
   arbitrary = fmap (ValidRow . SVFields) $ genRows
     where
-      genRows = fmap V.fromList $ listOf1 genValidUtf8
+      genRows = fmap V.fromList $ listOf1 utf8BS
 
 instance Arbitrary Separator where
   arbitrary = elements $ Separator <$> filter (not . affectsRowState) [32..127]
 
 -- | Valid rows for testing the tokenizer.
-newtype ValidSVRow = ValidSVRow { getValidSVRow :: [Text] }
+newtype ValidSVRow = ValidSVRow { getValidSVRow :: [BS.ByteString] }
   deriving (Eq, Show, Ord, ToRecord)
 
 instance Arbitrary RowCount where
@@ -81,17 +81,17 @@ affectsRowState w = elem w $ special
   special :: [Word8]
   special = (fromIntegral . ord) <$> ['"', '\'', '\r', '\n', '\\']
 
-invalidSVRow :: Separator -> Gen ByteString
+invalidSVRow :: Separator -> Gen BL.ByteString
 invalidSVRow (Separator s) = BL.intercalate (BL.pack [s]) <$> listOf1 invalidSVField
 
-invalidSVField :: Gen ByteString
+invalidSVField :: Gen BL.ByteString
 invalidSVField = BL.pack <$> (listOf arbitrary) `suchThat` isInvalidText
  where
   isInvalidText bs = (isLeft . decodeUtf8' . BS.pack) bs && not (any affectsRowState bs)
 
 validSVField :: Separator
-             -> Gen Text
-validSVField (Separator s) = decodeUtf8 <$>
+             -> Gen BS.ByteString
+validSVField (Separator s) =
   utf8BS `suchThat` isValid
   where
     isValid bs =
@@ -109,15 +109,15 @@ data TestField =
   | TestBoolean Bool
   deriving (Eq, Show)
 
-renderTestField :: TestField -> Text
-renderTestField (TestIntegral n) = T.pack $ show n
-renderTestField (TestReal n) = T.pack $ show n
-renderTestField (TestText t) = t
-renderTestField (TestBoolean b) = T.pack $ show b
+packTestField :: TestField -> BSC.ByteString
+packTestField (TestIntegral n) = BSC.pack $ show n
+packTestField (TestReal n) = BSC.pack $ show n
+packTestField (TestText t) = encodeUtf8 t
+packTestField (TestBoolean b) = BSC.pack $ show b
 
 tokenizedRow :: FieldCount -> Gen Row
 tokenizedRow (FieldCount n) = (SVFields . V.fromList) <$>
-  liftM renderTestField <$> (vectorOf n (arbitrary :: Gen TestField))
+  liftM packTestField <$> (vectorOf n (arbitrary :: Gen TestField))
 
 instance Arbitrary ParsedField where
   arbitrary = elements [minBound..maxBound]

@@ -110,7 +110,7 @@ separatorToChar = chr . fromIntegral . unSeparator
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
 data Row =
-    SVFields !(V.Vector Text)
+    SVFields !(V.Vector ByteString)
   | RowFailure !Text
   deriving (Eq, Show, Generic)
 

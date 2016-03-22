@@ -4,6 +4,7 @@
 
 module Test.Warden.Data.TextCounts where
 
+import           Data.ByteString (ByteString)
 import qualified Data.Set as S
 import           Data.List (take)
 import qualified Data.Vector as V
@@ -21,7 +22,7 @@ import           Test.Warden.Arbitrary ()
 
 import           Warden.Data.TextCounts
 
-prop_hashText :: UniquePair Text -> Property
+prop_hashText :: UniquePair ByteString -> Property
 prop_hashText (UniquePair x y) =
   let x' = hashText x
       y' = hashText y in

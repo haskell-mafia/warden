@@ -12,6 +12,7 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Semigroup ((<>))
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Vector.Unboxed as VU
 
 import           Disorder.Core.Property (failWith)
@@ -70,7 +71,7 @@ prop_validateViewMarkers_failed vms = forAll (fmap NE.fromList $ listOf1 failedV
 
 prop_compatibleEntries_text :: ObservationCount -> Property
 prop_compatibleEntries_text oc = forAll (elements muppets) $ \t ->
-  let l = parseField t
+  let l = parseField $ T.encodeUtf8 t
       csText = compatibleEntries TextField l oc
       csIntegral = compatibleEntries IntegralField l oc
       csReal = compatibleEntries RealField l oc
@@ -79,7 +80,7 @@ prop_compatibleEntries_text oc = forAll (elements muppets) $ \t ->
 
 prop_compatibleEntries_integral :: ObservationCount -> Int -> Property
 prop_compatibleEntries_integral oc n =
-  let l = parseField . T.pack $ show n
+  let l = parseField . T.encodeUtf8 . T.pack $ show n
       csText = compatibleEntries TextField l oc
       csIntegral = compatibleEntries IntegralField l oc
       csReal = compatibleEntries RealField l oc
@@ -88,7 +89,7 @@ prop_compatibleEntries_integral oc n =
 
 prop_compatibleEntries_boolean :: ObservationCount -> Property
 prop_compatibleEntries_boolean oc = forAll renderedBool $ \b ->
-  let l = parseField b
+  let l = parseField $ T.encodeUtf8 b
       csText = compatibleEntries TextField l oc
       csIntegral = compatibleEntries IntegralField l oc
       csReal = compatibleEntries RealField l oc
@@ -97,7 +98,7 @@ prop_compatibleEntries_boolean oc = forAll renderedBool $ \b ->
 
 prop_compatibleEntries_real :: ObservationCount -> Double -> Property
 prop_compatibleEntries_real oc n =
-  let l = parseField . T.pack $ show n
+  let l = parseField . T.encodeUtf8 . T.pack $ show n
       csText = compatibleEntries TextField l oc
       csIntegral = compatibleEntries IntegralField l oc
       csReal = compatibleEntries RealField l oc
