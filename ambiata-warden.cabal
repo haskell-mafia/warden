@@ -25,7 +25,6 @@ library
                      , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
-                     , cassava                         == 0.4.*
                      , cityhash                        == 0.3.0.*
                      , conduit                         == 1.2.*
                      , conduit-extra                   == 1.1.*
@@ -85,6 +84,7 @@ library
                        Warden.Numeric
                        Warden.Param
                        Warden.Row
+                       Warden.Row.Parser
                        Warden.Schema
                        Warden.Sampling.Reservoir
                        Warden.Serial.Json

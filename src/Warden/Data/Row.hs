@@ -16,6 +16,7 @@ module Warden.Data.Row (
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
+  , RawRecord(..)
   , Row(..)
   , RowCount(..)
   , SVParseState(..)
@@ -34,6 +35,7 @@ module Warden.Data.Row (
   , renderParsedField
   , renderRowCount
   , resolveSVParseState
+  , separatorToChar
   , textCounts
   , totalRows
   , updateFieldLooks
@@ -45,6 +47,7 @@ import           Control.Lens
 
 import           Data.Attoparsec.Combinator
 import           Data.Attoparsec.Text
+import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -62,6 +65,11 @@ import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 import           Warden.Data.TextCounts
+
+newtype RawRecord =
+  RawRecord {
+    unRawRecord :: V.Vector ByteString
+  } deriving (Eq, Show)
 
 newtype LineBound =
   LineBound {
@@ -102,6 +110,9 @@ instance NFData Separator
 
 charToSeparator :: Char -> Separator
 charToSeparator = Separator . fromIntegral . ord
+
+separatorToChar :: Separator -> Char
+separatorToChar = chr . fromIntegral . unSeparator
 
 -- | Raw record. Can be extended to support JSON objects as well as xSV if
 --   needed.
