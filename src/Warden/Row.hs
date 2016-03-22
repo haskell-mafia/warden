@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Row (
     decodeByteString
@@ -45,7 +46,7 @@ decodeByteString :: Separator
 decodeByteString sep (LineBound lb) _vf =
       sepByByteBounded (fromIntegral $ ord '\n') lb
   =$= decodeByteString'
-  =$= DC.map (toRow . second (V.map T.decodeUtf8))
+  =$= DC.map toRow
   where
     decodeByteString' = awaitForever $ \l ->
       yield . second unRawRecord $ AB.parseOnly (rawRecordP sep) l
@@ -102,7 +103,19 @@ readViewChunk' c vf (Chunk offset size) =
   slurp fp (unChunkOffset offset) (Just $ unChunkSize size)
     =$= c vf
 
-toRow :: Either String (Vector Text) -> Row
-toRow (Right !r) = SVFields r
-toRow (Left !e)  = RowFailure $ T.pack e
+-- FIXME: slow
+toRow :: Either String (Vector ByteString) -> Row
+toRow (Right !r) =
+  let ts = V.map T.decodeUtf8' r
+      (bads, goods) = partitionEithers $ V.toList ts in
+  if null bads
+    then
+      SVFields $ V.fromList goods
+    else
+      RowFailure $ T.concat [
+          "could not decode fields: "
+        , T.intercalate ", " (fmap (T.pack . show) $ bads)
+        ]
+toRow (Left !e) =
+  RowFailure $ T.pack e
 {-# INLINE toRow #-}
