@@ -29,6 +29,7 @@ import           Test.Warden.Arbitrary
 import           Warden.Data
 import           Warden.Error
 import           Warden.Inference
+import           Warden.Row
 
 prop_fieldLookSum :: NonEmpty ViewMarker -> Property
 prop_fieldLookSum vms =

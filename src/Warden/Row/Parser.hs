@@ -5,11 +5,13 @@
 
 module Warden.Row.Parser (
     rawRecordP
+  , fieldP
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (word8, peekWord8, takeWhile, anyWord8)
 import qualified Data.Attoparsec.ByteString as AB
+import qualified Data.Attoparsec.Text as AT
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Char (ord)
@@ -87,3 +89,27 @@ carriageReturn = fromIntegral $ ord '\r'
 doubleQuote :: Word8
 doubleQuote = fromIntegral $ ord '"'
 {-# INLINE doubleQuote #-}
+
+fieldP :: AT.Parser ParsedField
+fieldP = AT.choice [
+    void (AT.signed (AT.decimal :: AT.Parser Integer) <* AT.endOfInput) >> pure ParsedIntegral
+  , void (AT.double <* AT.endOfInput) >> pure ParsedReal
+  , void (boolP <* AT.endOfInput) >> pure ParsedBoolean
+  ]
+{-# INLINE fieldP #-}
+
+boolP :: AT.Parser ()
+boolP = trueP <|> falseP
+  where
+    trueP = do
+      void $ AT.char 't'
+      AT.peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ AT.string "rue"
+
+    falseP = do
+      void $ AT.char 'f'
+      AT.peekChar >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ AT.string "alse"
+{-# INLINE boolP #-}

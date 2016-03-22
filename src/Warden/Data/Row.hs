@@ -21,15 +21,13 @@ module Warden.Data.Row (
   , RowCount(..)
   , SVParseState(..)
   , Separator(..)
-  , asciiToLower
   , badRows
   , charToSeparator
   , combineFieldLooks
-  , fieldP
+  , emptyLookCountVector
   , fieldLooks
   , initialSVParseState
   , numFields
-  , parseField
   , renderFieldCount
   , renderObservationCount
   , renderParsedField
@@ -38,15 +36,10 @@ module Warden.Data.Row (
   , separatorToChar
   , textCounts
   , totalRows
-  , updateFieldLooks
-  , updateTextCounts
-  , updateSVParseState
 ) where
 
 import           Control.Lens
 
-import           Data.Attoparsec.Combinator
-import           Data.Attoparsec.Text
 import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)
 import           Data.Set (Set)
@@ -207,98 +200,6 @@ renderParsedField :: ParsedField
                   -> Text
 renderParsedField = T.pack . show
 
--- | We only care about ASCII characters here (true, false et cetera)
--- and converting unicode to lowercase is really expensive, so just
--- add 32 to the character if it's in the ASCII uppercase range.
-asciiToLower :: Text -> Text
-asciiToLower = T.map charToLower
-  where
-    charToLower c
-      | c >= 'A' && c <= 'Z' = chr $ ord c + 0x20
-      | otherwise            = c
-{-# INLINE asciiToLower #-}
-
-parseField :: Text -> FieldLooks
-parseField "" = LooksEmpty
-parseField t = case parseOnly fieldP (asciiToLower t) of
-  Left _ -> LooksText
-  Right ParsedIntegral -> LooksIntegral
-  Right ParsedReal -> LooksReal
-  Right ParsedBoolean -> LooksBoolean
-{-# INLINE parseField #-}
-
-updateFieldLooks :: Text -> VU.Vector ObservationCount -> VU.Vector ObservationCount
-updateFieldLooks !t !a =
-  VU.accum (+) a [(fromEnum (parseField t), 1)]
-{-# INLINE updateFieldLooks #-}
-
-fieldP :: Parser ParsedField
-fieldP = choice [
-    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
-  , void (double <* endOfInput) >> pure ParsedReal
-  , void (boolP <* endOfInput) >> pure ParsedBoolean
-  ]
-{-# INLINE fieldP #-}
-
-boolP :: Parser ()
-boolP = trueP <|> falseP
-  where
-    trueP = do
-      void $ char 't'
-      peekChar >>= \case
-        Nothing -> pure ()
-        Just _ -> void $ string "rue"
-
-    falseP = do
-      void $ char 'f'
-      peekChar >>= \case
-        Nothing -> pure ()
-        Just _ -> void $ string "alse"
-{-# INLINE boolP #-}
-
 initialSVParseState :: SVParseState
 initialSVParseState =
   SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts
-
-updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
-updateTextCounts fft (SVFields vs) NoTextCounts =
-  TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs $
-      V.replicate (V.length vs) emptyUniqueTextCount
-updateTextCounts fft (SVFields vs) (TextCounts tcs) =
-  TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs tcs
-updateTextCounts _ _ tc = tc
-{-# INLINE updateTextCounts #-}
-
--- | Accumulator for field/row counts on tokenized raw data.
-updateSVParseState :: TextFreeformThreshold
-                   -> SVParseState
-                   -> Row
-                   -> SVParseState
-updateSVParseState fft !st row =
-  let good = countGood row
-      bad  = countBad row  in
-    (totalRows %~ ((good + bad) +))
-  . (badRows %~ (bad +))
-  . (numFields %~ (updateNumFields row))
-  . (fieldLooks %~ (updateFields row))
-  . (textCounts %~ (updateTextCounts fft row))
-  $!! st
- where
-  countGood (SVFields _)   = RowCount 1
-  countGood (RowFailure _) = RowCount 0
-
-  countBad (SVFields _)    = RowCount 0
-  countBad (RowFailure _)  = RowCount 1
-
-  updateNumFields (SVFields !v) !ns =
-    let n = FieldCount $ V.length v in
-    S.insert n ns
-  updateNumFields _ !ns = ns
-
-  updateFields (SVFields !v) NoFieldLookCount =
-    FieldLookCount $ V.zipWith updateFieldLooks v $
-      V.replicate (V.length v) emptyLookCountVector
-  updateFields (SVFields !v) (FieldLookCount !a) =
-    FieldLookCount $!! V.zipWith updateFieldLooks v a
-  updateFields _ !a = a
-{-# INLINE updateSVParseState #-}
