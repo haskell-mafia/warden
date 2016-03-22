@@ -31,6 +31,7 @@ import qualified Data.Conduit.List as DC
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import           Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -115,8 +116,14 @@ readViewChunk' c vf (Chunk offset size) =
     =$= c vf
 
 toRow :: Either String (Vector ByteString) -> Row
-toRow (Right !r) =
-  SVFields r
+toRow (Right !rs) =
+  -- Decode everything here for validation purposes, we won't have a chance
+  -- to do it cleanly later.
+  case T.decodeUtf8' (BS.concat $ V.toList rs) of
+    Right _ ->
+      SVFields rs
+    Left !e ->
+      RowFailure . T.pack $ show e
 toRow (Left !e) =
   RowFailure $ T.pack e
 {-# INLINE toRow #-}
