@@ -109,12 +109,12 @@ finalizeSVParseState ps sch ds vfs sv =
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)
-  | n <= 0 = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
+  | n <= 0 = CheckFailed . pure $ RowCheckFailure ZeroRows
   | otherwise = CheckPassed
 
 checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
-checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
+checkBadRows n = CheckFailed . pure . RowCheckFailure $ HasBadRows n
 
 checkFieldCounts :: Set FieldCount -> CheckStatus
 checkFieldCounts fcs =
@@ -133,7 +133,7 @@ checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
       obsCount = FieldCount $ V.length as in
   if schemaCount /= obsCount
     then
-      CheckFailed $ NE.fromList [SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount]
+      CheckFailed . pure . SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount
     else
       let rs = V.zipWith (\t' (idx',oc') -> fieldAnomalies t' oc' (FieldIndex idx')) (schemaFieldType `V.map` fs) (V.indexed as)
           anoms = catMaybes $ V.toList rs in
