@@ -92,8 +92,14 @@ invalidSVField = BL.pack <$> (listOf arbitrary) `suchThat` isInvalidText
 validSVField :: Separator
              -> Gen BS.ByteString
 validSVField (Separator s) =
-  utf8BS `suchThat` isValid
+  oneof [quotedField, unquotedField]
   where
+    meat = utf8BS `suchThat` isValid
+
+    unquotedField = meat
+
+    quotedField = meat >>= (\m -> pure ("\"" <> m <> "\""))
+
     isValid bs =
          let bs' = BS.unpack bs in
          all (/= s) bs'
