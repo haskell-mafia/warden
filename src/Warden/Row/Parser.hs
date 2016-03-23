@@ -4,8 +4,11 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Row.Parser (
-    rawRecordP
+    escapedFieldP
   , fieldP
+  , rawFieldP
+  , rawRecordP
+  , sepByByte1P
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)

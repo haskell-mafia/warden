@@ -91,19 +91,19 @@ invalidSVField = BL.pack <$> (listOf arbitrary) `suchThat` isInvalidText
 
 validSVField :: Separator
              -> Gen BS.ByteString
-validSVField (Separator s) =
-  oneof [quotedField, unquotedField]
+validSVField s =
+  oneof [quotedField s, unquotedField s]
+
+unquotedField :: Separator -> Gen BS.ByteString 
+unquotedField (Separator s) = utf8BS `suchThat` isValid
   where
-    meat = utf8BS `suchThat` isValid
-
-    unquotedField = meat
-
-    quotedField = meat >>= (\m -> pure ("\"" <> m <> "\""))
-
     isValid bs =
-         let bs' = BS.unpack bs in
+      let bs' = BS.unpack bs in
          all (/= s) bs'
       && not (any affectsRowState bs')
+
+quotedField :: Separator -> Gen BS.ByteString 
+quotedField s = unquotedField s >>= (\m -> pure ("\"" <> m <> "\""))
 
 validSVRow :: Separator -> FieldCount -> Gen ValidSVRow
 validSVRow s (FieldCount n) = ValidSVRow <$> vectorOf n (validSVField s)
