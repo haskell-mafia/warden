@@ -6,6 +6,7 @@ module Main where
 import           Criterion.Main
 import           Criterion.Types
 
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import           Data.Char (ord)
 import           Data.Conduit ((=$=), ($$))
@@ -40,7 +41,7 @@ prepareView root = do
   vp <- generateView (Deterministic 271828) root (RecordCount 1000) (GenSize 1) (LineSize 100)
   unsafeWarden $ traverseView vp
 
-prepareRow :: IO [Text]
+prepareRow :: IO [ByteString]
 prepareRow =
   fmap getValidSVRow $ generate' (Deterministic 314159) (GenSize 30) $ validSVRow (Separator . fromIntegral $ ord '|') (FieldCount 200)
 
@@ -50,11 +51,11 @@ prepareSVParse = do
     validSVRow (Separator . fromIntegral $ ord '|') (FieldCount 200)
   pure $ fmap (SVFields . V.fromList . getValidSVRow) ts
 
-prepareHashText :: IO [Text]
+prepareHashText :: IO [ByteString]
 prepareHashText =
   generate' (Deterministic 54321) (GenSize 30) $ vectorOf 1000 arbitrary
 
-prepareFolds :: IO ([Row], [Text])
+prepareFolds :: IO ([Row], [ByteString])
 prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
 
 benchABDecode :: NonEmpty ViewFile -> IO ()
@@ -67,13 +68,13 @@ benchABDecode vfs =
     =$= C.map (BS.pack . show)
     $$  CB.sinkHandle bitbucket
 
-benchFieldParse :: [Text] -> [FieldLooks]
+benchFieldParse :: [ByteString] -> [FieldLooks]
 benchFieldParse = fmap parseField
 
 benchUpdateSVParseState :: [Row] -> SVParseState
 benchUpdateSVParseState rs = foldl' (updateSVParseState (TextFreeformThreshold 100)) initialSVParseState rs
 
-benchHashText :: [Text] -> [Int]
+benchHashText :: [ByteString] -> [Int]
 benchHashText = fmap hashText
 
 benchUpdateTextCounts :: [Row] -> TextCounts

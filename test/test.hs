@@ -10,6 +10,7 @@ import qualified Test.Warden.Data.TextCounts
 import qualified Test.Warden.Data.View
 import qualified Test.Warden.Inference
 import qualified Test.Warden.Numeric
+import qualified Test.Warden.Row.Parser
 import qualified Test.Warden.Sampling.Reservoir
 import qualified Test.Warden.Serial.Json.Marker
 import qualified Test.Warden.Serial.Json.Numeric
@@ -27,6 +28,7 @@ main = disorderMain [
   , Test.Warden.Data.View.tests
   , Test.Warden.Inference.tests
   , Test.Warden.Numeric.tests
+  , Test.Warden.Row.Parser.tests
   , Test.Warden.Sampling.Reservoir.tests
   , Test.Warden.Serial.Json.Marker.tests
   , Test.Warden.Serial.Json.Numeric.tests

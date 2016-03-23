@@ -4,12 +4,18 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Row.Parser (
-    rawRecordP
+    escapedFieldP
+  , fieldP
+  , rawFieldP
+  , rawRecordP
+  , sepByByte1P
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (word8, peekWord8, takeWhile, anyWord8)
+import           Data.Attoparsec.ByteString (string, endOfInput, choice)
 import qualified Data.Attoparsec.ByteString as AB
+import           Data.Attoparsec.ByteString.Char8 (decimal, signed, double)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Char (ord)
@@ -52,8 +58,16 @@ rawFieldP !sep =
 -- double-quotes present in a text field (as long as it remains consistent)
 -- shouldn't affect validation at all.
 escapedFieldP :: Parser ByteString
-escapedFieldP =
-  word8 doubleQuote *> (BS.init <$> (AB.scan False endOfField))
+escapedFieldP = do
+  void $ word8 doubleQuote
+  s <- AB.scan False endOfField
+  case BS.unsnoc s of
+    Nothing ->
+      pure ""
+    Just (init, last) ->
+      if last == doubleQuote
+        then pure init
+        else pure s
   where
     endOfField st c =
       if c == doubleQuote
@@ -87,3 +101,27 @@ carriageReturn = fromIntegral $ ord '\r'
 doubleQuote :: Word8
 doubleQuote = fromIntegral $ ord '"'
 {-# INLINE doubleQuote #-}
+
+fieldP :: Parser ParsedField
+fieldP = choice [
+    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
+  , void (double <* endOfInput) >> pure ParsedReal
+  , void (boolP <* endOfInput) >> pure ParsedBoolean
+  ]
+{-# INLINE fieldP #-}
+
+boolP :: Parser ()
+boolP = trueP <|> falseP
+  where
+    trueP = do
+      void . word8 . fromIntegral $ ord 't'
+      peekWord8 >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "rue"
+
+    falseP = do
+      void . word8 . fromIntegral $ ord 'f'
+      peekWord8 >>= \case
+        Nothing -> pure ()
+        Just _ -> void $ string "alse"
+{-# INLINE boolP #-}

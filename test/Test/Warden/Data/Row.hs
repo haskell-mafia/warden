@@ -13,7 +13,7 @@ import           System.IO (IO)
 
 import           Test.QuickCheck
 import           Test.Warden
-import           Test.Warden.Arbitrary
+import           Test.Warden.Arbitrary ()
 
 import           Warden.Data
 
@@ -26,12 +26,6 @@ prop_resolveSVParseState fft ss =
   (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
                             && total' >= (s'' ^. totalRows)
                             && fns' >= (S.size $ s'' ^. numFields)) ss
-
-prop_updateSVParseState :: TextFreeformThreshold -> [ValidRow] -> Property
-prop_updateSVParseState fft rs =
-  let rs' = unValidRow <$> rs
-      s = foldl (updateSVParseState fft) initialSVParseState rs' in
-  (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
 
 prop_combineFieldLooks :: [FieldLookCount] -> Property
 prop_combineFieldLooks ls =

@@ -38,7 +38,7 @@ prop_infer_tripping wps cps = testIO $ withTestView $ \(View vd) ->
                , checkSchemaFile = Nothing
                } in do
   withCurrentDirectory vd $ unsafeWarden $ do
-    v <- liftIO $ generateView NonDeterministic "." (RecordCount 1000) (GenSize 4) (LineSize 100)
+    v <- liftIO $ generateView NonDeterministic "." (RecordCount 100) (GenSize 1) (LineSize 100)
     rs1 <- check wps v cps'
     when (checkHasFailures rs1) . fail . T.unpack $
       "Initial check unexpectedly failed.\n\n" <> T.intercalate "\n" (NE.toList . (=<<) renderCheckResult $ rs1)

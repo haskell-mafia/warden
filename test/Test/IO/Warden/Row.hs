@@ -6,7 +6,7 @@ module Test.IO.Warden.Row where
 
 import           Control.Monad.Trans.Resource (runResourceT)
 
-import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString.Lazy as BL
 import           Data.Conduit (($$))
 import qualified Data.Conduit.List as CL
 import           Data.Csv
@@ -23,6 +23,7 @@ import           System.IO
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances  ()
 import           Test.IO.Warden
+import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -33,7 +34,7 @@ import           Warden.Row
 import           X.Control.Monad.Trans.Either
 
 prop_valid_svrows :: Separator -> FieldCount -> Property
-prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRow s i) $ \svrs ->
+prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
@@ -41,11 +42,11 @@ prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ va
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
-        let expected = reverse $ (SVFields . V.fromList . getValidSVRow) <$> svrs
-        pure $ expected === rs
+        let expected = reverse $ (stripFieldQuotes . SVFields . V.fromList . getValidSVRow) <$> svrs
+        pure $ expected === (stripFieldQuotes <$> rs)
 
 prop_valid_svrows_chunked :: ChunkCount -> Separator -> FieldCount -> Property
-prop_valid_svrows_chunked cc s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRow s i) $ \svrs ->
+prop_valid_svrows_chunked cc s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
@@ -55,8 +56,8 @@ prop_valid_svrows_chunked cc s i = forAll (choose (1, 100)) $ \n -> forAll (vect
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
-        let expected = reverse $ (SVFields . V.fromList . getValidSVRow) <$> svrs
-        pure $ expected === rs
+        let expected = reverse $ (stripFieldQuotes . SVFields . V.fromList . getValidSVRow) <$> svrs
+        pure $ expected === (stripFieldQuotes <$> rs)
 
 prop_invalid_svrows :: Separator -> Property
 prop_invalid_svrows s = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n (invalidSVRow s)) $ \svrs ->
