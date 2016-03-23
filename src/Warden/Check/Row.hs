@@ -15,7 +15,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.Conduit (Consumer, ($$))
 import qualified Data.Conduit.List as CL
-import           Data.List.NonEmpty (NonEmpty, nonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -100,6 +100,7 @@ finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkFieldAnomalies sch (sv ^. fieldLooks)
              , checkFormAnomalies sch (sv ^. textCounts)
+             , checkFieldCounts (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
@@ -114,6 +115,13 @@ checkTotalRows (RowCount n)
 checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
 checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
+
+checkFieldCounts :: Set FieldCount -> CheckStatus
+checkFieldCounts fcs =
+  case S.size fcs of
+    0 -> CheckFailed . pure $ RowCheckFailure ZeroRows
+    1 -> CheckPassed
+    _ -> CheckFailed . pure . RowCheckFailure $ FieldCountMismatch fcs
 
 -- FIXME: model check dependencies better, e.g., the field types shouldn't
 -- be compared if the field counts don't match.
