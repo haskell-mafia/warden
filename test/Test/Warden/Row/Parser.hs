@@ -24,15 +24,15 @@ prop_sepByByte1P s c = forAll (getValidSVRow <$> validSVRow s c) $ \bs ->
   r === Right (BS.unpack <$> bs)
 
 prop_unescapedFieldP :: Separator -> Property
-prop_unescapedFieldP s = forAll (unquotedField s) $ \f ->
+prop_unescapedFieldP s = forAll (validSVField s) $ \f ->
   (parseOnly (rawFieldP s) f) === Right f
 
 prop_escapedFieldP :: Separator -> Property
-prop_escapedFieldP s = forAll (unquotedField s) $ \f ->
+prop_escapedFieldP s = forAll (validSVField s) $ \f ->
   (parseOnly (rawFieldP s) ("\"" <> f <> "\"")) === Right f
 
 prop_escapedFieldP_infix :: Separator -> Property
-prop_escapedFieldP_infix s = forAll (unquotedField s) $ \f ->
+prop_escapedFieldP_infix s = forAll (validSVField s) $ \f ->
   let s' = BS.pack . pure $ unSeparator s
       middle = f <> s' <> f <> "\"\"" <> s' <> f in
   (parseOnly (rawFieldP s) ("\"" <> middle <> "\"")) === Right middle

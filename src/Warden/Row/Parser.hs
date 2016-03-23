@@ -58,8 +58,16 @@ rawFieldP !sep =
 -- double-quotes present in a text field (as long as it remains consistent)
 -- shouldn't affect validation at all.
 escapedFieldP :: Parser ByteString
-escapedFieldP =
-  word8 doubleQuote *> (BS.init <$> (AB.scan False endOfField))
+escapedFieldP = do
+  void $ word8 doubleQuote
+  s <- AB.scan False endOfField
+  case BS.unsnoc s of
+    Nothing ->
+      pure ""
+    Just (init, last) ->
+      if last == doubleQuote
+        then pure init
+        else pure s
   where
     endOfField st c =
       if c == doubleQuote
