@@ -1,0 +1,17 @@
+{
+    "version": "v1",
+    "fields": [
+        {
+            "field-form": {
+                "form-type": "freeform"
+            },
+            "field-type": "integral-field"
+        },
+        {
+            "field-form": {
+                "form-type": "freeform"
+            },
+            "field-type": "integral-field"
+        }
+    ]
+}
