@@ -7,6 +7,7 @@ module Test.IO.Warden.Commands.Check.Unit where
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import           Data.List.NonEmpty (NonEmpty(..))
+import qualified Data.Set as S
 
 import           Disorder.Core.IO (testIO)
 
@@ -38,7 +39,7 @@ commandUnitCheckParams = CheckParams {
   , checkSchemaFile = Nothing
   }
 
-checkUnitTest :: View -> CheckParams -> Either WardenError (NonEmpty CheckResult) -> Property
+checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property
 checkUnitTest (View v) cps expected = testIO $ do
   wps <- buildWardenParams (WardenVersion "test-io")
   r <- withTestView $ \vd ->
@@ -46,7 +47,48 @@ checkUnitTest (View v) cps expected = testIO $ do
     void $ execProcess (proc "cp" ["-r", v, v'])
     runResourceT . runEitherT $
       check wps (View v') cps
-  pure $ r === expected
+  pure $ expected r === True
+
+prop_check_FieldCountMismatch :: Property
+prop_check_FieldCountMismatch =
+  checkUnitTest
+    (View "test/data/commands/check/field-counts")
+    commandUnitCheckParams
+    expected
+  where
+    expected (Left _) = False
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed (RowCheckFailure (FieldCountMismatch (S.fromList [FieldCount 2, FieldCount 3])) :| []))) rs
+
+prop_check_ZeroRows :: Property
+prop_check_ZeroRows =
+  checkUnitTest
+    (View "test/data/commands/check/zero-rows")
+    commandUnitCheckParams
+    expected
+  where
+    expected (Left _) = False
+    -- We get this one twice, from checkFieldCounts and checkTotalRows.
+    -- Consider nubbing the failure lists at some point?
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((RowCheckFailure ZeroRows) :| [RowCheckFailure ZeroRows]))) rs
+
+prop_check_error :: Property
+prop_check_error =
+  checkUnitTest
+    (View "test/data/commands/check/empty-view")
+    commandUnitCheckParams
+    expected
+  where
+    expected = (== Left (WardenTraversalError EmptyView))
+
+prop_check_BadRows :: Property
+prop_check_BadRows =
+  checkUnitTest
+    (View "test/data/commands/check/bad-rows")
+    commandUnitCheckParams
+    expected
+  where
+    expected (Left _) = False
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((RowCheckFailure (HasBadRows (RowCount 1))) :| []))) rs
 
 return []
 tests :: IO Bool
