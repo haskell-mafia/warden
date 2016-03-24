@@ -116,6 +116,9 @@ checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
 checkBadRows n = CheckFailed . pure . RowCheckFailure $ HasBadRows n
 
+-- | Zero field counts -> we got zero rows -> fail.
+--   Multiple field counts -> at least some rows are borked -> fail.
+--   One field count -> pass.
 checkFieldCounts :: Set FieldCount -> CheckStatus
 checkFieldCounts fcs =
   case S.size fcs of
