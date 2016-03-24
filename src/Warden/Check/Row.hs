@@ -15,7 +15,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.Conduit (Consumer, ($$))
 import qualified Data.Conduit.List as CL
-import           Data.List.NonEmpty (NonEmpty, nonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -100,6 +100,7 @@ finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkFieldAnomalies sch (sv ^. fieldLooks)
              , checkFormAnomalies sch (sv ^. textCounts)
+             , checkFieldCounts (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
@@ -108,12 +109,22 @@ finalizeSVParseState ps sch ds vfs sv =
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)
-  | n <= 0 = CheckFailed $ NE.fromList [RowCheckFailure ZeroRows]
+  | n <= 0 = CheckFailed . pure $ RowCheckFailure ZeroRows
   | otherwise = CheckPassed
 
 checkBadRows :: RowCount -> CheckStatus
 checkBadRows (RowCount 0) = CheckPassed
-checkBadRows n = CheckFailed $ NE.fromList [RowCheckFailure $ HasBadRows n]
+checkBadRows n = CheckFailed . pure . RowCheckFailure $ HasBadRows n
+
+-- | Zero field counts -> we got zero rows -> fail.
+--   Multiple field counts -> at least some rows are borked -> fail.
+--   One field count -> pass.
+checkFieldCounts :: Set FieldCount -> CheckStatus
+checkFieldCounts fcs =
+  case S.size fcs of
+    0 -> CheckFailed . pure $ RowCheckFailure ZeroRows
+    1 -> CheckPassed
+    _ -> CheckFailed . pure . RowCheckFailure $ FieldCountMismatch fcs
 
 -- FIXME: model check dependencies better, e.g., the field types shouldn't
 -- be compared if the field counts don't match.
@@ -125,7 +136,7 @@ checkFieldAnomalies (Just (Schema SchemaV1 fs)) (FieldLookCount as) =
       obsCount = FieldCount $ V.length as in
   if schemaCount /= obsCount
     then
-      CheckFailed $ NE.fromList [SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount]
+      CheckFailed . pure . SchemaCheckFailure $ FieldCountObservationMismatch schemaCount obsCount
     else
       let rs = V.zipWith (\t' (idx',oc') -> fieldAnomalies t' oc' (FieldIndex idx')) (schemaFieldType `V.map` fs) (V.indexed as)
           anoms = catMaybes $ V.toList rs in
