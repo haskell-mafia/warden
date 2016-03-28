@@ -18,6 +18,7 @@ module Warden.Data.TextCounts (
   , combineUniqueTextCounts
   , emptyUniqueTextCount
   , hashText
+  , renderTextFreeformThreshold
   , renderUniqueTextCount
   , updateUniqueTextCount
   ) where
@@ -55,6 +56,9 @@ newtype TextFreeformThreshold =
   TextFreeformThreshold {
     unTextFreeformThreshold :: Int
   } deriving (Eq, Show)
+
+renderTextFreeformThreshold :: TextFreeformThreshold -> Text
+renderTextFreeformThreshold = renderIntegral . unTextFreeformThreshold
 
 data TextCounts =
     TextCounts !(V.Vector UniqueTextCount)

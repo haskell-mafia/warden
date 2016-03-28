@@ -94,9 +94,15 @@ textCountSum vms =
 
 inferForms :: NonEmpty ViewMarker -> Either InferenceError TextCountSummary
 inferForms vms =
+  let totalRowCount = totalViewRows vms
+      fft = vmFFT $ NE.head vms in do
+  when ((unRowCount totalRowCount) < (fromIntegral $ unTextFreeformThreshold fft)) $
+    Left $ InsufficientRowsForFormInference totalRowCount fft
   case textCountSum vms of
     NoTextCounts -> Left NoTextCountError
     TextCounts cs -> fmap TextCountSummary $ V.mapM (uncurry summarizeTextCount) $ V.indexed cs
+  where
+    vmFFT = checkFreeformThreshold . vmCheckParams . vmMetadata
 
 summarizeTextCount :: Int -> UniqueTextCount -> Either InferenceError FieldForm
 summarizeTextCount _ LooksFreeform =

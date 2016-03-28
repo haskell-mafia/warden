@@ -30,6 +30,7 @@ import           Warden.Data.Field
 import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.Schema
+import           Warden.Data.TextCounts
 import           Warden.Data.View
 
 data WardenError =
@@ -149,6 +150,7 @@ data InferenceError =
   | NoTextCountError
   | NoTextCountForField Int
   | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
+  | InsufficientRowsForFormInference RowCount TextFreeformThreshold
   deriving (Eq, Show)
 
 renderInferenceError :: InferenceError -> Text
@@ -177,6 +179,12 @@ renderInferenceError = ("inference error: " <>) . render'
       , renderRowCount rc
       , " : "
       , T.intercalate ", " (renderCompatibleEntries <$> cs)
+      ]
+    render' (InsufficientRowsForFormInference rc fft) = T.concat [
+        "cannot infer form - total row count "
+      , renderRowCount rc
+      , " smaller than check freeform threshold "
+      , renderTextFreeformThreshold fft
       ]
 
 data ValidationFailure =
