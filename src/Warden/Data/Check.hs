@@ -143,7 +143,7 @@ renderInsanity IrregularFile = "not a regular file"
 renderRowFailure :: RowFailure -> Text
 renderRowFailure (FieldCountMismatch cs) = T.concat [
     "differing field counts: "
-  , T.intercalate "," (fmap renderFieldCount $ S.toList cs)
+  , T.intercalate ", " (fmap renderFieldCount $ S.toList cs)
   ]
 renderRowFailure ZeroRows =
   "no rows in xSV document"
