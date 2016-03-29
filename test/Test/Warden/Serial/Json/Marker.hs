@@ -5,6 +5,7 @@
 module Test.Warden.Serial.Json.Marker where
 
 import           Data.Aeson.Types (parseEither)
+
 import           Disorder.Core.Tripping (tripping)
 
 import           P

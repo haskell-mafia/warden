@@ -81,25 +81,3 @@ data NumericSummary = NumericSummary !Minimum
                                      {-# UNPACK #-} !StdDev
                                      !Median
   deriving (Eq, Show)
-
-instance ToJSON NumericSummary where
-  toJSON (NumericSummary mn mx mean s md) = object [
-      "version"  .= ("v1" :: Text)
-    , "minimum"  .= mn
-    , "maximum"  .= mx
-    , "mean"     .= mean
-    , "stddev"   .= s
-    , "median"   .= md
-    ]
-
-instance FromJSON NumericSummary where
-  parseJSON (Object o) =
-    o .: "version" >>= \case
-      "v1" -> NumericSummary
-                <$> o .: "minimum"
-                <*> o .: "maximum"
-                <*> o .: "mean"
-                <*> o .: "stddev"
-                <*> o .: "median"
-      v    -> fail $ "NumericSummary: unknown version [" <> v <> "]"
-  parseJSON x          = typeMismatch "NumericSummary" x
