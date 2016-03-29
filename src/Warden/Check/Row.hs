@@ -47,8 +47,8 @@ runRowCheck :: WardenParams
             -> View
             -> NonEmpty ViewFile
             -> EitherT WardenError (ResourceT IO) CheckResult
-runRowCheck wps ps@(CheckParams _s _sf _lb verb _fce _fft) sch v vfs = do
-  liftIO . debugPrintLn verb $ T.concat [
+runRowCheck wps ps sch v vfs = do
+  liftIO . debugPrintLn (checkVerbosity ps) $ T.concat [
       "Running row checks on "
     , renderView v
     , "."
@@ -63,7 +63,7 @@ parseCheck :: NumCPUs
            -> Maybe Schema
            -> NonEmpty ViewFile
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
-parseCheck caps ps@(CheckParams s _sf lb verb _fce fft) sch vfs =
+parseCheck caps ps@(CheckParams s _sf lb verb _fce fft _xt) sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs in
   fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
     mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)

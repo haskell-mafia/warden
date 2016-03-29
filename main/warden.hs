@@ -52,22 +52,22 @@ main = do
 run :: WardenParams -> Command -> IO ()
 run wps (Check v ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ check wps v ps
-  finishCheck (checkVerbosity ps) r
+  finishCheck (checkVerbosity ps) (checkExitType ps) r
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
-  finishCheck (checkVerbosity ps) r
+  finishCheck (checkVerbosity ps) (checkExitType ps) r
 run _wps (Infer v fmr sf fs) = do
   s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fs
   T.writeFile (unSchemaFile sf) $ renderSchema s
 run wps (Sanity v sps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
-  finishCheck (sanityVerbosity sps) r
+  finishCheck (sanityVerbosity sps) (sanityExitType sps) r
 
-finishCheck :: Verbosity -> NonEmpty CheckResult -> IO ()
-finishCheck verb rs = do
+finishCheck :: Verbosity -> ExitType -> NonEmpty CheckResult -> IO ()
+finishCheck verb xt rs = do
   when (verb == Verbose) $
     mapM_ T.putStrLn . NE.toList . (=<<) renderCheckResult $ rs
-  if checkHasFailures rs
+  if checkHasFailures rs && xt == ExitWithCheckStatus
     then exitFailure
     else exitSuccess
 
@@ -100,10 +100,12 @@ checkParamsP = CheckParams <$> separatorP
                            <*> verbosityP
                            <*> forceP
                            <*> textFreeformThresholdP
+                           <*> exitTypeP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
                              <*> forceP
+                             <*> exitTypeP
 
 textFreeformThresholdP :: Parser TextFreeformThreshold
 textFreeformThresholdP = TextFreeformThreshold <$> (option auto $
@@ -188,3 +190,10 @@ fieldMatchRatioP = FieldMatchRatio <$> (option auto $
   <> metavar "MATCH-RATIO"
   <> value 0.95
   <> help "Minimum threshold of compatible observations to accept a field-type candidate, as a ratio to total number of rows. Defaults to 0.95.")
+
+exitTypeP :: Parser ExitType
+exitTypeP =
+  flag ExitWithCheckStatus ExitWithSuccess $
+       long "exit-success"
+    <> short 'e'
+    <> help "Exit with success status if no errors occur, even if checks have failures."

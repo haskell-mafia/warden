@@ -452,6 +452,7 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
@@ -534,3 +535,6 @@ instance Arbitrary TextFreeformThreshold where
 
 instance Arbitrary FieldIndex where
   arbitrary = fmap (FieldIndex . getSmall . getNonNegative) $ arbitrary
+
+instance Arbitrary ExitType where
+  arbitrary = elements [ExitWithCheckStatus, ExitWithSuccess]

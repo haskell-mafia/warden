@@ -3,6 +3,7 @@
 
 module Warden.Data.Param (
     CheckParams(..)
+  , ExitType(..)
   , Force(..)
   , NumCPUs(..)
   , RunId(..)
@@ -78,6 +79,11 @@ data Force =
   | NoForce
   deriving (Eq, Show)
 
+data ExitType =
+    ExitWithCheckStatus
+  | ExitWithSuccess
+  deriving (Eq, Show)
+
 data CheckParams =
   CheckParams {
       checkSeparator :: !Separator
@@ -86,12 +92,14 @@ data CheckParams =
     , checkVerbosity :: !Verbosity
     , checkForce :: !Force
     , checkFreeformThreshold :: !TextFreeformThreshold
+    , checkExitType :: !ExitType
     } deriving (Eq, Show)
 
 data SanityParams =
   SanityParams {
       sanityVerbosity :: !Verbosity
     , sanityForce :: !Force
+    , sanityExitType :: !ExitType
   } deriving (Eq, Show)
 
 data WardenParams =
