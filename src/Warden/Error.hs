@@ -148,7 +148,7 @@ data InferenceError =
   | CannotResolveCandidates FieldIndex [FieldType]
   | ZeroRowCountError
   | NoTextCountError
-  | NoTextCountForField Int
+  | NoTextCountForField FieldIndex
   | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   | InsufficientRowsForFormInference RowCount TextFreeformThreshold
   deriving (Eq, Show)
@@ -175,7 +175,7 @@ renderInferenceError = ("inference error: " <>) . render'
     render' NoTextCountError =
       "No text counts to use for form inference."
     render' (NoTextCountForField i) =
-      "No text counts to use for form inference on field " <> renderIntegral i
+      "No text counts to use for form inference on field " <> renderFieldIndex i
     render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
         "Fields have observation counts higher than the total row count "
       , renderRowCount rc

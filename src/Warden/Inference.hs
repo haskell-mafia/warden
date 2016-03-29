@@ -100,11 +100,12 @@ inferForms vms =
     Left $ InsufficientRowsForFormInference totalRowCount fft
   case textCountSum vms of
     NoTextCounts -> Left NoTextCountError
-    TextCounts cs -> fmap TextCountSummary $ V.mapM (uncurry summarizeTextCount) $ V.indexed cs
+    TextCounts cs -> fmap TextCountSummary .
+      V.mapM (uncurry summarizeTextCount) . V.map (first FieldIndex) $ V.indexed cs
   where
     vmFFT = checkFreeformThreshold . vmCheckParams . vmMetadata
 
-summarizeTextCount :: Int -> UniqueTextCount -> Either InferenceError FieldForm
+summarizeTextCount :: FieldIndex -> UniqueTextCount -> Either InferenceError FieldForm
 summarizeTextCount _ LooksFreeform =
   pure FreeForm
 summarizeTextCount i (UniqueTextCount hashes) =
