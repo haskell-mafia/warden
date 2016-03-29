@@ -173,14 +173,15 @@ fieldCandidates (FieldMatchRatio fmr) totalRowCount h = do
 
 inferField :: FieldMatchRatio
            -> RowCount
+           -> FieldIndex
            -> FieldHistogram
            -> Either InferenceError FieldType
-inferField fmr totalRowCount h = do
+inferField fmr totalRowCount ix h = do
   fcs <- fieldCandidates fmr totalRowCount h
   case S.toList (minima fcs) of
     [] -> Left NoMinimalFieldTypes
     [ft] -> pure ft
-    fts -> Left $ CannotResolveCandidates fts
+    fts -> Left $ CannotResolveCandidates ix fts
 
 generateSchema :: FieldMatchRatio
                -> TextCountSummary
@@ -188,5 +189,6 @@ generateSchema :: FieldMatchRatio
                -> V.Vector FieldHistogram
                -> Either InferenceError Schema
 generateSchema fmr (TextCountSummary ffs) totalRowCount hs = do
-  fts <- V.mapM (inferField fmr totalRowCount) hs
+  fts <- V.mapM (uncurry (inferField fmr totalRowCount)) .
+    V.map (first FieldIndex) $ V.indexed hs
   pure . Schema currentSchemaVersion $ V.zipWith SchemaField fts ffs
