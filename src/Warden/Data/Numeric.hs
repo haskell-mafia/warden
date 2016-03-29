@@ -36,6 +36,7 @@ instance Monoid Minimum where
         if cur < prev
           then Minimum cur
           else Minimum prev
+  {-# INLINE mappend #-}
 
 data Maximum =
     Maximum {-# UNPACK #-} !Double
@@ -52,6 +53,7 @@ instance Monoid Maximum where
         if cur > prev
           then Maximum cur
           else Maximum prev
+  {-# INLINE mappend #-}
 
 newtype Count = Count { getCount :: Int }
   deriving (Eq, Show, ToJSON, FromJSON)

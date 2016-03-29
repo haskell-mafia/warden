@@ -23,12 +23,14 @@ updateMinimum :: Real a
 updateMinimum !acc x =
   let x' = (Minimum . fromRational . toRational) x
   in acc <> x'
+{-# INLINE updateMinimum #-}
 
 updateMaximum :: Real a
               => Maximum -> a -> Maximum
 updateMaximum !acc x =
   let x' = (Maximum . fromRational . toRational) x
   in acc <> x'
+{-# INLINE updateMaximum #-}
 
 -- Numerically-stable mean and variance.
 --
@@ -53,6 +55,7 @@ updateMeanDev !macc x =
                     Nothing         -> Just $ Variance 0
                     Just (Variance var) -> Just . Variance $ var + delta * (v - (getMean m'))
       in MeanDevAcc m' s' i'
+{-# INLINE updateMeanDev #-}
 
 finalizeMeanDev :: MeanDevAcc -> Maybe (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = Nothing
