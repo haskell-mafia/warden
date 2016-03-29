@@ -363,7 +363,7 @@ instance Arbitrary UniqueTextCount where
 instance Arbitrary TextCounts where
   arbitrary = oneof [
       pure NoTextCounts
-    , (TextCounts <$> arbitrary)
+    , ((TextCounts . V.fromList . NE.toList) <$> arbitrary)
     ]
 
 instance Arbitrary SVParseState where

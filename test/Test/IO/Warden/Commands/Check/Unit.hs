@@ -90,6 +90,16 @@ prop_check_BadRows =
     expected (Left _) = False
     expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((RowCheckFailure (HasBadRows (RowCount 1))) :| []))) rs
 
+prop_check_FieldCountObservationMismatch :: Property
+prop_check_FieldCountObservationMismatch =
+  checkUnitTest
+    (View "test/data/commands/check/schema-field-type")
+    (commandUnitCheckParams { checkSchemaFile = Just (SchemaFile "test/data/commands/check/schema-field-type.json") } )
+    expected
+  where
+    expected (Left _) = False
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((SchemaCheckFailure (FieldCountObservationMismatch (FieldCount 2) (FieldCount 1))) :| []))) rs
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1 })
