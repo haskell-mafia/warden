@@ -34,7 +34,6 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Error
-import           Warden.View
 
 import           X.Control.Monad.Trans.Either
 
@@ -153,7 +152,10 @@ traverseTestDirectory :: DirName -> EitherT WardenError (ResourceT IO) [FilePath
 traverseTestDirectory dn =
   fmap directoryFiles $ traverseTestDirectory' (MaxDepth 10) [] dn
 
-traverseTestDirectory' :: MaxDepth -> [DirName] -> DirName -> EitherT WardenError (ResourceT IO) DirTree
+traverseTestDirectory' :: MaxDepth
+                       -> [DirName]
+                       -> DirName
+                       -> EitherT WardenError (ResourceT IO) DirTree
 traverseTestDirectory' (MaxDepth 0) _ _ = left $ WardenTraversalError MaxDepthExceeded
 traverseTestDirectory' (MaxDepth depth) preds dn =
   let preds' = preds <> [dn] in do
@@ -162,7 +164,7 @@ traverseTestDirectory' (MaxDepth depth) preds dn =
   let branches = fmap (DirName . fst) $
                    filter (uncurry visitable) $ zip ls sts
   let leaves = fmap (FileName . fst) $ filter (uncurry validLeaf) $ zip ls sts
-  subtrees <- mapM (traverseDirectory (MaxDepth $ depth - 1) preds') branches
+  subtrees <- mapM (traverseTestDirectory' (MaxDepth $ depth - 1) preds') branches
   pure $ DirTree dn subtrees leaves
   where
     visitable ('.':_) _ = False
