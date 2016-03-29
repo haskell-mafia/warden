@@ -20,6 +20,16 @@ import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Schema
 import           Warden.Serial.Json.TextCounts
 
+fromIncludeDotFiles :: IncludeDotFiles -> Value
+fromIncludeDotFiles IncludeDotFiles = String "include-dot-files"
+fromIncludeDotFiles NoIncludeDotFiles = String "no-include-dot-files"
+
+toIncludeDotFiles :: Value -> Parser IncludeDotFiles
+toIncludeDotFiles (String "include-dot-files") = pure IncludeDotFiles
+toIncludeDotFiles (String "no-include-dot-files") = pure NoIncludeDotFiles
+toIncludeDotFiles (String s) = fail . T.unpack $ "invalid IncludeDotFiles: " <> s
+toIncludeDotFiles x = typeMismatch "Warden.Data.Param.IncludeDotFiles" x
+
 fromForce :: Force -> Value
 fromForce Force = String "force"
 fromForce NoForce = String "no-force"
@@ -41,7 +51,7 @@ toExitType (String s) = fail $ "invalid ExitType parameter: " <> T.unpack s
 toExitType x = typeMismatch "Warden.Data.Param.ExitType" x
 
 fromCheckParams :: CheckParams -> Value
-fromCheckParams (CheckParams sep sf lb verb fce fft xt) = object [
+fromCheckParams (CheckParams sep sf lb verb fce fft xt idf) = object [
     "separator" .= fromSeparator sep
   , "line-bound" .= fromLineBound lb
   , "verbosity" .= fromVerbosity verb
@@ -49,6 +59,7 @@ fromCheckParams (CheckParams sep sf lb verb fce fft xt) = object [
   , "schema-file" .= maybe Null fromSchemaFile sf
   , "freeform-text-threshold" .= fromTextFreeformThreshold fft
   , "exit-type" .= fromExitType xt
+  , "include-dot-files" .= fromIncludeDotFiles idf
   ]
 
 toCheckParams :: Value -> Parser CheckParams
@@ -60,7 +71,8 @@ toCheckParams (Object o) = do
   sf <- maybe (pure Nothing) (fmap Just . toSchemaFile) =<< (o .:? "schema-file")
   fft <- toTextFreeformThreshold =<< (o .: "freeform-text-threshold")
   xt <- toExitType =<< (o .: "exit-type")
-  pure $ CheckParams sep sf lb verb fce fft xt
+  idf <- toIncludeDotFiles =<< (o .: "include-dot-files")
+  pure $ CheckParams sep sf lb verb fce fft xt idf
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
 
 fromWardenVersion :: WardenVersion -> Value

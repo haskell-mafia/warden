@@ -39,7 +39,7 @@ wardenBench = defaultMainWith cfg
 prepareView :: FilePath -> IO (NonEmpty ViewFile)
 prepareView root = do
   vp <- generateView (Deterministic 271828) root (RecordCount 1000) (GenSize 1) (LineSize 100)
-  unsafeWarden $ traverseView vp
+  unsafeWarden $ traverseView NoIncludeDotFiles vp
 
 prepareRow :: IO [ByteString]
 prepareRow =

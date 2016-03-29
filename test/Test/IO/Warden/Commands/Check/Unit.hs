@@ -38,6 +38,7 @@ commandUnitCheckParams = CheckParams {
   , checkFreeformThreshold = TextFreeformThreshold 10
   , checkSchemaFile = Nothing
   , checkExitType = ExitWithSuccess
+  , checkIncludeDotFiles = NoIncludeDotFiles
   }
 
 checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property

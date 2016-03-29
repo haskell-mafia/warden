@@ -63,8 +63,12 @@ parseCheck :: NumCPUs
            -> Maybe Schema
            -> NonEmpty ViewFile
            -> EitherT WardenError (ResourceT IO) (CheckStatus, ViewMetadata)
-parseCheck caps ps@(CheckParams s _sf lb verb _fce fft _xt) sch vfs =
-  let dates = S.fromList . NE.toList $ vfDate <$> vfs in
+parseCheck caps ps sch vfs =
+  let dates = S.fromList . NE.toList $ vfDate <$> vfs
+      fft = checkFreeformThreshold ps
+      s = checkSeparator ps
+      verb = checkVerbosity ps
+      lb = checkLineBound ps in
   fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
     mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
 

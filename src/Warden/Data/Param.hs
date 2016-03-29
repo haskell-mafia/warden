@@ -5,6 +5,7 @@ module Warden.Data.Param (
     CheckParams(..)
   , ExitType(..)
   , Force(..)
+  , IncludeDotFiles(..)
   , NumCPUs(..)
   , RunId(..)
   , SanityParams(..)
@@ -84,6 +85,11 @@ data ExitType =
   | ExitWithSuccess
   deriving (Eq, Show)
 
+data IncludeDotFiles =
+    NoIncludeDotFiles
+  | IncludeDotFiles
+  deriving (Eq, Show)
+
 data CheckParams =
   CheckParams {
       checkSeparator :: !Separator
@@ -93,6 +99,7 @@ data CheckParams =
     , checkForce :: !Force
     , checkFreeformThreshold :: !TextFreeformThreshold
     , checkExitType :: !ExitType
+    , checkIncludeDotFiles :: !IncludeDotFiles
     } deriving (Eq, Show)
 
 data SanityParams =

@@ -40,7 +40,8 @@ check :: WardenParams
       -> CheckParams
       -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
 check wps v ps =
-  traverseView v >>= (checkViewFiles wps ps v)
+  let idf = checkIncludeDotFiles ps in
+  traverseView idf v >>= (checkViewFiles wps ps v)
 
 fileCheck :: WardenParams
           -> ViewFile

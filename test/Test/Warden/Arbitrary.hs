@@ -462,6 +462,7 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
@@ -547,3 +548,6 @@ instance Arbitrary FieldIndex where
 
 instance Arbitrary ExitType where
   arbitrary = elements [ExitWithCheckStatus, ExitWithSuccess]
+
+instance Arbitrary IncludeDotFiles where
+  arbitrary = elements [IncludeDotFiles, NoIncludeDotFiles]

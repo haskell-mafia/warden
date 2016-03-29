@@ -13,18 +13,19 @@ import           System.IO (IO)
 import           Test.QuickCheck
 import           Test.IO.Warden
 
+import           Warden.Data.Param
 import           Warden.View
 
 import           X.Control.Monad.Trans.Either (runEitherT, mapEitherT)
 
 prop_traverseView_valid :: Property
 prop_traverseView_valid = withValidDirTree $ \v -> do
-  r <- runEitherT . mapEitherT runResourceT $ traverseView v
+  r <- runEitherT . mapEitherT runResourceT $ traverseView NoIncludeDotFiles v
   pure $ (isRight r) === True
 
 prop_traverseView_invalid :: Property
 prop_traverseView_invalid = withInvalidDirTree $ \v -> do
-  r <- runEitherT . mapEitherT runResourceT $ traverseView v
+  r <- runEitherT . mapEitherT runResourceT $ traverseView NoIncludeDotFiles v
   pure $ (isLeft r) === True
 
 return []

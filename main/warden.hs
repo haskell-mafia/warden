@@ -101,6 +101,7 @@ checkParamsP = CheckParams <$> separatorP
                            <*> forceP
                            <*> textFreeformThresholdP
                            <*> exitTypeP
+                           <*> includeDotFilesP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
@@ -197,3 +198,10 @@ exitTypeP =
        long "exit-success"
     <> short 'e'
     <> help "Exit with success status if no errors occur, even if checks have failures."
+
+includeDotFilesP :: Parser IncludeDotFiles
+includeDotFilesP =
+  flag NoIncludeDotFiles IncludeDotFiles $
+       long "include-dot-files"
+    <> short 'd'
+    <> help "Don't ignore dotfiles when traversing view."
