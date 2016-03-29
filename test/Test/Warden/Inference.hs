@@ -35,7 +35,7 @@ import           Warden.Row
 prop_fieldLookSum :: NonEmpty ViewMarker -> Property
 prop_fieldLookSum vms =
   let total = sum $ fmap (sumFLC . view fieldLooks . vmViewCounts . vmMetadata) vms
-      total' = sumFLC $ fieldLookSum vms in
+      total' = sumFLC $ fieldLookSum (ValidViewMarkers vms) in
   total === total'
 
 prop_viewMarkerMismatch_same :: ViewMarker -> Property
@@ -61,7 +61,7 @@ prop_viewMarkerMismatch_different_fft vm (UniquePair ta tb) =
 prop_validateViewMarkers_same :: Property
 prop_validateViewMarkers_same = forAll ((,) <$> passedViewMarker <*> choose (1, 100)) $ \(vm, n) ->
   let vms = NE.fromList . take n $ repeat vm in
-  (validateViewMarkers vms) === (Right ())
+  isRight (validateViewMarkers vms) === True
 
 prop_validateViewMarkers_failed :: NonEmpty ViewMarker -> Property
 prop_validateViewMarkers_failed vms = forAll (fmap NE.fromList $ listOf1 failedViewMarker) $ \fvms ->
@@ -149,7 +149,7 @@ prop_fieldCandidates_boolean fmr = forAll booleanHistogramPair $ \(rc, h) -> cas
 
 prop_totalViewRows :: NonEmpty ViewMarker -> Property
 prop_totalViewRows vms =
-  let trs = totalViewRows vms
+  let trs = totalViewRows $ ValidViewMarkers vms
       bads = filter (not . (>=) trs) . NE.toList $ fmap (view totalRows . vmViewCounts . vmMetadata) vms in
   bads === []
 
@@ -159,7 +159,7 @@ prop_inferForms_insufficient_rows vm = forAll (TextFreeformThreshold <$> choose 
   let vm' = vm { vmMetadata = ((vmMetadata vm) { vmViewCounts = ((vmViewCounts (vmMetadata vm)) { _totalRows = trs })})}
       vm'' = vm' { vmMetadata = ((vmMetadata vm') { vmCheckParams = ((vmCheckParams (vmMetadata vm')) { checkFreeformThreshold = fft })})}
       vms = pure vm'' in
-  isLeft (inferForms vms) === True
+  isLeft (inferForms $ ValidViewMarkers vms) === True
 
 return []
 tests :: IO Bool

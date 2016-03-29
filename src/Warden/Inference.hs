@@ -64,7 +64,7 @@ viewMarkerMismatch a b = do
 
 -- | Sanity-check view markers to prevent human error, e.g., trying to run
 -- `infer` on markers from multiple views.
-validateViewMarkers :: NonEmpty ViewMarker -> Either InferenceError ()
+validateViewMarkers :: NonEmpty ViewMarker -> Either InferenceError ValidViewMarkers
 validateViewMarkers (m:|ms) = go m ms >> checkFails
   where
     go _ [] = pure ()
@@ -76,26 +76,25 @@ validateViewMarkers (m:|ms) = go m ms >> checkFails
       let markers = m:ms
           stati = join $ (fmap summaryStatus . vmCheckResults) <$> markers in
       case nonEmpty (filter ((/= MarkerPass) . snd) $ zip markers stati) of
-        Nothing -> pure ()
+        Nothing -> pure $ ValidViewMarkers (m:|ms)
         Just fs -> Left . MarkerValidationFailure . ChecksMarkedFailed $ (wpRunId . vmWardenParams . fst) <$> fs
 
-fieldLookSum :: NonEmpty ViewMarker -> FieldLookCount
+fieldLookSum :: ValidViewMarkers -> FieldLookCount
 fieldLookSum =
   foldl' combineFieldLooks NoFieldLookCount . 
-    fmap (view fieldLooks . vmViewCounts . vmMetadata)
+    fmap (view fieldLooks . vmViewCounts . vmMetadata) . unValidViewMarkers
 
-textCountSum :: NonEmpty ViewMarker -> TextCounts
-textCountSum vms =
+textCountSum :: ValidViewMarkers -> TextCounts
+textCountSum (ValidViewMarkers vms) =
   -- FFTs already validated as the same
-  -- TODO: enforce this with types
   let fft = checkFreeformThreshold . vmCheckParams . vmMetadata $ NE.head vms in
   foldl' (combineTextCounts fft) NoTextCounts $
     fmap (view textCounts . vmViewCounts . vmMetadata) vms
 
-inferForms :: NonEmpty ViewMarker -> Either InferenceError TextCountSummary
+inferForms :: ValidViewMarkers -> Either InferenceError TextCountSummary
 inferForms vms =
   let totalRowCount = totalViewRows vms
-      fft = vmFFT $ NE.head vms in do
+      fft = vmFFT . NE.head $ unValidViewMarkers vms in do
   when ((unRowCount totalRowCount) < (fromIntegral $ unTextFreeformThreshold fft)) $
     Left $ InsufficientRowsForFormInference totalRowCount fft
   case textCountSum vms of
@@ -127,17 +126,16 @@ compatibleEntries t l o =
     then CompatibleEntries $ unObservationCount o
     else CompatibleEntries 0
 
-countCompatibleFields :: NonEmpty ViewMarker -> Either InferenceError (V.Vector FieldHistogram)
-countCompatibleFields vms = do
-  validateViewMarkers vms
+countCompatibleFields :: ValidViewMarkers -> Either InferenceError (V.Vector FieldHistogram)
+countCompatibleFields vms =
   case fieldLookSum vms of
       NoFieldLookCount ->
         Left $ MarkerValidationFailure NoFieldCounts
       FieldLookCount fls ->
         Right $ V.map countsForField fls
 
-totalViewRows :: NonEmpty ViewMarker -> RowCount
-totalViewRows = sum . fmap (view totalRows . vmViewCounts . vmMetadata)
+totalViewRows :: ValidViewMarkers -> RowCount
+totalViewRows = sum . fmap (view totalRows . vmViewCounts . vmMetadata) . unValidViewMarkers
 
 normalizeFieldHistogram :: RowCount -> FieldHistogram -> Either InferenceError (VU.Vector NormalizedEntries)
 normalizeFieldHistogram (RowCount rc) (FieldHistogram cs) = do

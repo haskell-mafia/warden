@@ -76,10 +76,11 @@ infer v fmr fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
-    cs <- withErr $ countCompatibleFields vms
+    vms' <- withErr $ validateViewMarkers vms
+    cs <- withErr $ countCompatibleFields vms'
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
-    tcs <- withErr $ inferForms vms
-    withErr $ generateSchema fmr tcs (totalViewRows vms) cs
+    tcs <- withErr $ inferForms vms'
+    withErr $ generateSchema fmr tcs (totalViewRows vms') cs
   where
     renderFieldHistogramVector hs =
       T.intercalate "\n" . V.toList .
