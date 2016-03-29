@@ -152,10 +152,16 @@ realField = TestReal <$> (arbitrary :: Gen Double)
 --
 
 instance Arbitrary Minimum where
-  arbitrary = Minimum <$> arbitrary
+  arbitrary = oneof [
+      Minimum <$> arbitrary
+    , pure NoMinimum
+    ]
 
 instance Arbitrary Maximum where
-  arbitrary = Maximum <$> arbitrary
+  arbitrary = oneof [
+      Maximum <$> arbitrary
+    , pure NoMaximum
+    ]
 
 instance Arbitrary Mean where
   arbitrary = Mean <$> arbitrary
@@ -164,7 +170,10 @@ instance Arbitrary StdDev where
   arbitrary = StdDev <$> (arbitrary `suchThat` (> 0.0))
 
 instance Arbitrary Median where
-  arbitrary = Median <$> arbitrary
+  arbitrary = oneof [
+      Median <$> arbitrary
+    , pure NoMedian
+    ]
 
 instance Arbitrary NumericSummary where
   arbitrary = NumericSummary <$> arbitrary
