@@ -17,10 +17,10 @@ module Warden.Data.Numeric (
   , StdDev(..)
   , Variance(..)
   , fromVariance
+  , initialNumericState
   , mkStdDev
   , stateMaximum
   , stateMeanDev
-  , stateMedian
   , stateMinimum
   ) where
 
@@ -135,9 +135,15 @@ data NumericState =
       _stateMinimum :: !Minimum
     , _stateMaximum :: !Maximum
     , _stateMeanDev :: !MeanDevAcc
-    , _stateMedian :: !Median
     } deriving (Eq, Show, Generic)
 
 instance NFData NumericState
 
 makeLenses ''NumericState
+
+initialNumericState :: NumericState
+initialNumericState =
+  NumericState
+    NoMinimum
+    NoMaximum
+    MeanDevInitial

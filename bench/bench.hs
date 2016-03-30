@@ -25,6 +25,7 @@ import           Test.QuickCheck (vectorOf, arbitrary)
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
+import           Warden.Numeric
 import           Warden.Row
 import           Warden.View
 
@@ -55,6 +56,10 @@ prepareHashText :: IO [ByteString]
 prepareHashText =
   generate' (Deterministic 54321) (GenSize 30) $ vectorOf 1000 arbitrary
 
+prepareNumbers :: IO [Double]
+prepareNumbers =
+  generate' (Deterministic 2468) (GenSize 100) $ vectorOf 10000 arbitrary
+
 prepareFolds :: IO ([Row], [ByteString])
 prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
 
@@ -80,6 +85,9 @@ benchHashText = fmap hashText
 benchUpdateTextCounts :: [Row] -> TextCounts
 benchUpdateTextCounts rs = foldl' (flip (updateTextCounts (TextFreeformThreshold 100))) NoTextCounts rs
 
+benchUpdateNumericState :: [Double] -> NumericState
+benchUpdateNumericState ns = foldl' updateNumericState initialNumericState ns
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -98,4 +106,8 @@ main = do
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]
+        , env prepareNumbers $ \ ~(ns) ->
+           bgroup "numerics" $ [
+                bench "updateNumericState/10000" $ nf benchUpdateNumericState ns
+             ]
         ]
