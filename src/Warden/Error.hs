@@ -145,10 +145,10 @@ data InferenceError =
   | MarkerValidationFailure ValidationFailure
   | EmptyFieldHistogram
   | NoMinimalFieldTypes
-  | CannotResolveCandidates [FieldType]
+  | CannotResolveCandidates FieldIndex [FieldType]
   | ZeroRowCountError
   | NoTextCountError
-  | NoTextCountForField Int
+  | NoTextCountForField FieldIndex
   | CompatibleFieldsGTRowCount RowCount [CompatibleEntries]
   | InsufficientRowsForFormInference RowCount TextFreeformThreshold
   deriving (Eq, Show)
@@ -164,8 +164,10 @@ renderInferenceError = ("inference error: " <>) . render'
       "No counts in field histogram. This should be impossible."
     render' NoMinimalFieldTypes =
       "No minimal field types in field histogram. This should be impossible."
-    render' (CannotResolveCandidates fts) = T.concat [
-        "Multiple candidates with equally high score. This field must be resolved manually between: "
+    render' (CannotResolveCandidates idx fts) = T.concat [
+        "Multiple candidates with equally high score. Field "
+      , renderFieldIndex idx
+      , " must be resolved manually between: "
       , T.intercalate ", " (renderFieldType <$> fts)
       ]
     render' ZeroRowCountError =
@@ -173,7 +175,7 @@ renderInferenceError = ("inference error: " <>) . render'
     render' NoTextCountError =
       "No text counts to use for form inference."
     render' (NoTextCountForField i) =
-      "No text counts to use for form inference on field " <> renderIntegral i
+      "No text counts to use for form inference on field " <> renderFieldIndex i
     render' (CompatibleFieldsGTRowCount rc cs) = T.concat [
         "Fields have observation counts higher than the total row count "
       , renderRowCount rc

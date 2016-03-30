@@ -152,10 +152,16 @@ realField = TestReal <$> (arbitrary :: Gen Double)
 --
 
 instance Arbitrary Minimum where
-  arbitrary = Minimum <$> arbitrary
+  arbitrary = oneof [
+      Minimum <$> arbitrary
+    , pure NoMinimum
+    ]
 
 instance Arbitrary Maximum where
-  arbitrary = Maximum <$> arbitrary
+  arbitrary = oneof [
+      Maximum <$> arbitrary
+    , pure NoMaximum
+    ]
 
 instance Arbitrary Mean where
   arbitrary = Mean <$> arbitrary
@@ -164,7 +170,10 @@ instance Arbitrary StdDev where
   arbitrary = StdDev <$> (arbitrary `suchThat` (> 0.0))
 
 instance Arbitrary Median where
-  arbitrary = Median <$> arbitrary
+  arbitrary = oneof [
+      Median <$> arbitrary
+    , pure NoMedian
+    ]
 
 instance Arbitrary NumericSummary where
   arbitrary = NumericSummary <$> arbitrary
@@ -452,6 +461,8 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
@@ -534,3 +545,9 @@ instance Arbitrary TextFreeformThreshold where
 
 instance Arbitrary FieldIndex where
   arbitrary = fmap (FieldIndex . getSmall . getNonNegative) $ arbitrary
+
+instance Arbitrary ExitType where
+  arbitrary = elements [ExitWithCheckStatus, ExitWithSuccess]
+
+instance Arbitrary IncludeDotFiles where
+  arbitrary = elements [IncludeDotFiles, NoIncludeDotFiles]

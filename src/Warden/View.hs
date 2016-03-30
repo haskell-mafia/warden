@@ -25,37 +25,45 @@ import           Warden.Error
 
 import           X.Control.Monad.Trans.Either (EitherT, left)
 
-traverseView :: View -> EitherT WardenError (ResourceT IO) (NonEmpty ViewFile)
-traverseView v = do
-  (bads, goods) <- traverseView' v
+traverseView :: IncludeDotFiles
+             -> View
+             -> EitherT WardenError (ResourceT IO) (NonEmpty ViewFile)
+traverseView idf v = do
+  (bads, goods) <- traverseView' idf v
   when (not $ null bads) $
     left . WardenTraversalError $ NonViewFiles bads
   when (null goods) $
     left $ WardenTraversalError EmptyView
   pure $ NE.fromList goods
 
-traverseView' :: View -> EitherT WardenError (ResourceT IO) ([NonViewFile], [ViewFile])
-traverseView' v = do
-  fs <- directoryFiles <$> traverseDirectory (MaxDepth 5) [] (DirName $ unView v)
+traverseView' :: IncludeDotFiles
+              -> View
+              -> EitherT WardenError (ResourceT IO) ([NonViewFile], [ViewFile])
+traverseView' idf v = do
+  fs <- directoryFiles <$> traverseDirectory idf (MaxDepth 5) [] (DirName $ unView v)
   pure . first (fmap NonViewFile) $ (partitionEithers $ viewFile <$> fs)
 
 -- | Traverse a directory tree to a maximum depth, ignoring hidden files.
-traverseDirectory :: MaxDepth -> [DirName] -> DirName -> EitherT WardenError (ResourceT IO) DirTree
-traverseDirectory (MaxDepth 0) _ _ = left $ WardenTraversalError MaxDepthExceeded
-traverseDirectory (MaxDepth depth) preds dn =
+traverseDirectory :: IncludeDotFiles
+                  -> MaxDepth
+                  -> [DirName]
+                  -> DirName
+                  -> EitherT WardenError (ResourceT IO) DirTree
+traverseDirectory _ (MaxDepth 0) _ _ = left $ WardenTraversalError MaxDepthExceeded
+traverseDirectory idf (MaxDepth depth) preds dn =
   let preds' = preds <> [dn] in do
   ls <- liftIO . getDirectoryContents $ joinDir preds'
   sts <- liftIO . mapM getSymbolicLinkStatus $ (joinFile preds') <$> ls
   let branches = fmap (DirName . fst) $
                    filter (uncurry visitable) $ zip ls sts
   let leaves = fmap (FileName . fst) $ filter (uncurry validLeaf) $ zip ls sts
-  subtrees <- mapM (traverseDirectory (MaxDepth $ depth - 1) preds') branches
+  subtrees <- mapM (traverseDirectory idf (MaxDepth $ depth - 1) preds') branches
   pure $ DirTree dn subtrees leaves
   where
     visitable ('.':_) _ = False
     visitable ('_':_) _ = False
     visitable _ st      = isDirectory st
 
-    validLeaf ('.':_) _ = False
+    validLeaf ('.':_) st = idf == IncludeDotFiles && isRegularFile st
     validLeaf ('_':_) _ = False
     validLeaf _ st      = isRegularFile st

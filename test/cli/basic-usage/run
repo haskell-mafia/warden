@@ -22,9 +22,9 @@ $WARDEN check .
 
 $WARDEN check /not/a/real/view
 
-$WARDEN check -v -b 1000 -s ',' --text-freeform-threshold 9999 /not/a/real/view
+$WARDEN check -e -v -b 1000 -s ',' --text-freeform-threshold 9999 /not/a/real/view
 
-$WARDEN check-file -f -v -b 1000 -s , /not/a/real/view/year=2016/month=03/day=04/not/a/real/file --schema not-a-real-schema.json
+$WARDEN check-file -e -f -v -b 1000 -s , /not/a/real/view/year=2016/month=03/day=04/not/a/real/file --schema not-a-real-schema.json
 
 $WARDEN infer /not/a/real/marker/file1 /not/a/real/marker/file2
 

@@ -40,7 +40,8 @@ check :: WardenParams
       -> CheckParams
       -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
 check wps v ps =
-  traverseView v >>= (checkViewFiles wps ps v)
+  let idf = checkIncludeDotFiles ps in
+  traverseView idf v >>= (checkViewFiles wps ps v)
 
 fileCheck :: WardenParams
           -> ViewFile
@@ -62,9 +63,9 @@ checkViewFiles :: WardenParams
                -> View
                -> NonEmpty ViewFile
                -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-checkViewFiles wps ps@(CheckParams _s sf _lb verb fce _fft) v vfs = do
-  schema <- maybe (pure Nothing) (fmap Just . readSchema) sf
-  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps verb fce) <$> vfs
+checkViewFiles wps ps v vfs = do
+  schema <- maybe (pure Nothing) (fmap Just . readSchema) $ checkSchemaFile ps
+  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps (checkVerbosity ps) (checkForce ps)) <$> vfs
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 
@@ -76,10 +77,11 @@ infer v fmr fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
-    cs <- withErr $ countCompatibleFields vms
+    vms' <- withErr $ validateViewMarkers vms
+    cs <- withErr $ countCompatibleFields vms'
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
-    tcs <- withErr $ inferForms vms
-    withErr $ generateSchema fmr tcs (totalViewRows vms) cs
+    tcs <- withErr $ inferForms vms'
+    withErr $ generateSchema fmr tcs (totalViewRows vms') cs
   where
     renderFieldHistogramVector hs =
       T.intercalate "\n" . V.toList .

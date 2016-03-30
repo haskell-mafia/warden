@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Test.Warden.Numeric where
 
@@ -20,38 +21,42 @@ import           Warden.Data
 import           Warden.Numeric
 
 prop_updateMinimum_positive :: Minimum -> Property
-prop_updateMinimum_positive mn@(Minimum Nothing) = forAll (arbitrary :: Gen Double) $ \x ->
-  (updateMinimum mn x) === (Minimum (Just x))
-prop_updateMinimum_positive mn@(Minimum (Just c)) = forAll ((arbitrary :: Gen Double) `suchThat` (< c)) $ \x ->
-  (updateMinimum mn x) === (Minimum (Just x))
+prop_updateMinimum_positive NoMinimum = forAll (arbitrary :: Gen Double) $ \x ->
+  (updateMinimum NoMinimum x) === (Minimum x)
+prop_updateMinimum_positive mn@(Minimum c) = forAll ((arbitrary :: Gen Double) `suchThat` (< c)) $ \x ->
+  (updateMinimum mn x) === (Minimum x)
 
 prop_updateMaximum_positive :: Maximum -> Property
-prop_updateMaximum_positive mn@(Maximum Nothing) = forAll (arbitrary :: Gen Double) $ \x ->
-  (updateMaximum mn x) === (Maximum (Just x))
-prop_updateMaximum_positive mx@(Maximum (Just c)) = forAll ((arbitrary :: Gen Double) `suchThat` (> c)) $ \x ->
-  (updateMaximum mx x) === (Maximum (Just x))
+prop_updateMaximum_positive NoMaximum = forAll (arbitrary :: Gen Double) $ \x ->
+  (updateMaximum NoMaximum x) === (Maximum x)
+prop_updateMaximum_positive mx@(Maximum c) = forAll ((arbitrary :: Gen Double) `suchThat` (> c)) $ \x ->
+  (updateMaximum mx x) === (Maximum x)
 
 prop_updateMinimum_negative :: Property
 prop_updateMinimum_negative =
   forAll (arbitrary :: Gen Double) $ \c ->
     forAll ((arbitrary :: Gen Double) `suchThat` (>= c)) $ \x ->
-      let mn = Minimum (Just c)
+      let mn = Minimum c
       in (updateMinimum mn x) === mn
 
 prop_updateMinimum_associative :: Int -> Property
 prop_updateMinimum_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  associativity updateMinimum (Minimum Nothing) xs getMinimum
+  associativity updateMinimum NoMinimum xs $ \case
+    NoMinimum -> 0.0
+    Minimum v -> v
 
 prop_updateMaximum_negative :: Property
 prop_updateMaximum_negative =
   forAll (arbitrary :: Gen Double) $ \c ->
     forAll ((arbitrary :: Gen Double) `suchThat` (<= c)) $ \x ->
-      let mx = Maximum (Just c)
+      let mx = Maximum c
       in (updateMaximum mx x) === mx
 
 prop_updateMaximum_associative :: Int -> Property
 prop_updateMaximum_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  associativity updateMaximum (Maximum Nothing) xs getMaximum
+  associativity updateMaximum NoMaximum xs $ \case
+    NoMaximum -> 0.0
+    Maximum v -> v
 
 prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->

@@ -17,6 +17,7 @@ module Warden.Data.Field (
   , parseFieldLooks
   , parseFieldType
   , renderCompatibleEntries
+  , renderFieldIndex
   , renderFieldLooks
   , renderFieldType
   ) where
@@ -155,3 +156,6 @@ $(derivingUnbox "FieldIndex"
   [t| FieldIndex -> Int |]
   [| \(FieldIndex x) -> x |]
   [| \x -> (FieldIndex x) |])
+
+renderFieldIndex :: FieldIndex -> Text
+renderFieldIndex = renderIntegral . unFieldIndex

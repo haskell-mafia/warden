@@ -31,12 +31,14 @@ import           X.Control.Monad.Trans.Either (runEitherT)
 
 commandUnitCheckParams :: CheckParams
 commandUnitCheckParams = CheckParams {
-    checkSeparator = (charToSeparator '|')
+    checkSeparator = charToSeparator '|'
   , checkVerbosity = Quiet
   , checkForce = NoForce
   , checkLineBound = LineBound 65536
   , checkFreeformThreshold = TextFreeformThreshold 10
   , checkSchemaFile = Nothing
+  , checkExitType = ExitWithSuccess
+  , checkIncludeDotFiles = NoIncludeDotFiles
   }
 
 checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property

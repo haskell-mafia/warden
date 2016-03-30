@@ -20,6 +20,16 @@ import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Schema
 import           Warden.Serial.Json.TextCounts
 
+fromIncludeDotFiles :: IncludeDotFiles -> Value
+fromIncludeDotFiles IncludeDotFiles = String "include-dot-files"
+fromIncludeDotFiles NoIncludeDotFiles = String "no-include-dot-files"
+
+toIncludeDotFiles :: Value -> Parser IncludeDotFiles
+toIncludeDotFiles (String "include-dot-files") = pure IncludeDotFiles
+toIncludeDotFiles (String "no-include-dot-files") = pure NoIncludeDotFiles
+toIncludeDotFiles (String s) = fail . T.unpack $ "invalid IncludeDotFiles: " <> s
+toIncludeDotFiles x = typeMismatch "Warden.Data.Param.IncludeDotFiles" x
+
 fromForce :: Force -> Value
 fromForce Force = String "force"
 fromForce NoForce = String "no-force"
@@ -30,14 +40,26 @@ toForce (String "no-force") = pure NoForce
 toForce (String s) = fail $ "invalid Force parameter: " <> T.unpack s
 toForce x = typeMismatch "Warden.Data.Param.Force" x
 
+fromExitType :: ExitType -> Value
+fromExitType ExitWithCheckStatus = "check-status-exit"
+fromExitType ExitWithSuccess = "success-exit"
+
+toExitType :: Value -> Parser ExitType
+toExitType (String "check-status-exit") = pure ExitWithCheckStatus
+toExitType (String "success-exit") = pure ExitWithSuccess
+toExitType (String s) = fail $ "invalid ExitType parameter: " <> T.unpack s
+toExitType x = typeMismatch "Warden.Data.Param.ExitType" x
+
 fromCheckParams :: CheckParams -> Value
-fromCheckParams (CheckParams sep sf lb verb fce fft) = object [
+fromCheckParams (CheckParams sep sf lb verb fce fft xt idf) = object [
     "separator" .= fromSeparator sep
   , "line-bound" .= fromLineBound lb
   , "verbosity" .= fromVerbosity verb
   , "force" .= fromForce fce
   , "schema-file" .= maybe Null fromSchemaFile sf
   , "freeform-text-threshold" .= fromTextFreeformThreshold fft
+  , "exit-type" .= fromExitType xt
+  , "include-dot-files" .= fromIncludeDotFiles idf
   ]
 
 toCheckParams :: Value -> Parser CheckParams
@@ -48,7 +70,9 @@ toCheckParams (Object o) = do
   fce <- toForce =<< (o .: "force")
   sf <- maybe (pure Nothing) (fmap Just . toSchemaFile) =<< (o .:? "schema-file")
   fft <- toTextFreeformThreshold =<< (o .: "freeform-text-threshold")
-  pure $ CheckParams sep sf lb verb fce fft
+  xt <- toExitType =<< (o .: "exit-type")
+  idf <- toIncludeDotFiles =<< (o .: "include-dot-files")
+  pure $ CheckParams sep sf lb verb fce fft xt idf
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
 
 fromWardenVersion :: WardenVersion -> Value

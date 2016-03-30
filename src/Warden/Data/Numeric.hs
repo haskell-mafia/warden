@@ -21,28 +21,39 @@ import           Data.Aeson.Types
 
 import           P
 
--- | Semigroup <cmp, a> => Monoid <mcompare, Maybe a>
-mcompare :: (a -> a -> Bool)
-         -> Maybe a -> Maybe a -> Maybe a
-mcompare _ Nothing init        = init
-mcompare _ (Just prev) Nothing = Just prev
-mcompare cmp (Just prev) (Just cur)
-  | cmp cur prev               = Just cur
-  | otherwise                  = Just prev
-
-newtype Minimum = Minimum { getMinimum :: Maybe Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+data Minimum =
+    Minimum {-# UNPACK #-} !Double
+  | NoMinimum
+  deriving (Eq, Show)
 
 instance Monoid Minimum where
-  mempty  = Minimum Nothing
-  mappend (Minimum x) (Minimum y) = Minimum $ mcompare (<) x y
+  mempty  = NoMinimum
+  mappend x y = mcompare x y
+    where
+      mcompare NoMinimum init = init
+      mcompare (Minimum prev) NoMinimum = Minimum prev
+      mcompare (Minimum prev) (Minimum cur) =
+        if cur < prev
+          then Minimum cur
+          else Minimum prev
+  {-# INLINE mappend #-}
 
-newtype Maximum = Maximum { getMaximum :: Maybe Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+data Maximum =
+    Maximum {-# UNPACK #-} !Double
+  | NoMaximum
+  deriving (Eq, Show)
 
 instance Monoid Maximum where
-  mempty  = Maximum Nothing
-  mappend (Maximum x) (Maximum y) = Maximum $ mcompare (>) x y
+  mempty  = NoMaximum
+  mappend x y = mcompare x y
+    where
+      mcompare NoMaximum init = init
+      mcompare (Maximum prev) NoMaximum = Maximum prev
+      mcompare (Maximum prev) (Maximum cur) =
+        if cur > prev
+          then Maximum cur
+          else Maximum prev
+  {-# INLINE mappend #-}
 
 newtype Count = Count { getCount :: Int }
   deriving (Eq, Show, ToJSON, FromJSON)
@@ -50,8 +61,10 @@ newtype Count = Count { getCount :: Int }
 newtype Mean = Mean { getMean :: Double }
   deriving (Eq, Show, ToJSON, FromJSON)
 
-newtype Median = Median { getMedian :: Maybe Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+data Median =
+    Median {-# UNPACK #-} !Double
+  | NoMedian
+  deriving (Eq, Show)
 
 newtype Variance = Variance { getVariance :: Double }
   deriving (Eq, Show, ToJSON, FromJSON)
@@ -81,25 +94,3 @@ data NumericSummary = NumericSummary !Minimum
                                      {-# UNPACK #-} !StdDev
                                      !Median
   deriving (Eq, Show)
-
-instance ToJSON NumericSummary where
-  toJSON (NumericSummary mn mx mean s md) = object [
-      "version"  .= ("v1" :: Text)
-    , "minimum"  .= mn
-    , "maximum"  .= mx
-    , "mean"     .= mean
-    , "stddev"   .= s
-    , "median"   .= md
-    ]
-
-instance FromJSON NumericSummary where
-  parseJSON (Object o) =
-    o .: "version" >>= \case
-      "v1" -> NumericSummary
-                <$> o .: "minimum"
-                <*> o .: "maximum"
-                <*> o .: "mean"
-                <*> o .: "stddev"
-                <*> o .: "median"
-      v    -> fail $ "NumericSummary: unknown version [" <> v <> "]"
-  parseJSON x          = typeMismatch "NumericSummary" x

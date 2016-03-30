@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
     MeanDevAcc(..)
@@ -14,27 +15,29 @@ import           Warden.Data
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc Mean (Maybe Variance) Count
+  | MeanDevAcc {-# UNPACK #-} !Mean !(Maybe Variance) {-# UNPACK #-} !Count
   deriving (Eq, Show)
 
 updateMinimum :: Real a
               => Minimum -> a -> Minimum
-updateMinimum acc x =
-  let x' = (Minimum . Just . fromRational . toRational) x
+updateMinimum !acc x =
+  let x' = (Minimum . fromRational . toRational) x
   in acc <> x'
+{-# INLINE updateMinimum #-}
 
 updateMaximum :: Real a
               => Maximum -> a -> Maximum
-updateMaximum acc x =
-  let x' = (Maximum . Just . fromRational . toRational) x
+updateMaximum !acc x =
+  let x' = (Maximum . fromRational . toRational) x
   in acc <> x'
+{-# INLINE updateMaximum #-}
 
 -- Numerically-stable mean and variance.
 --
 -- \( \frac{1}{n} \sum_{x \in X} x \equiv M_1 = X_1, M_k = M_{k-1} + \frac{(X_k - M_{k-1})}{k} \)
 updateMeanDev :: Real a
-           => MeanDevAcc -> a -> MeanDevAcc
-updateMeanDev macc x =
+              => MeanDevAcc -> a -> MeanDevAcc
+updateMeanDev !macc x =
   let x' = (fromRational . toRational) x in case macc of
   MeanDevInitial ->
     let i = Count 1
@@ -52,6 +55,7 @@ updateMeanDev macc x =
                     Nothing         -> Just $ Variance 0
                     Just (Variance var) -> Just . Variance $ var + delta * (v - (getMean m'))
       in MeanDevAcc m' s' i'
+{-# INLINE updateMeanDev #-}
 
 finalizeMeanDev :: MeanDevAcc -> Maybe (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = Nothing
