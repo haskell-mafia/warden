@@ -2,29 +2,43 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Numeric (
-    Minimum(..)
+    Count(..)
   , Maximum(..)
   , Mean(..)
-  , Count(..)
+  , MeanDevAcc(..)
   , Median(..)
-  , StdDev(..)
+  , Minimum(..)
+  , NumericState(..)
   , NumericSummary(..)
+  , StdDev(..)
   , Variance(..)
   , fromVariance
   , mkStdDev
+  , stateMaximum
+  , stateMeanDev
+  , stateMedian
+  , stateMinimum
   ) where
+
+import           Control.Lens (makeLenses)
 
 import           Data.Aeson
 import           Data.Aeson.Types
+
+import           GHC.Generics (Generic)
 
 import           P
 
 data Minimum =
     Minimum {-# UNPACK #-} !Double
   | NoMinimum
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Minimum
 
 instance Monoid Minimum where
   mempty  = NoMinimum
@@ -41,7 +55,9 @@ instance Monoid Minimum where
 data Maximum =
     Maximum {-# UNPACK #-} !Double
   | NoMaximum
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Maximum
 
 instance Monoid Maximum where
   mempty  = NoMaximum
@@ -56,24 +72,34 @@ instance Monoid Maximum where
   {-# INLINE mappend #-}
 
 newtype Count = Count { getCount :: Int }
-  deriving (Eq, Show, ToJSON, FromJSON)
+  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+
+instance NFData Count
 
 newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+
+instance NFData Mean
 
 data Median =
     Median {-# UNPACK #-} !Double
   | NoMedian
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Median
 
 newtype Variance = Variance { getVariance :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+
+instance NFData Variance
 
 fromVariance :: Variance -> StdDev
 fromVariance = StdDev . sqrt . getVariance
 
 newtype StdDev = StdDev { getStdDev :: Double }
-  deriving (Eq, Show, ToJSON)
+  deriving (Eq, Show, ToJSON, Generic)
+
+instance NFData StdDev
 
 mkStdDev :: Double -> Maybe StdDev
 mkStdDev v
@@ -93,4 +119,25 @@ data NumericSummary = NumericSummary !Minimum
                                      {-# UNPACK #-} !Mean
                                      {-# UNPACK #-} !StdDev
                                      !Median
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData NumericSummary
+
+data MeanDevAcc =
+    MeanDevInitial
+  | MeanDevAcc {-# UNPACK #-} !Mean !(Maybe Variance) {-# UNPACK #-} !Count
+  deriving (Eq, Show, Generic)
+
+instance NFData MeanDevAcc
+
+data NumericState =
+  NumericState {
+      _stateMinimum :: !Minimum
+    , _stateMaximum :: !Maximum
+    , _stateMeanDev :: !MeanDevAcc
+    , _stateMedian :: !Median
+    } deriving (Eq, Show, Generic)
+
+instance NFData NumericState
+
+makeLenses ''NumericState

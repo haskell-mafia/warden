@@ -2,21 +2,18 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
-    MeanDevAcc(..)
+    finalizeMeanDev
   , updateMinimum
   , updateMaximum
   , updateMeanDev
-  , finalizeMeanDev
+  , updateNumericState
   ) where
+
+import           Control.Lens ((%~))
 
 import           P
 
 import           Warden.Data
-
-data MeanDevAcc =
-    MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !Mean !(Maybe Variance) {-# UNPACK #-} !Count
-  deriving (Eq, Show)
 
 updateMinimum :: Real a
               => Minimum -> a -> Minimum
@@ -61,3 +58,13 @@ finalizeMeanDev :: MeanDevAcc -> Maybe (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = Nothing
 finalizeMeanDev (MeanDevAcc _ Nothing _) = Nothing
 finalizeMeanDev (MeanDevAcc mn (Just var) _) = Just (mn, fromVariance var)
+
+-- FIXME: median
+updateNumericState :: Real a
+                   => NumericState -> a -> NumericState
+updateNumericState acc x =
+    (stateMinimum %~ (flip updateMinimum x))
+  . (stateMaximum %~ (flip updateMaximum x))
+  . (stateMeanDev %~ (flip updateMeanDev x))
+  $!! acc
+{-# INLINE updateNumericState #-}
