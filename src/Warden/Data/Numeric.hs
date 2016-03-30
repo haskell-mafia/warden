@@ -9,6 +9,7 @@ module Warden.Data.Numeric (
     Count(..)
   , Maximum(..)
   , Mean(..)
+  , MeanAcc(..)
   , MeanDevAcc(..)
   , Median(..)
   , Minimum(..)
@@ -26,8 +27,7 @@ module Warden.Data.Numeric (
 
 import           Control.Lens (makeLenses)
 
-import           Data.Aeson
-import           Data.Aeson.Types
+import           Data.Aeson (ToJSON, FromJSON)
 
 import           GHC.Generics (Generic)
 
@@ -76,8 +76,19 @@ newtype Count = Count { getCount :: Int }
 
 instance NFData Count
 
-newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+-- | Preliminary mean, still accumulating.
+newtype MeanAcc =
+  MeanAcc {
+    unMeanAcc :: Double
+  } deriving (Eq, Show, ToJSON, FromJSON, Generic)
+
+instance NFData MeanAcc
+
+-- | Final mean.
+data Mean =
+    NoMean
+  | Mean {-# UNPACK #-} !Double
+  deriving (Eq, Show, Generic)
 
 instance NFData Mean
 
@@ -96,28 +107,24 @@ instance NFData Variance
 fromVariance :: Variance -> StdDev
 fromVariance = StdDev . sqrt . getVariance
 
-newtype StdDev = StdDev { getStdDev :: Double }
-  deriving (Eq, Show, ToJSON, Generic)
+data StdDev =
+    NoStdDev
+  | StdDev {-# UNPACK #-} !Double
+  deriving (Eq, Show, Generic)
 
 instance NFData StdDev
 
-mkStdDev :: Double -> Maybe StdDev
+mkStdDev :: Double -> StdDev
 mkStdDev v
-  | v < 0.0   = Nothing
-  | otherwise = Just $ StdDev v
-
-instance FromJSON StdDev where
-  parseJSON (Number v) = case mkStdDev ((fromRational . toRational) v) of
-    Nothing -> fail "StdDev must not be negative"
-    Just v' -> pure v'
-  parseJSON x          = typeMismatch "StdDev" x
+  | v < 0.0   = NoStdDev
+  | otherwise = StdDev v
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
 data NumericSummary = NumericSummary !Minimum
                                      !Maximum
-                                     {-# UNPACK #-} !Mean
-                                     {-# UNPACK #-} !StdDev
+                                     !Mean
+                                     !StdDev
                                      !Median
   deriving (Eq, Show, Generic)
 
@@ -125,7 +132,7 @@ instance NFData NumericSummary
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !Mean !(Maybe Variance) {-# UNPACK #-} !Count
+  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe Variance) {-# UNPACK #-} !Count
   deriving (Eq, Show, Generic)
 
 instance NFData MeanDevAcc

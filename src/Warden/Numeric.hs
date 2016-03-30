@@ -3,13 +3,14 @@
 
 module Warden.Numeric (
     finalizeMeanDev
+  , summarizeNumericState
   , updateMinimum
   , updateMaximum
   , updateMeanDev
   , updateNumericState
   ) where
 
-import           Control.Lens ((%~))
+import           Control.Lens ((%~), (^.))
 
 import           P
 
@@ -38,26 +39,26 @@ updateMeanDev !macc x =
   let x' = (fromRational . toRational) x in case macc of
   MeanDevInitial ->
     let i = Count 1
-        m = Mean 0
+        m = MeanAcc 0
         s = Nothing
     in update' m s i x'
   (MeanDevAcc m s i) ->
     update' m s i x'
   where
-    update' (Mean m) s (Count i) v =
+    update' (MeanAcc m) s (Count i) v =
       let delta = v - m
-          m'    = Mean $ m + delta / (fromIntegral i)
+          m'    = MeanAcc $ m + delta / (fromIntegral i)
           i'    = Count $ i + 1
           s'    = case s of
                     Nothing         -> Just $ Variance 0
-                    Just (Variance var) -> Just . Variance $ var + delta * (v - (getMean m'))
+                    Just (Variance var) -> Just . Variance $ var + delta * (v - (unMeanAcc m'))
       in MeanDevAcc m' s' i'
 {-# INLINE updateMeanDev #-}
 
-finalizeMeanDev :: MeanDevAcc -> Maybe (Mean, StdDev)
-finalizeMeanDev MeanDevInitial = Nothing
-finalizeMeanDev (MeanDevAcc _ Nothing _) = Nothing
-finalizeMeanDev (MeanDevAcc mn (Just var) _) = Just (mn, fromVariance var)
+finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
+finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
+finalizeMeanDev (MeanDevAcc _ Nothing _) = (NoMean, NoStdDev)
+finalizeMeanDev (MeanDevAcc mn (Just var) _) = (Mean (unMeanAcc mn), fromVariance var)
 
 -- FIXME: median
 updateNumericState :: Real a
@@ -68,3 +69,13 @@ updateNumericState acc x =
   . (stateMeanDev %~ (flip updateMeanDev x))
   $!! acc
 {-# INLINE updateNumericState #-}
+
+summarizeNumericState :: NumericState -> NumericSummary
+summarizeNumericState st =
+  let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
+  NumericSummary
+    (st ^. stateMinimum)
+    (st ^. stateMaximum)
+    mn
+    stddev
+    NoMedian

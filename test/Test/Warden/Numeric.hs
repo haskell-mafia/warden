@@ -65,8 +65,8 @@ prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \
       mu = (sum xs) / (fromIntegral n)
       var = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs
       sd = StdDev $ sqrt var
-      uMeanDev = Just (Mean mu, sd)
-  in nsMeanDev ~~~ uMeanDev
+      uMeanDev = (Mean mu, sd) in
+  nsMeanDev ~~~ uMeanDev
   where
     two :: Integer
     two = 2

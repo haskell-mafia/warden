@@ -44,11 +44,25 @@ import           Warden.Data
 import           Warden.Sampling.Reservoir
 
 instance AEq Mean where
+  NoMean === NoMean = True
+  NoMean === _ = False
+  _ === NoMean = False
   (Mean x) === (Mean y) = x === y
+
+  NoMean ~== NoMean = True
+  NoMean ~== _ = False
+  _ ~== NoMean = False
   (Mean x) ~== (Mean y) = x ~== y
 
 instance AEq StdDev where
+  NoStdDev === NoStdDev = True
+  NoStdDev === _ = False
+  _ === NoStdDev = False
   (StdDev x) === (StdDev y) = x === y
+
+  NoStdDev ~== NoStdDev = True
+  NoStdDev ~== _ = False
+  _ ~== NoStdDev = False
   (StdDev x) ~== (StdDev y) = x ~== y
 
 newtype ValidRow =
