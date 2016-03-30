@@ -2,7 +2,8 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
-    finalizeMeanDev
+    combineMeanAcc
+  , finalizeMeanDev
   , summarizeNumericState
   , updateMinimum
   , updateMaximum
@@ -79,3 +80,11 @@ summarizeNumericState st =
     mn
     stddev
     NoMedian
+
+-- FIXME: stability?
+combineMeanAcc :: (MeanAcc, Count) -> (MeanAcc, Count) -> MeanAcc
+combineMeanAcc (MeanAcc mu1, Count c1) (MeanAcc mu2, Count c2) =
+  let c1' = fromIntegral c1
+      c2' = fromIntegral c2 in
+  MeanAcc $ (mu1 * c1') + (mu2 * c2') / (c1' + c2')
+{-# INLINE combineMeanAcc #-}
