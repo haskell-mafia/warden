@@ -106,8 +106,8 @@ fromMean NoMean = object [
 toMean :: Value -> Parser Mean
 toMean (Object o) = do
   o .: "type" >>= \case
-    "no-median" -> pure NoMean
-    "median" -> do
+    "no-mean" -> pure NoMean
+    "mean" -> do
       v <- parseJSON =<< (o .: "value")
       pure $ Mean v
     s -> fail . T.unpack $ "invalid Mean type: " <> s
@@ -115,18 +115,18 @@ toMean x = typeMismatch "Warden.Data.Numeric.Mean" x
 
 fromStdDev :: StdDev -> Value
 fromStdDev (StdDev v) = object [
-    "type" .= String "stdDev"
+    "type" .= String "stddev"
   , "value" .= toJSON v
   ]
 fromStdDev NoStdDev = object [
-    "type" .= String "no-stdDev"
+    "type" .= String "no-stddev"
   ]
 
 toStdDev :: Value -> Parser StdDev
 toStdDev (Object o) = do
   o .: "type" >>= \case
-    "no-median" -> pure NoStdDev
-    "median" -> do
+    "no-stddev" -> pure NoStdDev
+    "stddev" -> do
       v <- parseJSON =<< (o .: "value")
       pure $ StdDev v
     s -> fail . T.unpack $ "invalid StdDev type: " <> s

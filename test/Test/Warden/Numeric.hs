@@ -5,6 +5,7 @@
 module Test.Warden.Numeric where
 
 import           Data.AEq (AEq)
+import           Data.List (take)
 
 import           Disorder.Core.Property ((~~~))
 
@@ -19,6 +20,26 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Numeric
+
+unstableMean :: (Num a, Fractional a) => [a] -> a
+unstableMean xs = (sum xs) / (fromIntegral $ length xs)
+
+unstableVariance :: (Num a, Fractional a) => a -> [a] -> a
+unstableVariance mu = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0
+  where
+    two :: Int
+    two = 2
+
+associativity :: (Show c, AEq c)
+              => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property
+associativity f y0 xs g =
+  left' ~~~ right'
+  where
+    left' = g $ foldl f y0 xs
+
+    right' = g $ foldr f' y0 xs
+
+    f' a b = f b a
 
 prop_updateMinimum_positive :: Minimum -> Property
 prop_updateMinimum_positive NoMinimum = forAll (arbitrary :: Gen Double) $ \x ->
@@ -62,29 +83,32 @@ prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   let nsMeanDev = finalizeMeanDev $ foldl updateMeanDev MeanDevInitial xs
 
-      mu = (sum xs) / (fromIntegral n)
-      var = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs
+      mu = unstableMean xs
+      var = unstableVariance mu xs
       sd = StdDev $ sqrt var
       uMeanDev = (Mean mu, sd) in
   nsMeanDev ~~~ uMeanDev
-  where
-    two :: Integer
-    two = 2
 
 prop_updateMeanDev_associative :: Int -> Property
 prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   associativity updateMeanDev MeanDevInitial xs finalizeMeanDev
 
-associativity :: (Show c, AEq c)
-              => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property
-associativity f y0 xs g =
-  left' ~~~ right'
-  where
-    left' = g $ foldl f y0 xs
-
-    right' = g $ foldr f' y0 xs
-
-    f' a b = f b a
+prop_combineMeanDevAcc :: Property
+prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n arbitrary) $ \xs ->
+  let m = n `div` 2
+      mu = unstableMean xs
+      var = unstableVariance mu xs
+      mda = MeanDevAcc (MeanAcc mu) (Just $ Variance var) (Count n)
+      xs1 = take m xs
+      xs2 = drop m xs
+      mu1 = MeanAcc $ unstableMean xs1
+      mu2 = MeanAcc $ unstableMean xs2
+      var1 = Just . Variance $ unstableVariance (unMeanAcc mu1) xs1
+      var2 = Just . Variance $ unstableVariance (unMeanAcc mu2) xs2
+      mda1 = MeanDevAcc mu1 var1 (Count m)
+      mda2 = MeanDevAcc mu2 var2 (Count m)
+      mda' = combineMeanDevAcc mda1 mda2 in
+  mda ~~~ mda'
 
 return []
 tests :: IO Bool

@@ -71,8 +71,10 @@ instance Monoid Maximum where
           else Maximum prev
   {-# INLINE mappend #-}
 
-newtype Count = Count { getCount :: Int }
-  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+newtype Count =
+  Count {
+    getCount :: Int
+  } deriving (Eq, Show, ToJSON, FromJSON, Generic, Num)
 
 instance NFData Count
 

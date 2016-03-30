@@ -565,3 +565,28 @@ instance Arbitrary ExitType where
 
 instance Arbitrary IncludeDotFiles where
   arbitrary = elements [IncludeDotFiles, NoIncludeDotFiles]
+
+smallPositiveEven :: Gen Int
+smallPositiveEven = fmap (* 2) (choose (1, 20))
+
+instance AEq MeanAcc where
+  (===) = (==)
+
+  (MeanAcc x) ~== (MeanAcc y) = x ~== y
+
+instance AEq Variance where
+  (===) = (==)
+
+  (Variance x) ~== (Variance y) = x ~== y
+
+instance AEq MeanDevAcc where
+  (===) = (==)
+
+  MeanDevInitial ~== MeanDevInitial = True
+  MeanDevInitial ~== _ = False
+  _ ~== MeanDevInitial = False
+  (MeanDevAcc mu1 s21 n1) ~== (MeanDevAcc mu2 s22 n2) = and [
+      mu1 ~== mu2
+    , s21 ~== s22
+    , n1 == n2
+    ]

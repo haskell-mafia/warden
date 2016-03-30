@@ -1,8 +1,10 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+ {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
     combineMeanAcc
+  , combineMeanDevAcc
+  , combineVariance
   , finalizeMeanDev
   , summarizeNumericState
   , updateMinimum
@@ -81,10 +83,44 @@ summarizeNumericState st =
     stddev
     NoMedian
 
--- FIXME: stability?
+-- FIXME: this is unstable, think of something less dumb
+combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc
+combineMeanDevAcc MeanDevInitial MeanDevInitial = MeanDevInitial
+combineMeanDevAcc MeanDevInitial md2 = md2
+combineMeanDevAcc md1 MeanDevInitial = md1
+combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
+  let muHat = combineMeanAcc (mu1, c1) (mu2, c2)
+      sHat = combineVariance muHat (mu1, s1, c1) (mu2, s2, c2) in
+  MeanDevAcc muHat sHat (c1 + c2)
+{-# INLINE combineMeanDevAcc #-}
+
+-- | Combine variance of two subsets.
+combineVariance :: MeanAcc -- ^ Combined mean.
+                -> (MeanAcc, Maybe Variance, Count) -- ^ First sample.
+                -> (MeanAcc, Maybe Variance, Count) -- ^ Second sample.
+                -> Maybe Variance
+combineVariance _ (_, Nothing, _) (_, Nothing, _) =
+  Nothing
+combineVariance _ (_, Just (Variance s1), _) (_, Nothing, _) =
+  Just $ Variance s1
+combineVariance _ (_, Nothing, _) (_, Just (Variance s2), _) =
+  Just $ Variance s2
+combineVariance (MeanAcc muHat) (MeanAcc mu1, Just (Variance s1), Count c1) (MeanAcc mu2, Just (Variance s2), Count c2) =
+  let t1 = c1' * (s1 + (mu1 ** two))
+      t2 = c2' * (s2 + (mu2 ** two)) in
+  Just . Variance $ ((t1 + t2) / (c1' + c2')) - (muHat ** two)
+  where
+    c1' = fromIntegral c1
+
+    c2' = fromIntegral c2
+
+    two = 2.0 :: Double
+{-# INLINE combineVariance #-}
+
+-- | Combine mean of two subsets, given subset means and size.
 combineMeanAcc :: (MeanAcc, Count) -> (MeanAcc, Count) -> MeanAcc
 combineMeanAcc (MeanAcc mu1, Count c1) (MeanAcc mu2, Count c2) =
   let c1' = fromIntegral c1
       c2' = fromIntegral c2 in
-  MeanAcc $ (mu1 * c1') + (mu2 * c2') / (c1' + c2')
+  MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
 {-# INLINE combineMeanAcc #-}
