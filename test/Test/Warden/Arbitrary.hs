@@ -596,3 +596,12 @@ instance Arbitrary KAcc where
 
 instance Arbitrary StdDevAcc where
   arbitrary = fmap StdDevAcc (choose (0.0, 10000.0))
+
+instance Arbitrary MeanAcc where
+  arbitrary = fmap MeanAcc arbitrary
+
+instance Arbitrary MeanDevAcc where
+  arbitrary = oneof [
+      pure MeanDevInitial
+    , MeanDevAcc <$> arbitrary <*> arbitrary <*> arbitrary
+    ]

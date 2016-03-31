@@ -63,6 +63,10 @@ prepareNumbers =
 prepareFolds :: IO ([Row], [ByteString])
 prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
 
+prepareMeanDevAccs :: IO [MeanDevAcc]
+prepareMeanDevAccs =
+  generate' (Deterministic 8642) (GenSize 100) $ vectorOf 10000 arbitrary
+
 benchABDecode :: NonEmpty ViewFile -> IO ()
 benchABDecode vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -88,6 +92,9 @@ benchUpdateTextCounts rs = foldl' (flip (updateTextCounts (TextFreeformThreshold
 benchUpdateNumericState :: [Double] -> NumericState
 benchUpdateNumericState ns = foldl' updateNumericState initialNumericState ns
 
+benchCombineMeanDevAcc :: [MeanDevAcc] -> MeanDevAcc
+benchCombineMeanDevAcc mdas = foldl' combineMeanDevAcc MeanDevInitial mdas
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -106,8 +113,9 @@ main = do
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]
-        , env prepareNumbers $ \ ~(ns) ->
+        , env ((,) <$> prepareNumbers <*> prepareMeanDevAccs) $ \ ~(ns, mdas) ->
            bgroup "numerics" $ [
                 bench "updateNumericState/10000" $ nf benchUpdateNumericState ns
+             ,  bench "combineMeanDevAcc/10000" $ nf benchCombineMeanDevAcc mdas
              ]
         ]
