@@ -21,12 +21,12 @@ import           Test.Warden.Arbitrary
 import           Warden.Data
 import           Warden.Numeric
 
-unstableMean :: (Num a, Fractional a) => [a] -> a
-unstableMean xs =
+textbookMean :: (Num a, Fractional a) => [a] -> a
+textbookMean xs =
   (sum xs) / (fromIntegral $ length xs)
 
-unstableVariance :: (Num a, Fractional a) => a -> [a] -> a
-unstableVariance mu xs =
+textbookVariance :: (Num a, Fractional a) => a -> [a] -> a
+textbookVariance mu xs =
   (foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs) / fromIntegral (length xs)
   where
     two :: Int
@@ -85,8 +85,8 @@ prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   let mda = foldl updateMeanDev MeanDevInitial xs
       nsMeanDev = finalizeMeanDev mda
-      mu = unstableMean xs
-      var = unstableVariance mu xs
+      mu = textbookMean xs
+      var = textbookVariance mu xs
       sd = StdDev $ sqrt var
       uMeanDev = (Mean mu, sd) in
   (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevCount mda)
@@ -99,21 +99,20 @@ prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double))
   associativity updateMeanDev MeanDevInitial xs finalizeMeanDev
 
 prop_combineMeanDevAcc :: Property
-prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n arbitrary) $ \xs ->
+prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   let m = n `div` 2
-      mu = unstableMean xs
-      var = unstableVariance mu xs
-      mda = MeanDevAcc (MeanAcc mu) (Just $ Variance var) (Count n)
+      mda = foldl updateMeanDev MeanDevInitial xs
       xs1 = take m xs
       xs2 = drop m xs
-      mu1 = MeanAcc $ unstableMean xs1
-      mu2 = MeanAcc $ unstableMean xs2
-      var1 = Just . Variance $ unstableVariance (unMeanAcc mu1) xs1
-      var2 = Just . Variance $ unstableVariance (unMeanAcc mu2) xs2
-      mda1 = MeanDevAcc mu1 var1 (Count m)
-      mda2 = MeanDevAcc mu2 var2 (Count m)
+      mda1 = foldl updateMeanDev MeanDevInitial xs1
+      mda2 = foldl updateMeanDev MeanDevInitial xs2
       mda' = combineMeanDevAcc mda1 mda2 in
   mda ~~~ mda'
+
+prop_tripping_StdDevAcc :: KAcc -> StdDevAcc -> Property
+prop_tripping_StdDevAcc ka sda =
+  let sda' = stdDevAccFromVariance ka $ varianceFromStdDevAcc ka sda in
+  sda ~~~ sda'
 
 return []
 tests :: IO Bool

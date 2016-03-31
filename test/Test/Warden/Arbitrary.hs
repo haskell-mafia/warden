@@ -574,10 +574,10 @@ instance AEq MeanAcc where
 
   (MeanAcc x) ~== (MeanAcc y) = x ~== y
 
-instance AEq Variance where
+instance AEq StdDevAcc where
   (===) = (==)
 
-  (Variance x) ~== (Variance y) = x ~== y
+  (StdDevAcc x) ~== (StdDevAcc y) = x ~== y
 
 instance AEq MeanDevAcc where
   (===) = (==)
@@ -590,3 +590,9 @@ instance AEq MeanDevAcc where
     , s21 ~== s22
     , n1 == n2
     ]
+
+instance Arbitrary KAcc where
+  arbitrary = fmap (KAcc . unNPlus) arbitrary
+
+instance Arbitrary StdDevAcc where
+  arbitrary = fmap StdDevAcc (choose (0.0, 10000.0))

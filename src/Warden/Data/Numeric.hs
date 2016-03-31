@@ -16,8 +16,8 @@ module Warden.Data.Numeric (
   , NumericState(..)
   , NumericSummary(..)
   , StdDev(..)
+  , StdDevAcc(..)
   , Variance(..)
-  , fromVariance
   , initialNumericState
   , mkStdDev
   , stateMaximum
@@ -101,13 +101,17 @@ data Median =
 
 instance NFData Median
 
-newtype Variance = Variance { getVariance :: Double }
+newtype StdDevAcc = StdDevAcc { unStdDevAcc :: Double }
   deriving (Eq, Show, ToJSON, FromJSON, Generic)
 
-instance NFData Variance
+instance NFData StdDevAcc
 
-fromVariance :: Variance -> StdDev
-fromVariance = StdDev . sqrt . getVariance
+newtype Variance =
+  Variance {
+    unVariance :: Double
+  } deriving (Eq, Show, Generic)
+
+instance NFData Variance
 
 data StdDev =
     NoStdDev
@@ -134,7 +138,7 @@ instance NFData NumericSummary
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe Variance) {-# UNPACK #-} !Count
+  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe StdDevAcc) {-# UNPACK #-} !Count
   deriving (Eq, Show, Generic)
 
 instance NFData MeanDevAcc

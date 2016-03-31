@@ -4,13 +4,16 @@
 module Warden.Numeric (
     combineMeanAcc
   , combineMeanDevAcc
-  , combineVariance
+  , combineStdDevAcc
   , finalizeMeanDev
+  , finalizeStdDevAcc
+  , stdDevAccFromVariance
   , summarizeNumericState
   , updateMinimum
   , updateMaximum
   , updateMeanDev
   , updateNumericState
+  , varianceFromStdDevAcc
   ) where
 
 import           Control.Lens ((%~), (^.))
@@ -33,7 +36,9 @@ updateMaximum !acc x =
   in acc <> x'
 {-# INLINE updateMaximum #-}
 
--- Numerically-stable mean and variance.
+-- Minimal-error mean and variance.
+--
+-- From Knuth (TAoCP v2, Seminumerical Algorithms, p232).
 --
 -- \( \frac{1}{n} \sum_{x \in X} x \equiv M_1 = X_1, M_k = M_{k-1} + \frac{(X_k - M_{k-1})}{k} \)
 updateMeanDev :: Real a
@@ -53,15 +58,17 @@ updateMeanDev !macc x =
           m'    = MeanAcc $ m + delta / (fromIntegral i)
           i'    = Count $ i + 1
           s'    = case s of
-                    Nothing         -> Just $ Variance 0
-                    Just (Variance var) -> Just . Variance $ var + delta * (v - (unMeanAcc m'))
+                    Nothing ->
+                      Just $ StdDevAcc 0
+                    Just (StdDevAcc sda) ->
+                      Just . StdDevAcc $ sda + (delta * (v - (unMeanAcc m')))
       in MeanDevAcc m' s' i'
 {-# INLINE updateMeanDev #-}
 
 finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
 finalizeMeanDev (MeanDevAcc _ Nothing _) = (NoMean, NoStdDev)
-finalizeMeanDev (MeanDevAcc mn (Just var) _) = (Mean (unMeanAcc mn), fromVariance var)
+finalizeMeanDev (MeanDevAcc mn (Just sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
 
 -- FIXME: median
 updateNumericState :: Real a
@@ -83,32 +90,51 @@ summarizeNumericState st =
     stddev
     NoMedian
 
--- FIXME: this is unstable, think of something less dumb
+-- FIXME: this might commute error, requires further thought.
 combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc
 combineMeanDevAcc MeanDevInitial MeanDevInitial = MeanDevInitial
 combineMeanDevAcc MeanDevInitial md2 = md2
 combineMeanDevAcc md1 MeanDevInitial = md1
 combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
-  let muHat = combineMeanAcc (mu1, c1) (mu2, c2)
-      sHat = combineVariance muHat (mu1, s1, c1) (mu2, s2, c2) in
-  MeanDevAcc muHat sHat (c1 + c2)
+  let mu' = combineMeanAcc (mu1, c1) (mu2, c2)
+      sda' = combineStdDevAcc mu' (mu1, s1, c1) (mu2, s2, c2)
+      -- KAccs are off-by-one from the actual number of values seen, so
+      -- subtract one from the sum to prevent it becoming off-by-two.
+      c' = c1 + c2 - (Count 1) in
+  MeanDevAcc mu' sda' c'
 {-# INLINE combineMeanDevAcc #-}
 
--- | Combine variance of two subsets.
-combineVariance :: MeanAcc -- ^ Combined mean.
-                -> (MeanAcc, Maybe Variance, Count) -- ^ First sample.
-                -> (MeanAcc, Maybe Variance, Count) -- ^ Second sample.
-                -> Maybe Variance
-combineVariance _ (_, Nothing, _) (_, Nothing, _) =
+-- | Combine stddev accumulators of two subsets by converting to variance
+-- (pretty cheap), combining the variances (less cheap), and converting back.
+--
+-- There's almost certainly a better way to do this.
+combineStdDevAcc :: MeanAcc -- ^ Combined mean.
+                -> (MeanAcc, Maybe StdDevAcc, KAcc) -- ^ First subset.
+                -> (MeanAcc, Maybe StdDevAcc, KAcc) -- ^ Second subset.
+                -> Maybe StdDevAcc
+combineStdDevAcc _ (_, Nothing, _) (_, Nothing, _) =
   Nothing
-combineVariance _ (_, Just (Variance s1), _) (_, Nothing, _) =
-  Just $ Variance s1
-combineVariance _ (_, Nothing, _) (_, Just (Variance s2), _) =
-  Just $ Variance s2
-combineVariance (MeanAcc muHat) (MeanAcc mu1, Just (Variance s1), Count c1) (MeanAcc mu2, Just (Variance s2), Count c2) =
-  let t1 = c1' * (s1 + (mu1 ** two))
-      t2 = c2' * (s2 + (mu2 ** two)) in
-  Just . Variance $ ((t1 + t2) / (c1' + c2')) - (muHat ** two)
+combineStdDevAcc _ (_, Just (StdDevAcc s1), _) (_, Nothing, _) =
+  Just $ StdDevAcc s1
+combineStdDevAcc _ (_, Nothing, _) (_, Just (StdDevAcc s2), _) =
+  Just $ StdDevAcc s2
+combineStdDevAcc muHat (mu1, Just sda1, c1) (mu2, Just sda2, c2) =
+  let var1 = varianceFromStdDevAcc c1 sda1
+      var2 = varianceFromStdDevAcc c2 sda2 in
+  Just . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
+    combineVariance muHat (mu1, var1, c1) (mu2, var2, c2)
+{-# INLINE combineStdDevAcc #-}
+
+-- | Combine variances of two subsets of a sample (that is, exact variance of
+-- datasets rather than estimate of variance of population).
+combineVariance :: MeanAcc -- ^ Combined mean.
+                -> (MeanAcc, Variance, KAcc) -- ^ First subset.
+                -> (MeanAcc, Variance, KAcc) -- ^ Second subset.
+                -> Variance
+combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) =
+  let t1 = c1' * (var1 + (mu1 ** two))
+      t2 = c2' * (var2 + (mu2 ** two)) in
+  Variance $ ((t1 + t2) / (c1' + c2')) - (muHat ** two)
   where
     c1' = fromIntegral c1
 
@@ -124,3 +150,22 @@ combineMeanAcc (MeanAcc mu1, Count c1) (MeanAcc mu2, Count c2) =
       c2' = fromIntegral c2 in
   MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
 {-# INLINE combineMeanAcc #-}
+
+finalizeStdDevAcc :: KAcc -> StdDevAcc -> StdDev
+finalizeStdDevAcc ka sda =
+  stdDevFromVariance $ varianceFromStdDevAcc ka sda
+{-# INLINE finalizeStdDevAcc #-}
+
+varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
+varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =
+  Variance $ sda / fromIntegral (n - 1)
+{-# INLINE varianceFromStdDevAcc #-}
+
+stdDevAccFromVariance :: KAcc -> Variance -> StdDevAcc
+stdDevAccFromVariance (KAcc n) (Variance var) =
+  StdDevAcc $ var * fromIntegral (n - 1)
+{-# INLINE stdDevAccFromVariance #-}
+
+stdDevFromVariance :: Variance -> StdDev
+stdDevFromVariance = StdDev . sqrt . unVariance
+{-# INLINE stdDevFromVariance #-}
