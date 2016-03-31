@@ -27,8 +27,6 @@ module Warden.Data.Numeric (
 
 import           Control.Lens (makeLenses)
 
-import           Data.Aeson (ToJSON, FromJSON)
-
 import           GHC.Generics (Generic)
 
 import           P
@@ -76,7 +74,7 @@ instance Monoid Maximum where
 newtype KAcc =
   KAcc {
     getKAcc :: Int
-  } deriving (Eq, Show, ToJSON, FromJSON, Generic, Num)
+  } deriving (Eq, Show, Generic, Num)
 
 instance NFData KAcc
 
@@ -84,7 +82,7 @@ instance NFData KAcc
 newtype MeanAcc =
   MeanAcc {
     unMeanAcc :: Double
-  } deriving (Eq, Show, ToJSON, FromJSON, Generic)
+  } deriving (Eq, Show, Generic)
 
 instance NFData MeanAcc
 
@@ -106,7 +104,7 @@ instance NFData Median
 newtype StdDevAcc =
   StdDevAcc {
     unStdDevAcc :: Double
-  } deriving (Eq, Show, ToJSON, FromJSON, Generic)
+  } deriving (Eq, Show, Generic)
 
 instance NFData StdDevAcc
 
