@@ -21,6 +21,7 @@ module Warden.Sampling.Reservoir (
   , xQuantile
   ) where
 
+import           Data.AEq (AEq, (===), (~==))
 import           Data.Vector.Unboxed (Vector)
 
 import           P
@@ -46,6 +47,10 @@ newtype Probability =
   Probability {
     unProbability :: Double
   } deriving (Eq, Show)
+
+instance AEq Probability where
+  (Probability p) === (Probability q) = p === q
+  (Probability p) ~== (Probability q) = p ~== q
 
 probability :: Double -> Maybe Probability
 probability p
