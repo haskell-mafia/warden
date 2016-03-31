@@ -83,12 +83,16 @@ prop_updateMaximum_associative n = forAll (vectorOf n (arbitrary :: Gen Double))
 
 prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  let nsMeanDev = finalizeMeanDev $ foldl updateMeanDev MeanDevInitial xs
+  let mda = foldl updateMeanDev MeanDevInitial xs
+      nsMeanDev = finalizeMeanDev mda
       mu = unstableMean xs
       var = unstableVariance mu xs
       sd = StdDev $ sqrt var
       uMeanDev = (Mean mu, sd) in
-  nsMeanDev ~~~ uMeanDev
+  (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevCount mda)
+  where
+    meanDevCount MeanDevInitial = Nothing
+    meanDevCount (MeanDevAcc _ _ (Count c)) = Just c
 
 prop_updateMeanDev_associative :: Int -> Property
 prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
