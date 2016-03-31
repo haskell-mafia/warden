@@ -89,10 +89,10 @@ prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \
       var = textbookVariance mu xs
       sd = StdDev $ sqrt var
       uMeanDev = (Mean mu, sd) in
-  (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevCount mda)
+  (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevKAcc mda)
   where
-    meanDevCount MeanDevInitial = Nothing
-    meanDevCount (MeanDevAcc _ _ (Count c)) = Just c
+    meanDevKAcc MeanDevInitial = Nothing
+    meanDevKAcc (MeanDevAcc _ _ (KAcc c)) = Just c
 
 prop_updateMeanDev_associative :: Int -> Property
 prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->

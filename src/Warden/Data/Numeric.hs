@@ -6,7 +6,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Numeric (
-    Count(..)
+    KAcc(..)
   , Maximum(..)
   , Mean(..)
   , MeanAcc(..)
@@ -71,12 +71,14 @@ instance Monoid Maximum where
           else Maximum prev
   {-# INLINE mappend #-}
 
-newtype Count =
-  Count {
-    getCount :: Int
+-- | Counter param for mean/stddev calculation. Equal to one plus the number
+-- of records seen.
+newtype KAcc =
+  KAcc {
+    getKAcc :: Int
   } deriving (Eq, Show, ToJSON, FromJSON, Generic, Num)
 
-instance NFData Count
+instance NFData KAcc
 
 -- | Preliminary mean, still accumulating.
 newtype MeanAcc =
@@ -101,8 +103,10 @@ data Median =
 
 instance NFData Median
 
-newtype StdDevAcc = StdDevAcc { unStdDevAcc :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON, Generic)
+newtype StdDevAcc =
+  StdDevAcc {
+    unStdDevAcc :: Double
+  } deriving (Eq, Show, ToJSON, FromJSON, Generic)
 
 instance NFData StdDevAcc
 
@@ -138,7 +142,7 @@ instance NFData NumericSummary
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe StdDevAcc) {-# UNPACK #-} !Count
+  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe StdDevAcc) {-# UNPACK #-} !KAcc
   deriving (Eq, Show, Generic)
 
 instance NFData MeanDevAcc

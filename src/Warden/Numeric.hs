@@ -1,4 +1,4 @@
- {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
@@ -46,17 +46,17 @@ updateMeanDev :: Real a
 updateMeanDev !macc x =
   let x' = (fromRational . toRational) x in case macc of
   MeanDevInitial ->
-    let i = Count 1
+    let i = KAcc 1
         m = MeanAcc 0
         s = Nothing
     in update' m s i x'
   (MeanDevAcc m s i) ->
     update' m s i x'
   where
-    update' (MeanAcc m) s (Count i) v =
+    update' (MeanAcc m) s (KAcc i) v =
       let delta = v - m
           m'    = MeanAcc $ m + delta / (fromIntegral i)
-          i'    = Count $ i + 1
+          i'    = KAcc $ i + 1
           s'    = case s of
                     Nothing ->
                       Just $ StdDevAcc 0
@@ -100,7 +100,7 @@ combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
       sda' = combineStdDevAcc mu' (mu1, s1, c1) (mu2, s2, c2)
       -- KAccs are off-by-one from the actual number of values seen, so
       -- subtract one from the sum to prevent it becoming off-by-two.
-      c' = c1 + c2 - (Count 1) in
+      c' = c1 + c2 - (KAcc 1) in
   MeanDevAcc mu' sda' c'
 {-# INLINE combineMeanDevAcc #-}
 
@@ -144,8 +144,8 @@ combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc m
 {-# INLINE combineVariance #-}
 
 -- | Combine mean of two subsets, given subset means and size.
-combineMeanAcc :: (MeanAcc, Count) -> (MeanAcc, Count) -> MeanAcc
-combineMeanAcc (MeanAcc mu1, Count c1) (MeanAcc mu2, Count c2) =
+combineMeanAcc :: (MeanAcc, KAcc) -> (MeanAcc, KAcc) -> MeanAcc
+combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) =
   let c1' = fromIntegral c1
       c2' = fromIntegral c2 in
   MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
