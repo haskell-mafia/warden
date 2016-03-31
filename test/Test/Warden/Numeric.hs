@@ -22,10 +22,12 @@ import           Warden.Data
 import           Warden.Numeric
 
 unstableMean :: (Num a, Fractional a) => [a] -> a
-unstableMean xs = (sum xs) / (fromIntegral $ length xs)
+unstableMean xs =
+  (sum xs) / (fromIntegral $ length xs)
 
 unstableVariance :: (Num a, Fractional a) => a -> [a] -> a
-unstableVariance mu = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0
+unstableVariance mu xs =
+  (foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs) / fromIntegral (length xs)
   where
     two :: Int
     two = 2
@@ -82,7 +84,6 @@ prop_updateMaximum_associative n = forAll (vectorOf n (arbitrary :: Gen Double))
 prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   let nsMeanDev = finalizeMeanDev $ foldl updateMeanDev MeanDevInitial xs
-
       mu = unstableMean xs
       var = unstableVariance mu xs
       sd = StdDev $ sqrt var
