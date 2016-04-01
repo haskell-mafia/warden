@@ -1,0 +1,418 @@
+{
+    "results": [
+        {
+            "status": {
+                "status": "pass"
+            },
+            "type": "row",
+            "description": "view-row-counts"
+        }
+    ],
+    "warden-params": {
+        "warden-version": "0.0.1-20160401040702-fac47bb-M",
+        "num-caps": 8,
+        "run-id": "696c595946cd6c51"
+    },
+    "version": "v1",
+    "metadata": {
+        "check-dates": [
+            "1804-05-11",
+            "1804-05-25",
+            "1804-06-28",
+            "1804-08-18",
+            "1804-08-24",
+            "1804-08-31",
+            "1804-10-06",
+            "1804-10-14",
+            "1804-10-15",
+            "1804-10-29",
+            "5301-07-17",
+            "5301-07-19",
+            "5301-07-24",
+            "5301-09-05",
+            "8997-01-15",
+            "8997-01-31",
+            "8997-05-05",
+            "8997-05-08",
+            "8997-05-21",
+            "8997-05-28",
+            "8997-10-06",
+            "8997-10-18",
+            "8997-11-11",
+            "8997-11-24",
+            "9801-08-28",
+            "9801-09-12",
+            "9801-09-28",
+            "9801-09-30",
+            "9801-09-31",
+            "9801-11-07",
+            "9801-11-16",
+            "9801-11-18",
+            "9801-11-27"
+        ],
+        "check-params": {
+            "force": "force",
+            "separator": "|",
+            "freeform-text-threshold": 100,
+            "verbosity": "quiet",
+            "include-dot-files": "no-include-dot-files",
+            "line-bound": 65536,
+            "schema-file": null,
+            "exit-type": "check-status-exit"
+        },
+        "counts": {
+            "field-counts": [
+                9
+            ],
+            "field-looks": [
+                [
+                    {
+                        "count": 359740,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22737,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 507,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327578,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3805,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 359848,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22590,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 478,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327739,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3712,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 361200,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22908,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 468,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326150,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3641,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360601,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22901,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 471,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326555,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3839,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360133,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22754,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 525,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327149,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3806,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360309,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 23011,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 465,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326952,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3630,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360089,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22699,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 467,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327376,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3736,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 361187,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22559,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 476,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326438,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3707,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360761,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22678,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 461,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326645,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3822,
+                        "looks": "looks-boolean"
+                    }
+                ]
+            ],
+            "bad-rows": 0,
+            "total-rows": 6714367,
+            "text-counts": [
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                }
+            ]
+        },
+        "check-files": [
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/chickenpox/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/chickenpox/stan",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/chickenpox/token",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/equine morbillivirus/chef",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/equine morbillivirus/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/equine morbillivirus/timmy",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=11/gou virus/stan",
+            "warden-gen-waldorf/measles/year=1804/month=05/day=25/token",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/equine morbillivirus/token",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/gou virus/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/gou virus/garrison",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/gou virus/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/norovirus/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/norovirus/stan",
+            "warden-gen-waldorf/measles/year=1804/month=06/day=28/smallpox/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=18/timmy",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/chickenpox/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/chickenpox/stan",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/dengue/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/dengue/timmy",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/norovirus/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=24/norovirus/chef",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/camelpox/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/camelpox/chef",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/camelpox/garrison",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/camelpox/stan",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/chickenpox/garrison",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/chickenpox/token",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/echovirus/timmy",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/equine morbillivirus/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=08/day=31/equine morbillivirus/chef",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=06/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=06/chef",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=06/kyle",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=14/chef",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=14/garrison",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=14/stan",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=14/token",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=15/norovirus/chef",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=15/norovirus/token",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/chickenpox/garrison",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/chickenpox/stan",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/dengue/chef",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/dengue/timmy",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/rotavirus/cartman",
+            "warden-gen-waldorf/measles/year=1804/month=10/day=29/rotavirus/chef",
+            "warden-gen-waldorf/measles/year=5301/month=07/day=17/token",
+            "warden-gen-waldorf/measles/year=5301/month=07/day=19/kyle",
+            "warden-gen-waldorf/measles/year=5301/month=07/day=19/timmy",
+            "warden-gen-waldorf/measles/year=5301/month=07/day=24/cartman",
+            "warden-gen-waldorf/measles/year=5301/month=07/day=24/garrison",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/measles/garrison",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/measles/token",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/norovirus/garrison",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/norovirus/kyle",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/norovirus/token",
+            "warden-gen-waldorf/measles/year=5301/month=09/day=05/rotavirus/token",
+            "warden-gen-waldorf/measles/year=8997/month=01/day=15/chef",
+            "warden-gen-waldorf/measles/year=8997/month=01/day=15/kyle",
+            "warden-gen-waldorf/measles/year=8997/month=01/day=15/timmy",
+            "warden-gen-waldorf/measles/year=8997/month=01/day=31/garrison",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/camelpox/garrison",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/camelpox/token",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/gou virus/cartman",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/gou virus/timmy",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/gou virus/token",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/norovirus/cartman",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=05/norovirus/garrison",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=08/cartman",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=08/garrison",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=21/timmy",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=28/camelpox/token",
+            "warden-gen-waldorf/measles/year=8997/month=05/day=28/rotavirus/chef",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/chickenpox/stan",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/chickenpox/token",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/norovirus/cartman",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/norovirus/chef",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/norovirus/kyle",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=06/norovirus/stan",
+            "warden-gen-waldorf/measles/year=8997/month=10/day=18/kyle",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/echovirus/stan",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/equine morbillivirus/cartman",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/equine morbillivirus/chef",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/equine morbillivirus/kyle",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/equine morbillivirus/timmy",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/gou virus/chef",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=11/gou virus/kyle",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=24/chef",
+            "warden-gen-waldorf/measles/year=8997/month=11/day=24/kyle",
+            "warden-gen-waldorf/measles/year=9801/month=08/day=28/cartman",
+            "warden-gen-waldorf/measles/year=9801/month=08/day=28/chef",
+            "warden-gen-waldorf/measles/year=9801/month=08/day=28/kyle",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/chickenpox/timmy",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/rotavirus/chef",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/rotavirus/kyle",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/rotavirus/token",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/smallpox/garrison",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/smallpox/stan",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/smallpox/timmy",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=12/smallpox/token",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=28/cartman",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=28/timmy",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=30/garrison",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=30/stan",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=30/timmy",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=31/garrison",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=31/kyle",
+            "warden-gen-waldorf/measles/year=9801/month=09/day=31/timmy",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=07/token",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=16/cartman",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=16/chef",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=18/kyle",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=27/chickenpox/chef",
+            "warden-gen-waldorf/measles/year=9801/month=11/day=27/monkeypox/stan"
+        ]
+    },
+    "view": "warden-gen-waldorf/measles/",
+    "timestamp": "2016-04-01 04:09:19"
+}
