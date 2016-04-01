@@ -101,6 +101,12 @@ data Median =
 
 instance NFData Median
 
+-- | Accumulator for standard deviation calculation. Closer to variance than 
+-- standard deviation to avoid repeated square roots.
+--
+-- \( acc = \sigma^{2} (k - 1) \)
+--
+-- Where `acc` is 'StdDevAcc' and `k` is the 'KAcc'.
 newtype StdDevAcc =
   StdDevAcc {
     unStdDevAcc :: Double
