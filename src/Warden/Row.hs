@@ -46,6 +46,7 @@ import           System.IO
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Numeric
 import           Warden.Row.Parser
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -171,6 +172,7 @@ updateSVParseState fft !st row =
   . (numFields %~ (updateNumFields row))
   . (fieldLooks %~ (updateFields row))
   . (textCounts %~ (updateTextCounts fft row))
+  . (numericState %~ (updateFieldNumericState row))
   $!! st
  where
   countGood (SVFields _)   = RowCount 1
@@ -190,4 +192,21 @@ updateSVParseState fft !st row =
   updateFields (SVFields !v) (FieldLookCount !a) =
     FieldLookCount $!! V.zipWith updateFieldLooks v a
   updateFields _ !a = a
+
+  updateFieldNumericState (SVFields !v) NoFieldNumericState =
+    FieldNumericState $ V.zipWith updateFieldNumericState' v $
+      V.replicate (V.length v) initialNumericState
+  updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
+    FieldNumericState $!! V.zipWith updateFieldNumericState' v a
+  updateFieldNumericState _ !a = a
 {-# INLINE updateSVParseState #-}
+
+-- FIXME: parsing fields twice
+updateFieldNumericState' :: ByteString -> NumericState -> NumericState
+updateFieldNumericState' t !acc =
+  case AB.parseOnly numericFieldP t of
+    Left _ ->
+      acc
+    Right (NumericField n) ->
+      updateNumericState acc n
+{-# INLINE updateFieldNumericState' #-}

@@ -13,6 +13,7 @@
 module Warden.Data.Row (
     FieldCount(..)
   , FieldLookCount(..)
+  , FieldNumericState(..)
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
@@ -27,6 +28,7 @@ module Warden.Data.Row (
   , emptyLookCountVector
   , fieldLooks
   , initialSVParseState
+  , numericState
   , numFields
   , renderFieldCount
   , renderObservationCount
@@ -57,6 +59,7 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Field
+import           Warden.Data.Numeric
 import           Warden.Data.TextCounts
 
 newtype RawRecord =
@@ -159,13 +162,21 @@ data FieldLookCount =
 
 instance NFData FieldLookCount
 
+data FieldNumericState =
+    FieldNumericState !(V.Vector NumericState)
+  | NoFieldNumericState
+  deriving (Eq, Show, Generic)
+
+instance NFData FieldNumericState
+
 data SVParseState =
   SVParseState {
-    _badRows     :: {-# UNPACK #-} !RowCount
-  , _totalRows   :: {-# UNPACK #-} !RowCount
-  , _numFields   :: !(Set FieldCount)
-  , _fieldLooks  :: !FieldLookCount
-  , _textCounts  :: !TextCounts
+    _badRows :: {-# UNPACK #-} !RowCount
+  , _totalRows :: {-# UNPACK #-} !RowCount
+  , _numFields :: !(Set FieldCount)
+  , _fieldLooks :: !FieldLookCount
+  , _textCounts :: !TextCounts
+  , _numericState :: !FieldNumericState
   } deriving (Eq, Show, Generic)
 
 instance NFData SVParseState
@@ -173,18 +184,20 @@ instance NFData SVParseState
 makeLenses ''SVParseState
 
 resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
-resolveSVParseState fft = foldr update initialSVParseState
-  where
-    update s !acc =
-        (badRows %~ ((s ^. badRows) +))
-      . (totalRows %~ ((s ^. totalRows) +))
-      . (numFields %~ ((s ^. numFields) `S.union`))
-      . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-      . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
-      $! acc
+resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
 
+combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
+combineSVParseState fft s !acc =
+    (badRows %~ ((s ^. badRows) +))
+  . (totalRows %~ ((s ^. totalRows) +))
+  . (numFields %~ ((s ^. numFields) `S.union`))
+  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
+  . (numericState %~ ((s ^. numericState) `combineNumericState`))
+  $! acc
+  where
     combineTextCounts' = combineTextCounts fft
-{-# INLINE resolveSVParseState #-}
+{-# INLINE combineSVParseState #-}
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
 -- the parser.
@@ -202,4 +215,4 @@ renderParsedField = T.pack . show
 
 initialSVParseState :: SVParseState
 initialSVParseState =
-  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts
+  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts NoFieldNumericState

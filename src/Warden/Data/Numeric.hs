@@ -13,6 +13,7 @@ module Warden.Data.Numeric (
   , MeanDevAcc(..)
   , Median(..)
   , Minimum(..)
+  , NumericField(..)
   , NumericState(..)
   , NumericSummary(..)
   , StdDev(..)
@@ -231,3 +232,9 @@ initialNumericState =
     NoMinimum
     NoMaximum
     MeanDevInitial
+
+-- | For numeric purposes we treat all numbers as reals.
+newtype NumericField =
+  NumericField {
+    unNumericField :: Double
+  } deriving (Eq, Show)

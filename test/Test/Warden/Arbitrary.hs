@@ -368,6 +368,7 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
+                           <*> arbitrary
 
 instance Arbitrary WardenVersion where
   arbitrary = WardenVersion <$> elements southpark
@@ -568,3 +569,9 @@ instance Arbitrary RowCountSummary where
       <*> arbitrary
       <*> arbitrary
       <*> arbitrary
+
+instance Arbitrary FieldNumericState where
+  arbitrary = oneof [
+      pure NoFieldNumericState
+    , (FieldNumericState . V.fromList) <$> (listOf1 arbitrary)
+    ]

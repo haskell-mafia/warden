@@ -6,6 +6,7 @@
 module Warden.Row.Parser (
     escapedFieldP
   , fieldP
+  , numericFieldP
   , rawFieldP
   , rawRecordP
   , sepByByte1P
@@ -25,6 +26,7 @@ import qualified Data.Vector as V
 
 import           P
 
+import           Warden.Data.Numeric
 import           Warden.Data.Row
 
 rawRecordP :: Separator -> Parser RawRecord
@@ -104,11 +106,26 @@ doubleQuote = fromIntegral $ ord '"'
 
 fieldP :: Parser ParsedField
 fieldP = choice [
-    void (signed (decimal :: Parser Integer) <* endOfInput) >> pure ParsedIntegral
-  , void (double <* endOfInput) >> pure ParsedReal
+    void integralFieldP >> pure ParsedIntegral
+  , void realFieldP >> pure ParsedReal
   , void (boolP <* endOfInput) >> pure ParsedBoolean
   ]
 {-# INLINE fieldP #-}
+
+integralFieldP :: Parser Integer
+integralFieldP = signed (decimal :: Parser Integer) <* endOfInput
+{-# INLINE integralFieldP #-}
+
+realFieldP :: Parser Double
+realFieldP = double <* endOfInput
+{-# INLINE realFieldP #-}
+
+numericFieldP :: Parser NumericField
+numericFieldP = choice [
+    NumericField <$> realFieldP
+  , (NumericField . fromIntegral) <$> integralFieldP
+  ]
+{-# INLINE numericFieldP #-}
 
 boolP :: Parser ()
 boolP = trueP <|> falseP
