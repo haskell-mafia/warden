@@ -5,17 +5,20 @@
 module Warden.Serial.Json.Marker(
     fromFileMarker
   , toFileMarker
+  , fromRowCountSummary
+  , toRowCountSummary
   , fromViewMarker
   , toViewMarker
   ) where
 
 import           Data.Aeson (ToJSON, FromJSON)
-import           Data.Aeson ((.:), (.=), object, toJSON, parseJSON)
+import           Data.Aeson ((.:), (.:?), (.=), object, toJSON, parseJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           Delorean.Local.Date (Date, renderDate, parseDate)
 import           Delorean.Local.DateTime (DateTime, renderDateTime, parseDateTime)
@@ -26,6 +29,7 @@ import           Warden.Data
 import           Warden.Serial.Json.Check
 import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Param
+import           Warden.Serial.Json.TextCounts
 import           Warden.Serial.Json.View
 
 fromNonEmpty :: ToJSON a => NonEmpty a -> Value
@@ -170,3 +174,32 @@ toViewMarker (Object o) = do
   vm <- toViewMetadata =<< (o .: "metadata")
   pure $ ViewMarker ve wps vi ts crs vm
 toViewMarker x          = typeMismatch "Warden.Data.Marker.ViewMarker" x
+
+fromRowCountSummary :: RowCountSummary -> Value
+fromRowCountSummary (RowCountSummary br tr nfs fas tcs) = object $ [
+    "bad-rows" .= fromRowCount br
+  , "total-rows" .= fromRowCount tr
+  , "field-counts" .= (fmap fromFieldCount $ S.toList nfs)
+  ] <> fieldLooks' <> textCounts'
+  where
+    fieldLooks' = case fas of
+      NoFieldLookCount ->
+        []
+      FieldLookCount fas' ->
+        ["field-looks" .= (fmap fromFieldVector $ V.toList fas')]
+
+    textCounts' = case tcs of
+      NoTextCounts ->
+        []
+      TextCounts tcs' ->
+        ["text-counts" .= (fmap fromUniqueTextCount $ V.toList tcs')]
+
+toRowCountSummary :: Value -> Parser RowCountSummary
+toRowCountSummary (Object o) = do
+  br <- toRowCount =<< (o .: "bad-rows")
+  tr <- toRowCount =<< (o .: "total-rows")
+  nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
+  fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldVector) =<< (o .:? "field-looks")
+  tcs <- maybe (pure NoTextCounts) (fmap TextCounts . mapM toUniqueTextCount) =<< (o .:? "text-counts")
+  pure $ RowCountSummary br tr nfs fas tcs
+toRowCountSummary x = typeMismatch "Warden.Data.Marker.RowCountSummary" x

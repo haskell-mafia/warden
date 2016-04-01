@@ -9,6 +9,7 @@ module Warden.Data.Marker (
   , MarkerFailure(..)
   , MarkerStatus(..)
   , MarkerVersion(..)
+  , RowCountSummary(..)
   , ViewMarker(..)
   , ViewMetadata(..)
   , currentMarkerVersion
@@ -18,8 +19,11 @@ module Warden.Data.Marker (
   , markerToFile
   , mkFileMarker
   , mkViewMarker
+  , summarizeSVParseState
   , viewMarkerPath
   ) where
+
+import           Control.Lens ((^.))
 
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill')
@@ -40,6 +44,7 @@ import           P
 import           Warden.Data.Check
 import           Warden.Data.Param
 import           Warden.Data.Row
+import           Warden.Data.TextCounts
 import           Warden.Data.View
 
 data MarkerVersion =
@@ -198,6 +203,24 @@ mkViewMarker :: WardenParams
 mkViewMarker wps v dsc dt vm cs =
   let crs = [summarizeResult RowResult dsc cs] in
   ViewMarker currentMarkerVersion wps v dt crs vm
+
+data RowCountSummary =
+  RowCountSummary {
+    rcsBadRows :: !RowCount
+  , rcsTotalRows :: !RowCount
+  , rcsNumFields :: !(Set FieldCount)
+  , rcsFieldLooks :: !FieldLookCount
+  , rcsTextCounts :: !TextCounts
+  } deriving (Eq, Show)
+
+summarizeSVParseState :: SVParseState -> RowCountSummary
+summarizeSVParseState ps =
+  RowCountSummary
+    (ps ^. badRows)
+    (ps ^. totalRows)
+    (ps ^. numFields)
+    (ps ^. fieldLooks)
+    (ps ^. textCounts)
 
 data ViewMetadata =
   ViewMetadata {

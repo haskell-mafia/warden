@@ -4,6 +4,8 @@
 module Warden.Serial.Json.Row(
     fromFieldCount
   , toFieldCount
+  , fromRowCount
+  , toRowCount
   , fromSVParseState
   , toSVParseState
   , toFieldVector
