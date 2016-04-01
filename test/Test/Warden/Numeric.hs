@@ -7,6 +7,7 @@ module Test.Warden.Numeric where
 import           Data.List (take)
 
 import           Disorder.Core.Property ((~~~))
+import           Disorder.Core.UniquePair (UniquePair)
 
 import           P
 

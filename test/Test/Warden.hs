@@ -10,6 +10,7 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 
 import           Disorder.Core.Property ((~~~))
+import           Disorder.Core.UniquePair (UniquePair(..))
 
 import           P
 
@@ -38,6 +39,9 @@ associativity f y0 xs g =
   where
     left' = g $ foldl f y0 xs
 
-    right' = g $ foldr f' y0 xs
+    right' = g $ foldr (flip f) y0 xs
 
-    f' a b = f b a
+commutativity :: (Show b, AEq b)
+              => (a -> a -> b) -> UniquePair a -> Property
+commutativity f (UniquePair x y) =
+  (f x y) ~~~ (f y x)
