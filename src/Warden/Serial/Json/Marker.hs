@@ -138,8 +138,8 @@ toFileMarker (Object o) = do
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
-fromViewMetadata (ViewMetadata vc ps ds vfs) = object [
-    "counts" .= fromSVParseState vc
+fromViewMetadata (ViewMetadata rcs ps ds vfs) = object [
+    "counts" .= fromRowCountSummary rcs
   , "check-params" .= fromCheckParams ps
   , "check-dates" .= (fmap fromDate $ S.toList ds)
   , "check-files" .= (fmap fromViewFile $ S.toList vfs)
@@ -147,11 +147,11 @@ fromViewMetadata (ViewMetadata vc ps ds vfs) = object [
 
 toViewMetadata :: Value -> Parser ViewMetadata
 toViewMetadata (Object o) = do
-  vc <- toSVParseState =<< (o .: "counts")
+  rcs <- toRowCountSummary =<< (o .: "counts")
   ps <- toCheckParams =<< (o .: "check-params")
   ds <- fmap S.fromList $ mapM toDate =<< (o .: "check-dates")
   vfs <- fmap S.fromList $ mapM toViewFile =<< (o .: "check-files")
-  pure $ ViewMetadata vc ps ds vfs
+  pure $ ViewMetadata rcs ps ds vfs
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 
 fromViewMarker :: ViewMarker -> Value

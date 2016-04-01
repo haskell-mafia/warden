@@ -559,3 +559,12 @@ instance Arbitrary MeanDevAcc where
 
 instance Arbitrary NumericState where
   arbitrary = NumericState <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary RowCountSummary where
+  arbitrary =
+    RowCountSummary
+      <$> arbitrary
+      <*> arbitrary
+      <*> arbitrary
+      <*> arbitrary
+      <*> arbitrary

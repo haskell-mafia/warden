@@ -224,7 +224,7 @@ summarizeSVParseState ps =
 
 data ViewMetadata =
   ViewMetadata {
-      vmViewCounts :: !SVParseState
+      vmViewCounts :: !RowCountSummary
     , vmCheckParams :: !CheckParams
     , vmDates :: !(Set Date)
     , vmViewFiles :: !(Set ViewFile)

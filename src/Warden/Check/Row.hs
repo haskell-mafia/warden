@@ -108,8 +108,9 @@ finalizeSVParseState ps sch ds vfs sv =
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
-      vfs' = S.fromList $ NE.toList vfs in
-  (st, ViewMetadata sv ps ds vfs')
+      vfs' = S.fromList $ NE.toList vfs
+      rcs = summarizeSVParseState sv in
+  (st, ViewMetadata rcs ps ds vfs')
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)

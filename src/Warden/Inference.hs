@@ -21,8 +21,6 @@ module Warden.Inference (
   , viewMarkerMismatch
   ) where
 
-import           Control.Lens ((^.), view)
-
 import           Data.List (zip)
 import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -58,7 +56,7 @@ viewMarkerMismatch a b = do
         then pure ()
         else Left $ ViewMarkerMismatch ctx (T.pack $ show x) (T.pack $ show y)
 
-    fields' vm' = (vmViewCounts $ vmMetadata vm') ^. numFields
+    fields' = rcsNumFields . vmViewCounts . vmMetadata
 
     fft' = checkFreeformThreshold . vmCheckParams . vmMetadata
 
@@ -82,14 +80,14 @@ validateViewMarkers (m:|ms) = go m ms >> checkFails
 fieldLookSum :: ValidViewMarkers -> FieldLookCount
 fieldLookSum =
   foldl' combineFieldLooks NoFieldLookCount . 
-    fmap (view fieldLooks . vmViewCounts . vmMetadata) . unValidViewMarkers
+    fmap (rcsFieldLooks . vmViewCounts . vmMetadata) . unValidViewMarkers
 
 textCountSum :: ValidViewMarkers -> TextCounts
 textCountSum (ValidViewMarkers vms) =
   -- FFTs already validated as the same
   let fft = checkFreeformThreshold . vmCheckParams . vmMetadata $ NE.head vms in
   foldl' (combineTextCounts fft) NoTextCounts $
-    fmap (view textCounts . vmViewCounts . vmMetadata) vms
+    fmap (rcsTextCounts . vmViewCounts . vmMetadata) vms
 
 inferForms :: ValidViewMarkers -> Either InferenceError TextCountSummary
 inferForms vms =
@@ -135,7 +133,7 @@ countCompatibleFields vms =
         Right $ V.map countsForField fls
 
 totalViewRows :: ValidViewMarkers -> RowCount
-totalViewRows = sum . fmap (view totalRows . vmViewCounts . vmMetadata) . unValidViewMarkers
+totalViewRows = sum . fmap (rcsTotalRows . vmViewCounts . vmMetadata) . unValidViewMarkers
 
 normalizeFieldHistogram :: RowCount -> FieldHistogram -> Either InferenceError (VU.Vector NormalizedEntries)
 normalizeFieldHistogram (RowCount rc) (FieldHistogram cs) = do
