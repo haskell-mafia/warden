@@ -6,8 +6,6 @@ module Warden.Serial.Json.Row(
   , toFieldCount
   , fromRowCount
   , toRowCount
-  , fromSVParseState
-  , toSVParseState
   , toFieldVector
   , fromFieldVector
   , toLineBound
@@ -18,10 +16,9 @@ module Warden.Serial.Json.Row(
 
 import           Control.Monad.ST (runST)
 
-import           Data.Aeson ((.:), (.:?), (.=), object, parseJSON, toJSON)
+import           Data.Aeson ((.:), (.=), object, parseJSON, toJSON)
 import           Data.Aeson.Types (Value(..), Parser, typeMismatch)
 import           Data.Char (chr, ord)
-import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
@@ -32,9 +29,7 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Row
-import           Warden.Data.TextCounts
 import           Warden.Serial.Json.Field
-import           Warden.Serial.Json.TextCounts
 
 fromSeparator :: Separator -> Value
 fromSeparator (Separator s) = String . T.pack . pure . chr $ fromIntegral s
@@ -91,32 +86,3 @@ toFieldVector (Array os) = do
       pure (looks, count')
     toAssoc x = typeMismatch "(Warden.Data.Row.FieldLooks, Integer)" x
 toFieldVector x = typeMismatch "V.Vector Warden.Data.Row.FieldLooks Integer" x
-
-fromSVParseState :: SVParseState -> Value
-fromSVParseState (SVParseState br tr nfs fas tcs) = object $ [
-    "bad-rows" .= fromRowCount br
-  , "total-rows" .= fromRowCount tr
-  , "field-counts" .= (fmap fromFieldCount $ S.toList nfs)
-  ] <> fieldLooks' <> textCounts'
-  where
-    fieldLooks' = case fas of
-      NoFieldLookCount ->
-        []
-      FieldLookCount fas' ->
-        ["field-looks" .= (fmap fromFieldVector $ V.toList fas')]
-
-    textCounts' = case tcs of
-      NoTextCounts ->
-        []
-      TextCounts tcs' ->
-        ["text-counts" .= (fmap fromUniqueTextCount $ V.toList tcs')]
-
-toSVParseState :: Value -> Parser SVParseState
-toSVParseState (Object o) = do
-  br <- toRowCount =<< (o .: "bad-rows")
-  tr <- toRowCount =<< (o .: "total-rows")
-  nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
-  fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldVector) =<< (o .:? "field-looks")
-  tcs <- maybe (pure NoTextCounts) (fmap TextCounts . mapM toUniqueTextCount) =<< (o .:? "text-counts")
-  pure $ SVParseState br tr nfs fas tcs
-toSVParseState x          = typeMismatch "Warden.Data.Row.SVParseState" x
