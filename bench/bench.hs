@@ -67,6 +67,10 @@ prepareMeanDevAccs :: IO [MeanDevAcc]
 prepareMeanDevAccs =
   generate' (Deterministic 8642) (GenSize 100) $ vectorOf 10000 arbitrary
 
+prepareNumericStates :: IO [NumericState]
+prepareNumericStates =
+  generate' (Deterministic 9876) (GenSize 100) $ vectorOf 10000 arbitrary
+
 benchABDecode :: NonEmpty ViewFile -> IO ()
 benchABDecode vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -95,6 +99,9 @@ benchUpdateNumericState ns = foldl' updateNumericState initialNumericState ns
 benchCombineMeanDevAcc :: [MeanDevAcc] -> MeanDevAcc
 benchCombineMeanDevAcc mdas = foldl' combineMeanDevAcc MeanDevInitial mdas
 
+benchCombineNumericState :: [NumericState] -> NumericState
+benchCombineNumericState nss = foldl' combineNumericState initialNumericState nss
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -113,9 +120,10 @@ main = do
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]
-        , env ((,) <$> prepareNumbers <*> prepareMeanDevAccs) $ \ ~(ns, mdas) ->
+        , env ((,,) <$> prepareNumbers <*> prepareMeanDevAccs <*> prepareNumericStates) $ \ ~(ns, mdas, nss) ->
            bgroup "numerics" $ [
                 bench "updateNumericState/10000" $ nf benchUpdateNumericState ns
              ,  bench "combineMeanDevAcc/10000" $ nf benchCombineMeanDevAcc mdas
+             ,  bench "combineNumericState/10000" $ nf benchCombineNumericState nss
              ]
         ]

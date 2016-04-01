@@ -556,3 +556,6 @@ instance Arbitrary MeanDevAcc where
       pure MeanDevInitial
     , MeanDevAcc <$> arbitrary <*> arbitrary <*> arbitrary
     ]
+
+instance Arbitrary NumericState where
+  arbitrary = NumericState <$> arbitrary <*> arbitrary <*> arbitrary

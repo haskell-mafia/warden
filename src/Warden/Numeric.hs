@@ -4,6 +4,7 @@
 module Warden.Numeric (
     combineMeanAcc
   , combineMeanDevAcc
+  , combineNumericState
   , combineStdDevAcc
   , finalizeMeanDev
   , finalizeStdDevAcc
@@ -36,7 +37,7 @@ updateMaximum !acc x =
   in acc <> x'
 {-# INLINE updateMaximum #-}
 
--- Minimal-error mean and variance.
+-- | Minimal-error mean and standard deviation.
 --
 -- From Knuth (TAoCP v2, Seminumerical Algorithms, p232).
 --
@@ -169,3 +170,11 @@ stdDevAccFromVariance (KAcc n) (Variance var) =
 stdDevFromVariance :: Variance -> StdDev
 stdDevFromVariance = StdDev . sqrt . unVariance
 {-# INLINE stdDevFromVariance #-}
+
+combineNumericState :: NumericState -> NumericState -> NumericState
+combineNumericState ns1 ns2 =
+    (stateMinimum %~ (<> (ns1 ^. stateMinimum)))
+  . (stateMaximum %~ (<> (ns1 ^. stateMaximum)))
+  . (stateMeanDev %~ (combineMeanDevAcc (ns1 ^. stateMeanDev)))
+  $!! ns2
+{-# INLINE combineNumericState #-}
