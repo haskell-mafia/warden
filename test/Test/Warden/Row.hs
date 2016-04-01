@@ -6,8 +6,7 @@ module Test.Warden.Data.Row where
 import           Control.Lens ((^.))
 
 import qualified Data.Set as S
-
-import           Disorder.Core.UniquePair (UniquePair)
+import qualified Data.Text.Encoding as T
 
 import           P
 
@@ -37,6 +36,16 @@ prop_combineSVParseState_commutative =
 prop_combineSVParseState_associative :: [SVParseState] -> Property
 prop_combineSVParseState_associative xs =
   associativity combineSVParseState initialSVParseState xs id
+
+prop_resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> Property
+prop_resolveSVParseState fft ss =
+  let s' = resolveSVParseState fft ss
+      bad' = s' ^. badRows
+      total' = s' ^. totalRows
+      fns' = S.size $ s' ^. numFields in
+  (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
+                            && total' >= (s'' ^. totalRows)
+                            && fns' >= (S.size $ s'' ^. numFields)) ss
 
 return []
 tests :: IO Bool

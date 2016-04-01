@@ -5,7 +5,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Row (
-    decodeByteString
+    combineSVParseState
+  , decodeByteString
   , fieldP
   , parseField
   , readView
@@ -13,12 +14,13 @@ module Warden.Row (
   , readViewChunk
   , readViewChunk'
   , readViewFile
+  , resolveSVParseState
   , updateFieldLooks
   , updateTextCounts
   , updateSVParseState
   ) where
 
-import           Control.Lens ((%~))
+import           Control.Lens ((%~), (^.))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
@@ -210,3 +212,20 @@ updateFieldNumericState' t !acc =
     Right (NumericField n) ->
       updateNumericState acc n
 {-# INLINE updateFieldNumericState' #-}
+
+combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
+combineSVParseState fft s !acc =
+    (badRows %~ ((s ^. badRows) +))
+  . (totalRows %~ ((s ^. totalRows) +))
+  . (numFields %~ ((s ^. numFields) `S.union`))
+  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
+  . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
+  $! acc
+  where
+    combineTextCounts' = combineTextCounts fft
+{-# INLINE combineSVParseState #-}
+
+resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
+resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
+{-# INLINE resolveSVParseState #-}

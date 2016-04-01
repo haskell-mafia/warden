@@ -13,7 +13,6 @@
 module Warden.Data.Row (
     FieldCount(..)
   , FieldLookCount(..)
-  , FieldNumericState(..)
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
@@ -34,13 +33,12 @@ module Warden.Data.Row (
   , renderObservationCount
   , renderParsedField
   , renderRowCount
-  , resolveSVParseState
   , separatorToChar
   , textCounts
   , totalRows
 ) where
 
-import           Control.Lens (makeLenses, (^.), (%~))
+import           Control.Lens (makeLenses)
 
 import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)
@@ -162,13 +160,6 @@ data FieldLookCount =
 
 instance NFData FieldLookCount
 
-data FieldNumericState =
-    FieldNumericState !(V.Vector NumericState)
-  | NoFieldNumericState
-  deriving (Eq, Show, Generic)
-
-instance NFData FieldNumericState
-
 data SVParseState =
   SVParseState {
     _badRows :: {-# UNPACK #-} !RowCount
@@ -182,22 +173,6 @@ data SVParseState =
 instance NFData SVParseState
 
 makeLenses ''SVParseState
-
-resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
-resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
-
-combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
-combineSVParseState fft s !acc =
-    (badRows %~ ((s ^. badRows) +))
-  . (totalRows %~ ((s ^. totalRows) +))
-  . (numFields %~ ((s ^. numFields) `S.union`))
-  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
-  . (numericState %~ ((s ^. numericState) `combineNumericState`))
-  $! acc
-  where
-    combineTextCounts' = combineTextCounts fft
-{-# INLINE combineSVParseState #-}
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
 -- the parser.

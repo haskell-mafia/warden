@@ -42,6 +42,7 @@ import           System.IO (FilePath)
 import           P
 
 import           Warden.Data.Check
+import           Warden.Data.Numeric
 import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.TextCounts
@@ -211,6 +212,7 @@ data RowCountSummary =
   , rcsNumFields :: !(Set FieldCount)
   , rcsFieldLooks :: !FieldLookCount
   , rcsTextCounts :: !TextCounts
+  , rcsNumericSummaries :: !NumericFieldSummary
   } deriving (Eq, Show)
 
 summarizeSVParseState :: SVParseState -> RowCountSummary
@@ -221,6 +223,7 @@ summarizeSVParseState ps =
     (ps ^. numFields)
     (ps ^. fieldLooks)
     (ps ^. textCounts)
+    (summarizeFieldNumericState $ ps ^. numericState)
 
 data ViewMetadata =
   ViewMetadata {

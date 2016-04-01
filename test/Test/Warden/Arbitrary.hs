@@ -572,9 +572,16 @@ instance Arbitrary RowCountSummary where
       <*> arbitrary
       <*> arbitrary
       <*> arbitrary
+      <*> arbitrary
 
 instance Arbitrary FieldNumericState where
   arbitrary = oneof [
       pure NoFieldNumericState
     , (FieldNumericState . V.fromList) <$> (listOf1 arbitrary)
+    ]
+
+instance Arbitrary NumericFieldSummary where
+  arbitrary = oneof [
+      pure NoNumericFieldSummary
+    , (NumericFieldSummary . V.fromList) <$> listOf1 arbitrary
     ]

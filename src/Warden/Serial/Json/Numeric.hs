@@ -3,13 +3,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Serial.Json.Numeric (
-    toNumericSummary,
-    fromNumericSummary
+    fromNumericFieldSummary
+  , toNumericFieldSummary
+  , fromNumericSummary
+  , toNumericSummary
 ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           P
 
@@ -29,6 +32,30 @@ toNumericSummaryVersion :: Value -> Parser NumericSummaryVersion
 toNumericSummaryVersion (String "v1") = pure NumericSummaryV1
 toNumericSummaryVersion (String s) = fail . T.unpack $ "invalid NumericSummary version: " <> s
 toNumericSummaryVersion x = typeMismatch "Warden.Serial.Json.Numeric.NumericSummaryVersion" x
+
+fromNumericFieldSummary :: NumericFieldSummary -> Value
+fromNumericFieldSummary NoNumericFieldSummary = object [
+    "type" .= String "no-numeric-field-summary"
+  ]
+fromNumericFieldSummary (NumericFieldSummary nss) = object [
+    "type" .= String "numeric-field-summary"
+  , "field-summary" .= Array (V.map fromNumericSummary nss)
+  ]
+
+toNumericFieldSummary :: Value -> Parser NumericFieldSummary
+toNumericFieldSummary (Object o) =
+  o .: "type" >>= \case
+    String "no-numeric-field-summary" ->
+      pure NoNumericFieldSummary
+    String "numeric-field-summary" ->
+      o .: "field-summary" >>= \case
+        (Array as) ->
+          fmap NumericFieldSummary $ V.mapM toNumericSummary as
+        x -> typeMismatch "Warden.Data.Numeric.NumericFieldSummary.field-summary" x
+    String s ->
+      fail . T.unpack $ "invalid NumericFieldSummary type: " <> s
+    x -> typeMismatch "Warden.Data.NumericFieldSummary.type" x
+toNumericFieldSummary x = typeMismatch "Warden.Data.Numeric.NumericFieldSummary" x
 
 fromNumericSummary :: NumericSummary -> Value
 fromNumericSummary NoNumericSummary = object [

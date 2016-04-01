@@ -27,8 +27,9 @@ import           P
 
 import           Warden.Data
 import           Warden.Serial.Json.Check
-import           Warden.Serial.Json.Row
+import           Warden.Serial.Json.Numeric
 import           Warden.Serial.Json.Param
+import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.TextCounts
 import           Warden.Serial.Json.View
 
@@ -176,10 +177,11 @@ toViewMarker (Object o) = do
 toViewMarker x          = typeMismatch "Warden.Data.Marker.ViewMarker" x
 
 fromRowCountSummary :: RowCountSummary -> Value
-fromRowCountSummary (RowCountSummary br tr nfs fas tcs) = object $ [
+fromRowCountSummary (RowCountSummary br tr nfs fas tcs nss) = object $ [
     "bad-rows" .= fromRowCount br
   , "total-rows" .= fromRowCount tr
   , "field-counts" .= (fmap fromFieldCount $ S.toList nfs)
+  , "numeric-summaries" .= fromNumericFieldSummary nss
   ] <> fieldLooks' <> textCounts'
   where
     fieldLooks' = case fas of
@@ -201,5 +203,6 @@ toRowCountSummary (Object o) = do
   nfs <- fmap S.fromList $ mapM toFieldCount =<< (o .: "field-counts")
   fas <- maybe (pure NoFieldLookCount) (fmap FieldLookCount . mapM toFieldVector) =<< (o .:? "field-looks")
   tcs <- maybe (pure NoTextCounts) (fmap TextCounts . mapM toUniqueTextCount) =<< (o .:? "text-counts")
-  pure $ RowCountSummary br tr nfs fas tcs
+  nss <- maybe (pure NoNumericFieldSummary) toNumericFieldSummary =<< (o .:? "numeric-summaries")
+  pure $ RowCountSummary br tr nfs fas tcs nss
 toRowCountSummary x = typeMismatch "Warden.Data.Marker.RowCountSummary" x
