@@ -171,6 +171,7 @@ stdDevFromVariance :: Variance -> StdDev
 stdDevFromVariance = StdDev . sqrt . unVariance
 {-# INLINE stdDevFromVariance #-}
 
+-- FIXME: not associative
 combineNumericState :: NumericState -> NumericState -> NumericState
 combineNumericState ns1 ns2 =
     (stateMinimum %~ (<> (ns1 ^. stateMinimum)))

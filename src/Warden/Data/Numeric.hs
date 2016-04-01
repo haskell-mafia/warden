@@ -40,6 +40,10 @@ data Minimum =
 
 instance NFData Minimum
 
+instance AEq Minimum where
+  (===) = (==)
+  (~==) = (==)
+
 instance Monoid Minimum where
   mempty  = NoMinimum
   mappend x y = mcompare x y
@@ -58,6 +62,10 @@ data Maximum =
   deriving (Eq, Show, Generic)
 
 instance NFData Maximum
+
+instance AEq Maximum where
+  (===) = (==)
+  (~==) = (==)
 
 instance Monoid Maximum where
   mempty  = NoMaximum
@@ -207,6 +215,15 @@ data NumericState =
 instance NFData NumericState
 
 makeLenses ''NumericState
+
+instance AEq NumericState where
+  (===) = (==)
+
+  (NumericState mn1 mx1 mda1) ~== (NumericState mn2 mx2 mda2) = and [
+      mn1 ~== mn2
+    , mx1 ~== mx2
+    , mda1 ~== mda2
+    ]
 
 initialNumericState :: NumericState
 initialNumericState =
