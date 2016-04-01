@@ -167,11 +167,14 @@ instance Arbitrary Median where
     ]
 
 instance Arbitrary NumericSummary where
-  arbitrary = NumericSummary <$> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
+  arbitrary = oneof [
+      pure NoNumericSummary
+    , NumericSummary <$> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+    ]
 
 instance Arbitrary ReservoirSize where
   arbitrary = ReservoirSize <$> choose (1, 100)

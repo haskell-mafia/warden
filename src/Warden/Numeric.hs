@@ -83,13 +83,16 @@ updateNumericState acc x =
 
 summarizeNumericState :: NumericState -> NumericSummary
 summarizeNumericState st =
-  let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
-  NumericSummary
-    (st ^. stateMinimum)
-    (st ^. stateMaximum)
-    mn
-    stddev
-    NoMedian
+  if st == initialNumericState
+    -- We didn't see any numeric fields, so there's nothing to summarize.
+    then NoNumericSummary
+    else let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
+      NumericSummary
+        (st ^. stateMinimum)
+        (st ^. stateMaximum)
+        mn
+        stddev
+        NoMedian
 
 -- FIXME: this might commute error, requires further thought.
 combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc

@@ -178,11 +178,9 @@ mkStdDev v
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
-data NumericSummary = NumericSummary !Minimum
-                                     !Maximum
-                                     !Mean
-                                     !StdDev
-                                     !Median
+data NumericSummary =
+    NoNumericSummary
+  | NumericSummary !Minimum !Maximum !Mean !StdDev !Median
   deriving (Eq, Show, Generic)
 
 instance NFData NumericSummary
