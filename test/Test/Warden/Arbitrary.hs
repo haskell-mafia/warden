@@ -316,9 +316,6 @@ instance Arbitrary ValidDirTree where
 instance Arbitrary CheckDescription where
   arbitrary = elements [minBound..maxBound]
 
-instance Arbitrary MarkerVersion where
-  arbitrary = elements [minBound..maxBound]
-
 instance Arbitrary CheckResultType where
   arbitrary = elements [minBound..maxBound]
 
@@ -338,7 +335,6 @@ instance Arbitrary CheckResultSummary where
 
 instance Arbitrary FileMarker where
   arbitrary = FileMarker <$> arbitrary
-                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
@@ -384,7 +380,6 @@ instance Arbitrary ViewMetadata where
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
-                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary

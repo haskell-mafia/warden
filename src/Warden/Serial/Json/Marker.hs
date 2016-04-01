@@ -33,6 +33,14 @@ import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.TextCounts
 import           Warden.Serial.Json.View
 
+data MarkerVersion =
+    MarkerV1
+  | MarkerV2
+  deriving (Eq, Show, Ord, Bounded, Enum)
+
+currentMarkerVersion :: MarkerVersion
+currentMarkerVersion = maxBound
+
 fromNonEmpty :: ToJSON a => NonEmpty a -> Value
 fromNonEmpty = toJSON . NE.toList
 
@@ -45,10 +53,12 @@ toNonEmpty x          = typeMismatch "Data.List.NonEmpty.NonEmpty" x
 
 fromMarkerVersion :: MarkerVersion -> Value
 fromMarkerVersion MarkerV1 = String "v1"
+fromMarkerVersion MarkerV2 = String "v2"
 
 toMarkerVersion :: Value -> Parser MarkerVersion
 toMarkerVersion (String s) = case s of
   "v1" -> pure MarkerV1
+  "v2" -> pure MarkerV2
   _    -> fail $ "Unknown marker version " <> (T.unpack s)
 toMarkerVersion x          = typeMismatch "Warden.Data.Marker.MarkerVersion" x
 
@@ -120,8 +130,8 @@ toCheckResultSummary (Object o) = do
 toCheckResultSummary x          = typeMismatch "Warden.Data.Marker.CheckResultSummary" x
 
 fromFileMarker :: FileMarker -> Value
-fromFileMarker (FileMarker v wps vf ts crs) = object [
-    "version" .= fromMarkerVersion v
+fromFileMarker (FileMarker wps vf ts crs) = object [
+    "version" .= fromMarkerVersion currentMarkerVersion
   , "warden-params" .= fromWardenParams wps
   , "view-file" .= fromViewFile vf
   , "timestamp" .= fromDateTime ts
@@ -130,12 +140,16 @@ fromFileMarker (FileMarker v wps vf ts crs) = object [
 
 toFileMarker :: Value -> Parser FileMarker
 toFileMarker (Object o) = do
-  v <- toMarkerVersion =<< (o .: "version")
-  wps <- toWardenParams =<< (o .: "warden-params")
-  vf <- toViewFile =<< (o .: "view-file")
-  ts <- toDateTime =<< (o .: "timestamp")
-  crs <- mapM toCheckResultSummary =<< (o .: "results")
-  pure $ FileMarker v wps vf ts crs
+  (toMarkerVersion =<< (o .: "version")) >>= \case
+    MarkerV1 -> markerV1V2
+    MarkerV2 -> markerV1V2
+  where
+    markerV1V2 = do
+      wps <- toWardenParams =<< (o .: "warden-params")
+      vf <- toViewFile =<< (o .: "view-file")
+      ts <- toDateTime =<< (o .: "timestamp")
+      crs <- mapM toCheckResultSummary =<< (o .: "results")
+      pure $ FileMarker wps vf ts crs
 toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
@@ -156,8 +170,8 @@ toViewMetadata (Object o) = do
 toViewMetadata x          = typeMismatch "Warden.Data.Marker.ViewMetadata" x
 
 fromViewMarker :: ViewMarker -> Value
-fromViewMarker (ViewMarker ve wps vi ts crs vm) = object [
-    "version" .= fromMarkerVersion ve
+fromViewMarker (ViewMarker wps vi ts crs vm) = object [
+    "version" .= fromMarkerVersion currentMarkerVersion
   , "warden-params" .= fromWardenParams wps
   , "view" .= fromView vi
   , "timestamp" .= fromDateTime ts
@@ -167,13 +181,17 @@ fromViewMarker (ViewMarker ve wps vi ts crs vm) = object [
 
 toViewMarker :: Value -> Parser ViewMarker
 toViewMarker (Object o) = do
-  ve <- toMarkerVersion =<< (o .: "version")
-  wps <- toWardenParams =<< (o .: "warden-params")
-  vi <- toView =<< (o .: "view")
-  ts <- toDateTime =<< (o .: "timestamp")
-  crs <- mapM toCheckResultSummary =<< (o .: "results")
-  vm <- toViewMetadata =<< (o .: "metadata")
-  pure $ ViewMarker ve wps vi ts crs vm
+  (toMarkerVersion =<< (o .: "version")) >>= \case
+    MarkerV1 -> markerV1V2
+    MarkerV2 -> markerV1V2
+  where
+    markerV1V2 = do
+      wps <- toWardenParams =<< (o .: "warden-params")
+      vi <- toView =<< (o .: "view")
+      ts <- toDateTime =<< (o .: "timestamp")
+      crs <- mapM toCheckResultSummary =<< (o .: "results")
+      vm <- toViewMetadata =<< (o .: "metadata")
+      pure $ ViewMarker wps vi ts crs vm
 toViewMarker x          = typeMismatch "Warden.Data.Marker.ViewMarker" x
 
 fromRowCountSummary :: RowCountSummary -> Value

@@ -8,11 +8,9 @@ module Warden.Data.Marker (
   , FileMarker(..)
   , MarkerFailure(..)
   , MarkerStatus(..)
-  , MarkerVersion(..)
   , RowCountSummary(..)
   , ViewMarker(..)
   , ViewMetadata(..)
-  , currentMarkerVersion
   , dateRange
   , filePathChar
   , fileToMarker
@@ -47,13 +45,6 @@ import           Warden.Data.Param
 import           Warden.Data.Row
 import           Warden.Data.TextCounts
 import           Warden.Data.View
-
-data MarkerVersion =
-    MarkerV1
-  deriving (Eq, Show, Ord, Bounded, Enum)
-
-currentMarkerVersion :: MarkerVersion
-currentMarkerVersion = maxBound
 
 data CheckResultType =
     FileResult
@@ -109,8 +100,7 @@ summarizeResult typ dsc st =
 
 data FileMarker =
   FileMarker {
-    fmVersion :: !MarkerVersion
-  , fmWardenParams :: !WardenParams
+    fmWardenParams :: !WardenParams
   , fmViewFile :: !ViewFile
   , fmTimestamp :: !DateTime
   , fmCheckResults :: ![CheckResultSummary]
@@ -124,7 +114,7 @@ mkFileMarker :: WardenParams
              -> FileMarker
 mkFileMarker wps v dsc dt cs =
   let crs = [summarizeResult FileResult dsc cs] in
-  FileMarker currentMarkerVersion wps v dt crs
+  FileMarker wps v dt crs
 
 markerSuffix :: FilePath
 markerSuffix = ".warden"
@@ -186,8 +176,7 @@ filePathChar = satisfy (not . bad)
 
 data ViewMarker =
   ViewMarker {
-    vmVersion :: !MarkerVersion
-  , vmWardenParams :: !WardenParams
+    vmWardenParams :: !WardenParams
   , vmView :: !View
   , vmTimestamp :: !DateTime
   , vmCheckResults :: ![CheckResultSummary]
@@ -203,7 +192,7 @@ mkViewMarker :: WardenParams
              -> ViewMarker
 mkViewMarker wps v dsc dt vm cs =
   let crs = [summarizeResult RowResult dsc cs] in
-  ViewMarker currentMarkerVersion wps v dt crs vm
+  ViewMarker wps v dt crs vm
 
 data RowCountSummary =
   RowCountSummary {
