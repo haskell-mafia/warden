@@ -59,6 +59,11 @@ decodeByteString :: Separator
                  -> ViewFile
                  -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeByteString sep (LineBound lb) _vf =
+      -- This deliberately doesn't try to handle different line-ending formats
+      -- differently - RFC 4180-style files with CRLF line endings will have
+      -- a junk \r at the end of each line, but this doesn't matter for
+      -- validation purposes as long as it's consistent.
+      -- FIXME: make the above actually true (numerics)
       sepByByteBounded (fromIntegral $ ord '\n') lb
   =$= decodeByteString'
   =$= DC.map toRow
