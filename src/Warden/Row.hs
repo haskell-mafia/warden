@@ -16,6 +16,9 @@ module Warden.Row (
   , readViewFile
   , resolveSVParseState
   , updateFieldLooks
+  , updateFieldNumericState
+  , updateFields
+  , updateNumFields
   , updateTextCounts
   , updateSVParseState
   ) where
@@ -31,6 +34,7 @@ import           Data.Char (ord)
 import           Data.Conduit (Source, Conduit, (=$=), awaitForever, yield)
 import qualified Data.Conduit.List as DC
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -187,26 +191,32 @@ updateSVParseState fft !st row =
 
   countBad (SVFields _)    = RowCount 0
   countBad (RowFailure _)  = RowCount 1
-
-  updateNumFields (SVFields !v) !ns =
-    let n = FieldCount $ V.length v in
-    S.insert n ns
-  updateNumFields _ !ns = ns
-
-  updateFields (SVFields !v) NoFieldLookCount =
-    FieldLookCount $ V.zipWith updateFieldLooks v $
-      V.replicate (V.length v) emptyLookCountVector
-  updateFields (SVFields !v) (FieldLookCount !a) =
-    FieldLookCount $!! V.zipWith updateFieldLooks v a
-  updateFields _ !a = a
-
-  updateFieldNumericState (SVFields !v) NoFieldNumericState =
-    FieldNumericState $ V.zipWith updateFieldNumericState' v $
-      V.replicate (V.length v) initialNumericState
-  updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
-    FieldNumericState $!! V.zipWith updateFieldNumericState' v a
-  updateFieldNumericState _ !a = a
 {-# INLINE updateSVParseState #-}
+
+updateNumFields :: Row -> Set FieldCount -> Set FieldCount
+updateNumFields (SVFields !v) !ns =
+  let n = FieldCount $ V.length v in
+  S.insert n ns
+updateNumFields _ !ns = ns
+{-# INLINE updateNumFields #-}
+
+updateFields :: Row -> FieldLookCount -> FieldLookCount
+updateFields (SVFields !v) NoFieldLookCount =
+  FieldLookCount $ V.zipWith updateFieldLooks v $
+    V.replicate (V.length v) emptyLookCountVector
+updateFields (SVFields !v) (FieldLookCount !a) =
+  FieldLookCount $!! V.zipWith updateFieldLooks v a
+updateFields _ !a = a
+{-# INLINE updateFields #-}
+
+updateFieldNumericState :: Row -> FieldNumericState -> FieldNumericState
+updateFieldNumericState (SVFields !v) NoFieldNumericState =
+  FieldNumericState $ V.zipWith updateFieldNumericState' v $
+    V.replicate (V.length v) initialNumericState
+updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
+  FieldNumericState $!! V.zipWith updateFieldNumericState' v a
+updateFieldNumericState _ !a = a
+{-# INLINE updateFieldNumericState #-}
 
 -- FIXME: parsing fields twice
 updateFieldNumericState' :: ByteString -> NumericState -> NumericState
