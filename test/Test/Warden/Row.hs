@@ -6,6 +6,7 @@ module Test.Warden.Row where
 import           Control.Lens ((^.))
 
 import qualified Data.Set as S
+import qualified Data.Text.Encoding as T
 
 import           P
 
@@ -32,6 +33,14 @@ prop_resolveSVParseState fft ss =
   (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
                             && total' >= (s'' ^. totalRows)
                             && fns' >= (S.size $ s'' ^. numFields)) ss
+
+prop_updateFieldNumericState' :: Int -> Double -> Property
+prop_updateFieldNumericState' m n =
+  let nb = T.encodeUtf8 $ renderFractional n
+      mb = T.encodeUtf8 $ renderIntegral m
+      ns = updateFieldNumericState' nb initialNumericState
+      ms = updateFieldNumericState' mb initialNumericState in
+  (ns == initialNumericState, ms == initialNumericState) === (False, False)
 
 return []
 tests :: IO Bool
