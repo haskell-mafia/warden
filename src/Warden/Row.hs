@@ -17,6 +17,7 @@ module Warden.Row (
   , resolveSVParseState
   , updateFieldLooks
   , updateFieldNumericState
+  , updateFieldNumericState'
   , updateFields
   , updateNumFields
   , updateTextCounts
