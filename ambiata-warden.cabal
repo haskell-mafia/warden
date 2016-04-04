@@ -37,13 +37,14 @@ library
                      , ieee754                         == 0.7.*
                      , lens                            == 4.9.*
                      , lifted-async                    == 0.5.*
+                     , mwc-random                      == 0.13.*
                      , resourcet                       == 1.1.*
                      , semigroups                      >= 0.16 && < 0.19
                      , statistics                      == 0.13.2.*
                      , text                            == 1.2.*
                      , tz                              == 0.1.0.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.*
+                     , unix                            == 2.7.1.*
                      , vector                          == 0.10.*
                      , vector-algorithms               == 0.7.*
                      , vector-th-unbox                 == 0.2.1.*
@@ -149,7 +150,7 @@ executable             warden-gen
                      , temporary                       == 1.2.*
                      , transformers                    >= 0.3 && < 5
                      , text
-                     , unix                            == 2.7.*
+                     , unix                            == 2.7.1.*
                      , vector                          == 0.10.*
 
 test-suite test
@@ -233,7 +234,7 @@ test-suite test-io
                      , temporary
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.*
+                     , unix                            == 2.7.1.*
                      , vector                          == 0.10.*
 
 benchmark bench
@@ -276,7 +277,7 @@ benchmark bench
                      , temporary
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.*
+                     , unix                            == 2.7.1.*
                      , vector                          == 0.10.*
 
 

@@ -456,16 +456,16 @@ instance Arbitrary NumCPUs where
 -- FIXME: expose test generators from debruijn
 instance Arbitrary RunId where
   arbitrary = fmap RunId $
-    forceParse =<< (fmap T.pack $ vectorOf runIdLength hex)
+    forceParse =<< (fmap T.pack $ vectorOf 16 hex)
 
     where
       hex = elements hexes
 
       hexes = ['a'..'f'] <> ['0'..'9']
 
-      forceParse t = case parseHex runIdLength t of
-        Left err -> fail $ T.unpack err
-        Right h -> pure h
+      forceParse t = case parseHex t of
+        Nothing -> fail . T.unpack $ "hex " <> t <> " failed to parse"
+        Just h -> pure h
 
 instance Arbitrary WardenParams where
   arbitrary = WardenParams <$> arbitrary

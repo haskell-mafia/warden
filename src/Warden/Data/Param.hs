@@ -17,12 +17,11 @@ module Warden.Data.Param (
   , parseVerbosity
   , renderRunId
   , renderVerbosity
-  , runIdLength
   ) where
 
 import           P
 
-import           Debruijn.Hex (Hex, unHex, parseHex)
+import           Debruijn.Hex (Hex, renderHex, parseHex)
 
 import           Warden.Data.Chunk
 import           Warden.Data.Row
@@ -36,16 +35,11 @@ newtype RunId =
     unRunId :: Hex
   } deriving (Eq, Show)
 
-runIdLength :: Int
-runIdLength = 16
-
 renderRunId :: RunId -> Text
-renderRunId = unHex . unRunId
+renderRunId = renderHex . unRunId
 
 parseRunId :: Text -> Maybe RunId
-parseRunId t = case parseHex runIdLength t of
-  Left _ -> Nothing
-  Right h -> pure $ RunId h
+parseRunId = fmap RunId . parseHex
 
 newtype WardenVersion =
   WardenVersion {
