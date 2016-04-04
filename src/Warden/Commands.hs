@@ -59,7 +59,7 @@ sanity :: WardenParams
 sanity wps view sps =
   let idf = sanityIncludeDotFiles sps in do
   vfs <- traverseView idf view
-  frs <- fmap join $ traverse (forM File.fileChecks) $ (File.runFileCheck wps (sanityVerbosity sps) (sanityForce sps)) <$> vfs
+  frs <- fmap join . traverse (forM File.fileChecks) $ (File.runFileCheck wps (sanityVerbosity sps) (sanityForce sps)) <$> vfs
   pure frs
 
 checkViewFiles :: WardenParams
