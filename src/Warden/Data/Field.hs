@@ -145,6 +145,7 @@ $(derivingUnbox "CompatibleEntries"
   [| \(CompatibleEntries x) -> x |]
   [| \x -> (CompatibleEntries x) |])
 
+-- | Starting at zero.
 newtype FieldIndex =
   FieldIndex {
     unFieldIndex :: Int
