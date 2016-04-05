@@ -5,7 +5,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Row (
-    decodeByteString
+    combineSVParseState
+  , decodeByteString
   , fieldP
   , parseField
   , readView
@@ -13,12 +14,17 @@ module Warden.Row (
   , readViewChunk
   , readViewChunk'
   , readViewFile
+  , resolveSVParseState
   , updateFieldLooks
+  , updateFieldNumericState
+  , updateFieldNumericState'
+  , updateFields
+  , updateNumFields
   , updateTextCounts
   , updateSVParseState
   ) where
 
-import           Control.Lens ((%~))
+import           Control.Lens ((%~), (^.))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
@@ -29,6 +35,7 @@ import           Data.Char (ord)
 import           Data.Conduit (Source, Conduit, (=$=), awaitForever, yield)
 import qualified Data.Conduit.List as DC
 import           Data.List.NonEmpty (NonEmpty)
+import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -46,6 +53,7 @@ import           System.IO
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Numeric
 import           Warden.Row.Parser
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -56,6 +64,11 @@ decodeByteString :: Separator
                  -> ViewFile
                  -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeByteString sep (LineBound lb) _vf =
+      -- This deliberately doesn't try to handle different line-ending formats
+      -- differently - RFC 4180-style files with CRLF line endings will have
+      -- a junk \r at the end of each line, but this doesn't matter for
+      -- validation purposes as long as it's consistent.
+      -- FIXME: make the above actually true (numerics)
       sepByByteBounded (fromIntegral $ ord '\n') lb
   =$= decodeByteString'
   =$= DC.map toRow
@@ -171,6 +184,7 @@ updateSVParseState fft !st row =
   . (numFields %~ (updateNumFields row))
   . (fieldLooks %~ (updateFields row))
   . (textCounts %~ (updateTextCounts fft row))
+  . (numericState %~ (updateFieldNumericState row))
   $!! st
  where
   countGood (SVFields _)   = RowCount 1
@@ -178,16 +192,56 @@ updateSVParseState fft !st row =
 
   countBad (SVFields _)    = RowCount 0
   countBad (RowFailure _)  = RowCount 1
-
-  updateNumFields (SVFields !v) !ns =
-    let n = FieldCount $ V.length v in
-    S.insert n ns
-  updateNumFields _ !ns = ns
-
-  updateFields (SVFields !v) NoFieldLookCount =
-    FieldLookCount $ V.zipWith updateFieldLooks v $
-      V.replicate (V.length v) emptyLookCountVector
-  updateFields (SVFields !v) (FieldLookCount !a) =
-    FieldLookCount $!! V.zipWith updateFieldLooks v a
-  updateFields _ !a = a
 {-# INLINE updateSVParseState #-}
+
+updateNumFields :: Row -> Set FieldCount -> Set FieldCount
+updateNumFields (SVFields !v) !ns =
+  let n = FieldCount $ V.length v in
+  S.insert n ns
+updateNumFields _ !ns = ns
+{-# INLINE updateNumFields #-}
+
+updateFields :: Row -> FieldLookCount -> FieldLookCount
+updateFields (SVFields !v) NoFieldLookCount =
+  FieldLookCount $ V.zipWith updateFieldLooks v $
+    V.replicate (V.length v) emptyLookCountVector
+updateFields (SVFields !v) (FieldLookCount !a) =
+  FieldLookCount $!! V.zipWith updateFieldLooks v a
+updateFields _ !a = a
+{-# INLINE updateFields #-}
+
+updateFieldNumericState :: Row -> FieldNumericState -> FieldNumericState
+updateFieldNumericState (SVFields !v) NoFieldNumericState =
+  FieldNumericState $ V.zipWith updateFieldNumericState' v $
+    V.replicate (V.length v) initialNumericState
+updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
+  FieldNumericState $!! V.zipWith updateFieldNumericState' v a
+updateFieldNumericState _ !a = a
+{-# INLINE updateFieldNumericState #-}
+
+-- FIXME: parsing fields twice
+updateFieldNumericState' :: ByteString -> NumericState -> NumericState
+updateFieldNumericState' t !acc =
+  case AB.parseOnly numericFieldP t of
+    Left _ ->
+      acc
+    Right (NumericField n) ->
+      updateNumericState acc n
+{-# INLINE updateFieldNumericState' #-}
+
+combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
+combineSVParseState fft s !acc =
+    (badRows %~ ((s ^. badRows) +))
+  . (totalRows %~ ((s ^. totalRows) +))
+  . (numFields %~ ((s ^. numFields) `S.union`))
+  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
+  . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
+  $! acc
+  where
+    combineTextCounts' = combineTextCounts fft
+{-# INLINE combineSVParseState #-}
+
+resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
+resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
+{-# INLINE resolveSVParseState #-}

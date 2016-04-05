@@ -38,13 +38,10 @@ import           Warden.Error
 -- | Do these two markers look like they're compatible?
 viewMarkerMismatch :: ViewMarker -> ViewMarker -> Either ValidationFailure ()
 viewMarkerMismatch a b = do
-  validateVersion (vmVersion a) (vmVersion b)
   validateView (vmView a) (vmView b)
   validateTotalFields (fields' a) (fields' b)
   validateFreeformThreshold (fft' a) (fft' b)
   where
-    validateVersion = validateEq "vmVersion"
-
     validateView = validateEq "vmView"
 
     validateTotalFields = validateEq "numFields"

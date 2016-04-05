@@ -1,0 +1,19 @@
+{
+    "results": [
+        {
+            "status": {
+                "status": "pass"
+            },
+            "type": "file",
+            "description": "file-sanity-checks"
+        }
+    ],
+    "warden-params": {
+        "warden-version": "0.0.1-20160401040702-fac47bb-M",
+        "num-caps": 8,
+        "run-id": "696c595946cd6c51"
+    },
+    "version": "v1",
+    "view-file": "warden-gen-waldorf/measles/year=9801/month=11/day=27/monkeypox/stan",
+    "timestamp": "2016-04-01 04:09:00"
+}

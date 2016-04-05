@@ -1,20 +1,18 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Test.Warden.Data.Row where
+module Test.Warden.Row where
 
 import           Control.Lens ((^.))
 
 import qualified Data.Set as S
-
-import           Disorder.Core.UniquePair (UniquePair)
+import qualified Data.Text.Encoding as T
 
 import           P
 
 import           System.IO (IO)
 
 import           Test.QuickCheck
-import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -26,17 +24,23 @@ prop_updateSVParseState fft rs =
       s = foldl (updateSVParseState fft) initialSVParseState rs' in
   (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
 
-prop_updateSVParseState_associative :: [ValidRow] -> Property
-prop_updateSVParseState_associative xs =
-  associativity updateSVParseState initialSVParseState xs id
+prop_resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> Property
+prop_resolveSVParseState fft ss =
+  let s' = resolveSVParseState fft ss
+      bad' = s' ^. badRows
+      total' = s' ^. totalRows
+      fns' = S.size $ s' ^. numFields in
+  (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
+                            && total' >= (s'' ^. totalRows)
+                            && fns' >= (S.size $ s'' ^. numFields)) ss
 
-prop_combineSVParseState_commutative :: UniquePair SVParseState -> Property
-prop_combineSVParseState_commutative =
-  commutativity combineSVParseState
-
-prop_combineSVParseState_associative :: [SVParseState] -> Property
-prop_combineSVParseState_associative xs =
-  associativity combineSVParseState initialSVParseState xs id
+prop_updateFieldNumericState' :: Int -> Double -> Property
+prop_updateFieldNumericState' m n =
+  let nb = T.encodeUtf8 $ renderFractional n
+      mb = T.encodeUtf8 $ renderIntegral m
+      ns = updateFieldNumericState' nb initialNumericState
+      ms = updateFieldNumericState' mb initialNumericState in
+  (ns == initialNumericState, ms == initialNumericState) === (False, False)
 
 return []
 tests :: IO Bool

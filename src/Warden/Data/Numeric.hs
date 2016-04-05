@@ -6,28 +6,38 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Numeric (
-    KAcc(..)
+    FieldNumericState(..)
+  , KAcc(..)
   , Maximum(..)
   , Mean(..)
   , MeanAcc(..)
   , MeanDevAcc(..)
   , Median(..)
   , Minimum(..)
+  , NumericField(..)
   , NumericState(..)
+  , NumericFieldSummary(..)
   , NumericSummary(..)
   , StdDev(..)
   , StdDevAcc(..)
   , Variance(..)
+  , finalizeMeanDev
+  , finalizeStdDevAcc
   , initialNumericState
   , mkStdDev
+  , stdDevAccFromVariance
   , stateMaximum
   , stateMeanDev
   , stateMinimum
+  , summarizeFieldNumericState
+  , summarizeNumericState
+  , varianceFromStdDevAcc
   ) where
 
-import           Control.Lens (makeLenses)
+import           Control.Lens (makeLenses, (^.))
 
 import           Data.AEq (AEq, (===), (~==))
+import qualified Data.Vector as V
 
 import           GHC.Generics (Generic)
 
@@ -177,14 +187,26 @@ mkStdDev v
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
-data NumericSummary = NumericSummary !Minimum
-                                     !Maximum
-                                     !Mean
-                                     !StdDev
-                                     !Median
+data NumericSummary =
+    NoNumericSummary
+  | NumericSummary !Minimum !Maximum !Mean !StdDev !Median
   deriving (Eq, Show, Generic)
 
 instance NFData NumericSummary
+
+data FieldNumericState =
+    FieldNumericState !(V.Vector NumericState)
+  | NoFieldNumericState
+  deriving (Eq, Show, Generic)
+
+instance NFData FieldNumericState
+
+data NumericFieldSummary =
+    NumericFieldSummary !(V.Vector NumericSummary)
+  | NoNumericFieldSummary
+  deriving (Eq, Show, Generic)
+
+instance NFData NumericFieldSummary
 
 data MeanDevAcc =
     MeanDevInitial
@@ -231,3 +253,57 @@ initialNumericState =
     NoMinimum
     NoMaximum
     MeanDevInitial
+
+-- | For numeric purposes we treat all numbers as reals.
+newtype NumericField =
+  NumericField {
+    unNumericField :: Double
+  } deriving (Eq, Show)
+
+summarizeNumericState :: NumericState -> NumericSummary
+summarizeNumericState st =
+  if st == initialNumericState
+    -- We didn't see any numeric fields, so there's nothing to summarize.
+    then NoNumericSummary
+    else let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
+      NumericSummary
+        (st ^. stateMinimum)
+        (st ^. stateMaximum)
+        mn
+        stddev
+        NoMedian
+
+summarizeFieldNumericState :: FieldNumericState -> NumericFieldSummary
+summarizeFieldNumericState NoFieldNumericState =
+  NoNumericFieldSummary
+summarizeFieldNumericState (FieldNumericState ss) =
+  if V.null ss
+    then
+      NoNumericFieldSummary
+    else
+      NumericFieldSummary . V.map summarizeNumericState $ ss
+
+varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
+varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =
+  Variance $ sda / fromIntegral (n - 1)
+{-# INLINE varianceFromStdDevAcc #-}
+
+stdDevAccFromVariance :: KAcc -> Variance -> StdDevAcc
+stdDevAccFromVariance (KAcc n) (Variance var) =
+  StdDevAcc $ var * fromIntegral (n - 1)
+{-# INLINE stdDevAccFromVariance #-}
+
+stdDevFromVariance :: Variance -> StdDev
+stdDevFromVariance = StdDev . sqrt . unVariance
+{-# INLINE stdDevFromVariance #-}
+
+finalizeStdDevAcc :: KAcc -> StdDevAcc -> StdDev
+finalizeStdDevAcc ka sda =
+  stdDevFromVariance $ varianceFromStdDevAcc ka sda
+{-# INLINE finalizeStdDevAcc #-}
+
+finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
+finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
+finalizeMeanDev (MeanDevAcc _ Nothing _) = (NoMean, NoStdDev)
+finalizeMeanDev (MeanDevAcc mn (Just sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
+{-# INLINE finalizeMeanDev #-}

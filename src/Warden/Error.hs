@@ -76,7 +76,7 @@ data TraversalError =
 renderTraversalError :: TraversalError -> Text
 renderTraversalError = ("traversal error: " <>) . render'
   where
-    render' MaxDepthExceeded = "maximum traversal depth exceeded"
+    render' MaxDepthExceeded = "maximum traversal depth exceeded - make sure you're pointing to the top level of a view."
     render' EmptyView = "no files found in view"
     render' (NonViewFiles fs) =
          "extra files which don't seem to be part of a view: "

@@ -167,11 +167,14 @@ instance Arbitrary Median where
     ]
 
 instance Arbitrary NumericSummary where
-  arbitrary = NumericSummary <$> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
-                             <*> arbitrary
+  arbitrary = oneof [
+      pure NoNumericSummary
+    , NumericSummary <$> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+                     <*> arbitrary
+    ]
 
 instance Arbitrary ReservoirSize where
   arbitrary = ReservoirSize <$> choose (1, 100)
@@ -313,9 +316,6 @@ instance Arbitrary ValidDirTree where
 instance Arbitrary CheckDescription where
   arbitrary = elements [minBound..maxBound]
 
-instance Arbitrary MarkerVersion where
-  arbitrary = elements [minBound..maxBound]
-
 instance Arbitrary CheckResultType where
   arbitrary = elements [minBound..maxBound]
 
@@ -335,7 +335,6 @@ instance Arbitrary CheckResultSummary where
 
 instance Arbitrary FileMarker where
   arbitrary = FileMarker <$> arbitrary
-                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
@@ -368,6 +367,7 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
+                           <*> arbitrary
 
 instance Arbitrary WardenVersion where
   arbitrary = WardenVersion <$> elements southpark
@@ -380,7 +380,6 @@ instance Arbitrary ViewMetadata where
 
 instance Arbitrary ViewMarker where
   arbitrary = ViewMarker <$> arbitrary
-                         <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
                          <*> arbitrary
@@ -568,3 +567,16 @@ instance Arbitrary RowCountSummary where
       <*> arbitrary
       <*> arbitrary
       <*> arbitrary
+      <*> arbitrary
+
+instance Arbitrary FieldNumericState where
+  arbitrary = oneof [
+      pure NoFieldNumericState
+    , (FieldNumericState . V.fromList) <$> (listOf1 arbitrary)
+    ]
+
+instance Arbitrary NumericFieldSummary where
+  arbitrary = oneof [
+      pure NoNumericFieldSummary
+    , (NumericFieldSummary . V.fromList) <$> listOf1 arbitrary
+    ]

@@ -2,22 +2,20 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Warden.Numeric (
-    combineMeanAcc
+    combineFieldNumericState
+  , combineMeanAcc
   , combineMeanDevAcc
   , combineNumericState
   , combineStdDevAcc
-  , finalizeMeanDev
-  , finalizeStdDevAcc
-  , stdDevAccFromVariance
-  , summarizeNumericState
   , updateMinimum
   , updateMaximum
   , updateMeanDev
   , updateNumericState
-  , varianceFromStdDevAcc
   ) where
 
 import           Control.Lens ((%~), (^.))
+
+import qualified Data.Vector as V
 
 import           P
 
@@ -66,11 +64,6 @@ updateMeanDev !macc x =
       in MeanDevAcc m' s' i'
 {-# INLINE updateMeanDev #-}
 
-finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
-finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
-finalizeMeanDev (MeanDevAcc _ Nothing _) = (NoMean, NoStdDev)
-finalizeMeanDev (MeanDevAcc mn (Just sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
-
 -- FIXME: median
 updateNumericState :: Real a
                    => NumericState -> a -> NumericState
@@ -80,16 +73,6 @@ updateNumericState acc x =
   . (stateMeanDev %~ (flip updateMeanDev x))
   $!! acc
 {-# INLINE updateNumericState #-}
-
-summarizeNumericState :: NumericState -> NumericSummary
-summarizeNumericState st =
-  let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
-  NumericSummary
-    (st ^. stateMinimum)
-    (st ^. stateMaximum)
-    mn
-    stddev
-    NoMedian
 
 -- FIXME: this might commute error, requires further thought.
 combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc
@@ -152,25 +135,6 @@ combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) =
   MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
 {-# INLINE combineMeanAcc #-}
 
-finalizeStdDevAcc :: KAcc -> StdDevAcc -> StdDev
-finalizeStdDevAcc ka sda =
-  stdDevFromVariance $ varianceFromStdDevAcc ka sda
-{-# INLINE finalizeStdDevAcc #-}
-
-varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
-varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =
-  Variance $ sda / fromIntegral (n - 1)
-{-# INLINE varianceFromStdDevAcc #-}
-
-stdDevAccFromVariance :: KAcc -> Variance -> StdDevAcc
-stdDevAccFromVariance (KAcc n) (Variance var) =
-  StdDevAcc $ var * fromIntegral (n - 1)
-{-# INLINE stdDevAccFromVariance #-}
-
-stdDevFromVariance :: Variance -> StdDev
-stdDevFromVariance = StdDev . sqrt . unVariance
-{-# INLINE stdDevFromVariance #-}
-
 -- FIXME: not associative
 combineNumericState :: NumericState -> NumericState -> NumericState
 combineNumericState ns1 ns2 =
@@ -179,3 +143,14 @@ combineNumericState ns1 ns2 =
   . (stateMeanDev %~ (combineMeanDevAcc (ns1 ^. stateMeanDev)))
   $!! ns2
 {-# INLINE combineNumericState #-}
+
+combineFieldNumericState :: FieldNumericState -> FieldNumericState -> FieldNumericState
+combineFieldNumericState NoFieldNumericState NoFieldNumericState =
+  NoFieldNumericState
+combineFieldNumericState NoFieldNumericState fns2 =
+  fns2
+combineFieldNumericState fns1 NoFieldNumericState =
+  fns1
+combineFieldNumericState (FieldNumericState ns1) (FieldNumericState ns2) =
+  FieldNumericState $ V.zipWith combineNumericState ns1 ns2
+{-# INLINE combineFieldNumericState #-}

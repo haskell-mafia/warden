@@ -3,38 +3,69 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Serial.Json.Numeric (
-    toNumericSummary,
-    fromNumericSummary
+    fromNumericFieldSummary
+  , toNumericFieldSummary
+  , fromNumericSummary
+  , toNumericSummary
 ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           P
 
 import           Warden.Data.Numeric
 
+fromNumericFieldSummary :: NumericFieldSummary -> Value
+fromNumericFieldSummary NoNumericFieldSummary = object [
+    "type" .= String "no-numeric-field-summary"
+  ]
+fromNumericFieldSummary (NumericFieldSummary nss) = object [
+    "type" .= String "numeric-field-summary"
+  , "field-summary" .= Array (V.map fromNumericSummary nss)
+  ]
+
+toNumericFieldSummary :: Value -> Parser NumericFieldSummary
+toNumericFieldSummary (Object o) =
+  o .: "type" >>= \case
+    String "no-numeric-field-summary" ->
+      pure NoNumericFieldSummary
+    String "numeric-field-summary" ->
+      o .: "field-summary" >>= \case
+        (Array as) ->
+          fmap NumericFieldSummary $ V.mapM toNumericSummary as
+        x -> typeMismatch "Warden.Data.Numeric.NumericFieldSummary.field-summary" x
+    String s ->
+      fail . T.unpack $ "invalid NumericFieldSummary type: " <> s
+    x -> typeMismatch "Warden.Data.NumericFieldSummary.type" x
+toNumericFieldSummary x = typeMismatch "Warden.Data.Numeric.NumericFieldSummary" x
+
 fromNumericSummary :: NumericSummary -> Value
+fromNumericSummary NoNumericSummary = object [
+    "type" .= String "no-numeric-summary"
+  ]
 fromNumericSummary (NumericSummary mn mx mean s md) = object [
-    "version"  .= ("v1" :: Text)
-  , "minimum"  .= fromMinimum mn
-  , "maximum"  .= fromMaximum mx
-  , "mean"     .= fromMean mean
-  , "stddev"   .= fromStdDev s
-  , "median"   .= fromMedian md
+    "type" .= String "numeric-summary"
+  , "minimum" .= fromMinimum mn
+  , "maximum" .= fromMaximum mx
+  , "mean" .= fromMean mean
+  , "stddev" .= fromStdDev s
+  , "median" .= fromMedian md
   ]
 
 toNumericSummary :: Value -> Parser NumericSummary
 toNumericSummary (Object o) =
-  o .: "version" >>= \case
-    "v1" -> NumericSummary
+  (o .: "type" :: Parser Text) >>= \case
+    "numeric-summary" -> NumericSummary
       <$> (toMinimum =<< (o .: "minimum"))
       <*> (toMaximum =<< (o .: "maximum"))
       <*> (toMean =<< (o .: "mean"))
       <*> (toStdDev =<< (o .: "stddev"))
       <*> (toMedian =<< (o .: "median"))
-    v -> fail $ "Warden.Data.Numeric.NumericSummary: unknown version [" <> v <> "]"
+    "no-numeric-summary" -> pure NoNumericSummary
+    s -> fail . T.unpack $ "invalid NumericSummary type: " <> s
 toNumericSummary x = typeMismatch "Warden.Data.Numeric.NumericSummary" x
 
 fromMaximum :: Maximum -> Value

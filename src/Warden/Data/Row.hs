@@ -27,18 +27,18 @@ module Warden.Data.Row (
   , emptyLookCountVector
   , fieldLooks
   , initialSVParseState
+  , numericState
   , numFields
   , renderFieldCount
   , renderObservationCount
   , renderParsedField
   , renderRowCount
-  , resolveSVParseState
   , separatorToChar
   , textCounts
   , totalRows
 ) where
 
-import           Control.Lens (makeLenses, (^.), (%~))
+import           Control.Lens (makeLenses)
 
 import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)
@@ -57,6 +57,7 @@ import           P
 import           Prelude (fromEnum)
 
 import           Warden.Data.Field
+import           Warden.Data.Numeric
 import           Warden.Data.TextCounts
 
 newtype RawRecord =
@@ -161,30 +162,17 @@ instance NFData FieldLookCount
 
 data SVParseState =
   SVParseState {
-    _badRows     :: {-# UNPACK #-} !RowCount
-  , _totalRows   :: {-# UNPACK #-} !RowCount
-  , _numFields   :: !(Set FieldCount)
-  , _fieldLooks  :: !FieldLookCount
-  , _textCounts  :: !TextCounts
+    _badRows :: {-# UNPACK #-} !RowCount
+  , _totalRows :: {-# UNPACK #-} !RowCount
+  , _numFields :: !(Set FieldCount)
+  , _fieldLooks :: !FieldLookCount
+  , _textCounts :: !TextCounts
+  , _numericState :: !FieldNumericState
   } deriving (Eq, Show, Generic)
 
 instance NFData SVParseState
 
 makeLenses ''SVParseState
-
-resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
-resolveSVParseState fft = foldr update initialSVParseState
-  where
-    update s !acc =
-        (badRows %~ ((s ^. badRows) +))
-      . (totalRows %~ ((s ^. totalRows) +))
-      . (numFields %~ ((s ^. numFields) `S.union`))
-      . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-      . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
-      $! acc
-
-    combineTextCounts' = combineTextCounts fft
-{-# INLINE resolveSVParseState #-}
 
 -- | We don't include a ParsedText here; Text is indicated by failure of
 -- the parser.
@@ -202,4 +190,4 @@ renderParsedField = T.pack . show
 
 initialSVParseState :: SVParseState
 initialSVParseState =
-  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts
+  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts NoFieldNumericState
