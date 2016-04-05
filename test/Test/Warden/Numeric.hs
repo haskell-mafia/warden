@@ -4,10 +4,10 @@
 
 module Test.Warden.Numeric where
 
-import           Data.AEq (AEq)
 import           Data.List (take)
 
 import           Disorder.Core.Property ((~~~))
+import           Disorder.Core.UniquePair (UniquePair)
 
 import           P
 
@@ -16,6 +16,7 @@ import           System.IO
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
+import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -31,17 +32,6 @@ textbookVariance mu xs =
   where
     two :: Int
     two = 2
-
-associativity :: (Show c, AEq c)
-              => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property
-associativity f y0 xs g =
-  left' ~~~ right'
-  where
-    left' = g $ foldl f y0 xs
-
-    right' = g $ foldr f' y0 xs
-
-    f' a b = f b a
 
 prop_updateMinimum_positive :: Minimum -> Property
 prop_updateMinimum_positive NoMinimum = forAll (arbitrary :: Gen Double) $ \x ->
@@ -94,9 +84,16 @@ prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \
     meanDevKAcc MeanDevInitial = Nothing
     meanDevKAcc (MeanDevAcc _ _ (KAcc c)) = Just c
 
-prop_updateMeanDev_associative :: Int -> Property
-prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
+prop_updateMeanDev_associative :: [Double] -> Property
+prop_updateMeanDev_associative xs =
   associativity updateMeanDev MeanDevInitial xs finalizeMeanDev
+
+prop_updateNumericState_associative :: [Double] -> Property
+prop_updateNumericState_associative xs =
+  associativity updateNumericState initialNumericState xs id
+
+prop_combineNumericState_commutative :: UniquePair NumericState -> Property
+prop_combineNumericState_commutative = commutativity combineNumericState
 
 prop_combineMeanDevAcc :: Property
 prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->

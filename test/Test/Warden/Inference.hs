@@ -4,8 +4,6 @@
 
 module Test.Warden.Inference where
 
-import           Control.Lens (view)
-
 import           Data.List (take, repeat)
 import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NE
@@ -34,7 +32,7 @@ import           Warden.Row
 
 prop_fieldLookSum :: NonEmpty ViewMarker -> Property
 prop_fieldLookSum vms =
-  let total = sum $ fmap (sumFLC . view fieldLooks . vmViewCounts . vmMetadata) vms
+  let total = sum $ fmap (sumFLC . rcsFieldLooks . vmViewCounts . vmMetadata) vms
       total' = sumFLC $ fieldLookSum (ValidViewMarkers vms) in
   total === total'
 
@@ -150,13 +148,13 @@ prop_fieldCandidates_boolean fmr = forAll booleanHistogramPair $ \(rc, h) -> cas
 prop_totalViewRows :: NonEmpty ViewMarker -> Property
 prop_totalViewRows vms =
   let trs = totalViewRows $ ValidViewMarkers vms
-      bads = filter (not . (>=) trs) . NE.toList $ fmap (view totalRows . vmViewCounts . vmMetadata) vms in
+      bads = filter (not . (>=) trs) . NE.toList $ fmap (rcsTotalRows . vmViewCounts . vmMetadata) vms in
   bads === []
 
 prop_inferForms_insufficient_rows :: ViewMarker -> Property
 prop_inferForms_insufficient_rows vm = forAll (TextFreeformThreshold <$> choose (2, 2000)) $ \fft -> forAll ((RowCount . fromIntegral) <$> choose (0, (unTextFreeformThreshold fft) - 1)) $ \trs ->
       -- More lenses maybe?
-  let vm' = vm { vmMetadata = ((vmMetadata vm) { vmViewCounts = ((vmViewCounts (vmMetadata vm)) { _totalRows = trs })})}
+  let vm' = vm { vmMetadata = ((vmMetadata vm) { vmViewCounts = ((vmViewCounts (vmMetadata vm)) { rcsTotalRows = trs })})}
       vm'' = vm' { vmMetadata = ((vmMetadata vm') { vmCheckParams = ((vmCheckParams (vmMetadata vm')) { checkFreeformThreshold = fft })})}
       vms = pure vm'' in
   isLeft (inferForms $ ValidViewMarkers vms) === True

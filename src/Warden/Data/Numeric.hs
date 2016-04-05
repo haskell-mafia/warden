@@ -27,6 +27,8 @@ module Warden.Data.Numeric (
 
 import           Control.Lens (makeLenses)
 
+import           Data.AEq (AEq, (===), (~==))
+
 import           GHC.Generics (Generic)
 
 import           P
@@ -37,6 +39,10 @@ data Minimum =
   deriving (Eq, Show, Generic)
 
 instance NFData Minimum
+
+instance AEq Minimum where
+  (===) = (==)
+  (~==) = (==)
 
 instance Monoid Minimum where
   mempty  = NoMinimum
@@ -56,6 +62,10 @@ data Maximum =
   deriving (Eq, Show, Generic)
 
 instance NFData Maximum
+
+instance AEq Maximum where
+  (===) = (==)
+  (~==) = (==)
 
 instance Monoid Maximum where
   mempty  = NoMaximum
@@ -86,6 +96,11 @@ newtype MeanAcc =
 
 instance NFData MeanAcc
 
+instance AEq MeanAcc where
+  (===) = (==)
+
+  (MeanAcc x) ~== (MeanAcc y) = x ~== y
+
 -- | Final mean.
 data Mean =
     NoMean
@@ -93,6 +108,17 @@ data Mean =
   deriving (Eq, Show, Generic)
 
 instance NFData Mean
+
+instance AEq Mean where
+  NoMean === NoMean = True
+  NoMean === _ = False
+  _ === NoMean = False
+  (Mean x) === (Mean y) = x === y
+
+  NoMean ~== NoMean = True
+  NoMean ~== _ = False
+  _ ~== NoMean = False
+  (Mean x) ~== (Mean y) = x ~== y
 
 data Median =
     Median {-# UNPACK #-} !Double
@@ -114,6 +140,11 @@ newtype StdDevAcc =
 
 instance NFData StdDevAcc
 
+instance AEq StdDevAcc where
+  (===) = (==)
+
+  (StdDevAcc x) ~== (StdDevAcc y) = x ~== y
+
 newtype Variance =
   Variance {
     unVariance :: Double
@@ -127,6 +158,17 @@ data StdDev =
   deriving (Eq, Show, Generic)
 
 instance NFData StdDev
+
+instance AEq StdDev where
+  NoStdDev === NoStdDev = True
+  NoStdDev === _ = False
+  _ === NoStdDev = False
+  (StdDev x) === (StdDev y) = x === y
+
+  NoStdDev ~== NoStdDev = True
+  NoStdDev ~== _ = False
+  _ ~== NoStdDev = False
+  (StdDev x) ~== (StdDev y) = x ~== y
 
 mkStdDev :: Double -> StdDev
 mkStdDev v
@@ -151,6 +193,18 @@ data MeanDevAcc =
 
 instance NFData MeanDevAcc
 
+instance AEq MeanDevAcc where
+  (===) = (==)
+
+  MeanDevInitial ~== MeanDevInitial = True
+  MeanDevInitial ~== _ = False
+  _ ~== MeanDevInitial = False
+  (MeanDevAcc mu1 s21 n1) ~== (MeanDevAcc mu2 s22 n2) = and [
+      mu1 ~== mu2
+    , s21 ~== s22
+    , n1 == n2
+    ]
+
 data NumericState =
   NumericState {
       _stateMinimum :: !Minimum
@@ -161,6 +215,15 @@ data NumericState =
 instance NFData NumericState
 
 makeLenses ''NumericState
+
+instance AEq NumericState where
+  (===) = (==)
+
+  (NumericState mn1 mx1 mda1) ~== (NumericState mn2 mx2 mda2) = and [
+      mn1 ~== mn2
+    , mx1 ~== mx2
+    , mda1 ~== mda2
+    ]
 
 initialNumericState :: NumericState
 initialNumericState =
