@@ -1,12 +1,13 @@
-MARKDOWNS=$(wildcard *.md)
-PDFS=$(MARKDOWNS:md=pdf)
+MARKDOWNS=$(sort $(wildcard *.md))
+BIB=warden.bib
+OUT=warden.pdf
 
-all: $(PDFS)
+all: $(OUT)
 
-%.pdf: %.md
-	pandoc -V geometry:margin=2cm -f markdown+tex_math_dollars $< -o $@
+$(OUT): $(MARKDOWNS) $(BIB)
+	pandoc --toc --smart --filter pandoc-citeproc --bibliography $(BIB) -f markdown+tex_math_dollars $(MARKDOWNS) -o $@
 
 clean:
-	rm -f $(PDFS)
+	rm -f $(OUT)
 
 .PHONY: clean
