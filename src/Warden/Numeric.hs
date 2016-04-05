@@ -60,7 +60,7 @@ updateMeanDev !macc x =
                     Nothing ->
                       Just $ StdDevAcc 0
                     Just (StdDevAcc sda) ->
-                      Just . StdDevAcc $ sda + (delta * (v - (unMeanAcc m')))
+                      Just . StdDevAcc $!! sda + (delta * (v - (unMeanAcc m')))
       in MeanDevAcc m' s' i'
 {-# INLINE updateMeanDev #-}
 
