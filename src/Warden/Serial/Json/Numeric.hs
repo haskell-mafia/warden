@@ -20,8 +20,8 @@ fromNumericSummary (NumericSummary mn mx mean s md) = object [
     "version"  .= ("v1" :: Text)
   , "minimum"  .= fromMinimum mn
   , "maximum"  .= fromMaximum mx
-  , "mean"     .= mean
-  , "stddev"   .= s
+  , "mean"     .= fromMean mean
+  , "stddev"   .= fromStdDev s
   , "median"   .= fromMedian md
   ]
 
@@ -31,8 +31,8 @@ toNumericSummary (Object o) =
     "v1" -> NumericSummary
       <$> (toMinimum =<< (o .: "minimum"))
       <*> (toMaximum =<< (o .: "maximum"))
-      <*> o .: "mean"
-      <*> o .: "stddev"
+      <*> (toMean =<< (o .: "mean"))
+      <*> (toStdDev =<< (o .: "stddev"))
       <*> (toMedian =<< (o .: "median"))
     v -> fail $ "Warden.Data.Numeric.NumericSummary: unknown version [" <> v <> "]"
 toNumericSummary x = typeMismatch "Warden.Data.Numeric.NumericSummary" x
@@ -93,3 +93,41 @@ toMedian (Object o) = do
       pure $ Median v
     s -> fail . T.unpack $ "invalid Median type: " <> s
 toMedian x = typeMismatch "Warden.Data.Numeric.Median" x
+
+fromMean :: Mean -> Value
+fromMean (Mean v) = object [
+    "type" .= String "mean"
+  , "value" .= toJSON v
+  ]
+fromMean NoMean = object [
+    "type" .= String "no-mean"
+  ]
+
+toMean :: Value -> Parser Mean
+toMean (Object o) = do
+  o .: "type" >>= \case
+    "no-mean" -> pure NoMean
+    "mean" -> do
+      v <- parseJSON =<< (o .: "value")
+      pure $ Mean v
+    s -> fail . T.unpack $ "invalid Mean type: " <> s
+toMean x = typeMismatch "Warden.Data.Numeric.Mean" x
+
+fromStdDev :: StdDev -> Value
+fromStdDev (StdDev v) = object [
+    "type" .= String "stddev"
+  , "value" .= toJSON v
+  ]
+fromStdDev NoStdDev = object [
+    "type" .= String "no-stddev"
+  ]
+
+toStdDev :: Value -> Parser StdDev
+toStdDev (Object o) = do
+  o .: "type" >>= \case
+    "no-stddev" -> pure NoStdDev
+    "stddev" -> do
+      v <- parseJSON =<< (o .: "value")
+      pure $ StdDev v
+    s -> fail . T.unpack $ "invalid StdDev type: " <> s
+toStdDev x = typeMismatch "Warden.Data.Numeric.StdDev" x

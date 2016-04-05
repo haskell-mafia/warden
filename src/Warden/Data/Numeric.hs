@@ -2,29 +2,41 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Numeric (
-    Minimum(..)
+    KAcc(..)
   , Maximum(..)
   , Mean(..)
-  , Count(..)
+  , MeanAcc(..)
+  , MeanDevAcc(..)
   , Median(..)
-  , StdDev(..)
+  , Minimum(..)
+  , NumericState(..)
   , NumericSummary(..)
+  , StdDev(..)
+  , StdDevAcc(..)
   , Variance(..)
-  , fromVariance
+  , initialNumericState
   , mkStdDev
+  , stateMaximum
+  , stateMeanDev
+  , stateMinimum
   ) where
 
-import           Data.Aeson
-import           Data.Aeson.Types
+import           Control.Lens (makeLenses)
+
+import           GHC.Generics (Generic)
 
 import           P
 
 data Minimum =
     Minimum {-# UNPACK #-} !Double
   | NoMinimum
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Minimum
 
 instance Monoid Minimum where
   mempty  = NoMinimum
@@ -41,7 +53,9 @@ instance Monoid Minimum where
 data Maximum =
     Maximum {-# UNPACK #-} !Double
   | NoMaximum
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Maximum
 
 instance Monoid Maximum where
   mempty  = NoMaximum
@@ -55,42 +69,102 @@ instance Monoid Maximum where
           else Maximum prev
   {-# INLINE mappend #-}
 
-newtype Count = Count { getCount :: Int }
-  deriving (Eq, Show, ToJSON, FromJSON)
+-- | Counter param for mean/stddev calculation. Equal to one plus the number
+-- of records seen.
+newtype KAcc =
+  KAcc {
+    getKAcc :: Int
+  } deriving (Eq, Show, Generic, Num)
 
-newtype Mean = Mean { getMean :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+instance NFData KAcc
+
+-- | Preliminary mean, still accumulating.
+newtype MeanAcc =
+  MeanAcc {
+    unMeanAcc :: Double
+  } deriving (Eq, Show, Generic)
+
+instance NFData MeanAcc
+
+-- | Final mean.
+data Mean =
+    NoMean
+  | Mean {-# UNPACK #-} !Double
+  deriving (Eq, Show, Generic)
+
+instance NFData Mean
 
 data Median =
     Median {-# UNPACK #-} !Double
   | NoMedian
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
-newtype Variance = Variance { getVariance :: Double }
-  deriving (Eq, Show, ToJSON, FromJSON)
+instance NFData Median
 
-fromVariance :: Variance -> StdDev
-fromVariance = StdDev . sqrt . getVariance
+-- | Accumulator for standard deviation calculation. Closer to variance than 
+-- standard deviation to avoid repeated square roots.
+--
+-- \( acc = \sigma^{2} (k - 1) \)
+--
+-- Where `acc` is 'StdDevAcc' and `k` is the 'KAcc'.
+newtype StdDevAcc =
+  StdDevAcc {
+    unStdDevAcc :: Double
+  } deriving (Eq, Show, Generic)
 
-newtype StdDev = StdDev { getStdDev :: Double }
-  deriving (Eq, Show, ToJSON)
+instance NFData StdDevAcc
 
-mkStdDev :: Double -> Maybe StdDev
+newtype Variance =
+  Variance {
+    unVariance :: Double
+  } deriving (Eq, Show, Generic)
+
+instance NFData Variance
+
+data StdDev =
+    NoStdDev
+  | StdDev {-# UNPACK #-} !Double
+  deriving (Eq, Show, Generic)
+
+instance NFData StdDev
+
+mkStdDev :: Double -> StdDev
 mkStdDev v
-  | v < 0.0   = Nothing
-  | otherwise = Just $ StdDev v
-
-instance FromJSON StdDev where
-  parseJSON (Number v) = case mkStdDev ((fromRational . toRational) v) of
-    Nothing -> fail "StdDev must not be negative"
-    Just v' -> pure v'
-  parseJSON x          = typeMismatch "StdDev" x
+  | v < 0.0   = NoStdDev
+  | otherwise = StdDev v
 
 -- | So we can cheaply keep track of long-term change in numeric datasets.
 --   Will probably also end up in brandix.
 data NumericSummary = NumericSummary !Minimum
                                      !Maximum
-                                     {-# UNPACK #-} !Mean
-                                     {-# UNPACK #-} !StdDev
+                                     !Mean
+                                     !StdDev
                                      !Median
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData NumericSummary
+
+data MeanDevAcc =
+    MeanDevInitial
+  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe StdDevAcc) {-# UNPACK #-} !KAcc
+  deriving (Eq, Show, Generic)
+
+instance NFData MeanDevAcc
+
+data NumericState =
+  NumericState {
+      _stateMinimum :: !Minimum
+    , _stateMaximum :: !Maximum
+    , _stateMeanDev :: !MeanDevAcc
+    } deriving (Eq, Show, Generic)
+
+instance NFData NumericState
+
+makeLenses ''NumericState
+
+initialNumericState :: NumericState
+initialNumericState =
+  NumericState
+    NoMinimum
+    NoMaximum
+    MeanDevInitial

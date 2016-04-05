@@ -38,7 +38,7 @@ module Warden.Data.Row (
   , totalRows
 ) where
 
-import           Control.Lens
+import           Control.Lens (makeLenses, (^.), (%~))
 
 import           Data.ByteString (ByteString)
 import           Data.Char (chr, ord)

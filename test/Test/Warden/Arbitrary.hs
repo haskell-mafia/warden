@@ -44,11 +44,25 @@ import           Warden.Data
 import           Warden.Sampling.Reservoir
 
 instance AEq Mean where
+  NoMean === NoMean = True
+  NoMean === _ = False
+  _ === NoMean = False
   (Mean x) === (Mean y) = x === y
+
+  NoMean ~== NoMean = True
+  NoMean ~== _ = False
+  _ ~== NoMean = False
   (Mean x) ~== (Mean y) = x ~== y
 
 instance AEq StdDev where
+  NoStdDev === NoStdDev = True
+  NoStdDev === _ = False
+  _ === NoStdDev = False
   (StdDev x) === (StdDev y) = x === y
+
+  NoStdDev ~== NoStdDev = True
+  NoStdDev ~== _ = False
+  _ ~== NoStdDev = False
   (StdDev x) ~== (StdDev y) = x ~== y
 
 newtype ValidRow =
@@ -551,3 +565,34 @@ instance Arbitrary ExitType where
 
 instance Arbitrary IncludeDotFiles where
   arbitrary = elements [IncludeDotFiles, NoIncludeDotFiles]
+
+smallPositiveEven :: Gen Int
+smallPositiveEven = fmap (* 2) (choose (1, 20))
+
+instance AEq MeanAcc where
+  (===) = (==)
+
+  (MeanAcc x) ~== (MeanAcc y) = x ~== y
+
+instance AEq StdDevAcc where
+  (===) = (==)
+
+  (StdDevAcc x) ~== (StdDevAcc y) = x ~== y
+
+instance AEq MeanDevAcc where
+  (===) = (==)
+
+  MeanDevInitial ~== MeanDevInitial = True
+  MeanDevInitial ~== _ = False
+  _ ~== MeanDevInitial = False
+  (MeanDevAcc mu1 s21 n1) ~== (MeanDevAcc mu2 s22 n2) = and [
+      mu1 ~== mu2
+    , s21 ~== s22
+    , n1 == n2
+    ]
+
+instance Arbitrary KAcc where
+  arbitrary = fmap (KAcc . unNPlus) arbitrary
+
+instance Arbitrary StdDevAcc where
+  arbitrary = fmap StdDevAcc (choose (0.0, 10000.0))

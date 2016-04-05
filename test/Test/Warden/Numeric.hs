@@ -5,6 +5,7 @@
 module Test.Warden.Numeric where
 
 import           Data.AEq (AEq)
+import           Data.List (take)
 
 import           Disorder.Core.Property ((~~~))
 
@@ -19,6 +20,28 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Numeric
+
+textbookMean :: (Num a, Fractional a) => [a] -> a
+textbookMean xs =
+  (sum xs) / (fromIntegral $ length xs)
+
+textbookVariance :: (Num a, Fractional a) => a -> [a] -> a
+textbookVariance mu xs =
+  (foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs) / fromIntegral (length xs)
+  where
+    two :: Int
+    two = 2
+
+associativity :: (Show c, AEq c)
+              => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property
+associativity f y0 xs g =
+  left' ~~~ right'
+  where
+    left' = g $ foldl f y0 xs
+
+    right' = g $ foldr f' y0 xs
+
+    f' a b = f b a
 
 prop_updateMinimum_positive :: Minimum -> Property
 prop_updateMinimum_positive NoMinimum = forAll (arbitrary :: Gen Double) $ \x ->
@@ -60,31 +83,36 @@ prop_updateMaximum_associative n = forAll (vectorOf n (arbitrary :: Gen Double))
 
 prop_updateMeanDev :: NPlus -> Property
 prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
-  let nsMeanDev = finalizeMeanDev $ foldl updateMeanDev MeanDevInitial xs
-
-      mu = (sum xs) / (fromIntegral n)
-      var = foldr (\v acc -> acc + ((v - mu) ^ two)) 0.0 xs
+  let mda = foldl updateMeanDev MeanDevInitial xs
+      nsMeanDev = finalizeMeanDev mda
+      mu = textbookMean xs
+      var = textbookVariance mu xs
       sd = StdDev $ sqrt var
-      uMeanDev = Just (Mean mu, sd)
-  in nsMeanDev ~~~ uMeanDev
+      uMeanDev = (Mean mu, sd) in
+  (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevKAcc mda)
   where
-    two :: Integer
-    two = 2
+    meanDevKAcc MeanDevInitial = Nothing
+    meanDevKAcc (MeanDevAcc _ _ (KAcc c)) = Just c
 
 prop_updateMeanDev_associative :: Int -> Property
 prop_updateMeanDev_associative n = forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   associativity updateMeanDev MeanDevInitial xs finalizeMeanDev
 
-associativity :: (Show c, AEq c)
-              => (a -> b -> a) -> a -> [b] -> (a -> c) -> Property
-associativity f y0 xs g =
-  left' ~~~ right'
-  where
-    left' = g $ foldl f y0 xs
+prop_combineMeanDevAcc :: Property
+prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
+  let m = n `div` 2
+      mda = foldl updateMeanDev MeanDevInitial xs
+      xs1 = take m xs
+      xs2 = drop m xs
+      mda1 = foldl updateMeanDev MeanDevInitial xs1
+      mda2 = foldl updateMeanDev MeanDevInitial xs2
+      mda' = combineMeanDevAcc mda1 mda2 in
+  mda ~~~ mda'
 
-    right' = g $ foldr f' y0 xs
-
-    f' a b = f b a
+prop_tripping_StdDevAcc :: KAcc -> StdDevAcc -> Property
+prop_tripping_StdDevAcc ka sda =
+  let sda' = stdDevAccFromVariance ka $ varianceFromStdDevAcc ka sda in
+  sda ~~~ sda'
 
 return []
 tests :: IO Bool
