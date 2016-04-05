@@ -15,4 +15,5 @@ trap "rm -rf ${ROOT}" EXIT
   VIEW=$(../${WARDEN_GEN} gen -d 14142 -s 1 -c 10000)
   # Restrict heap usage in order to fail if there's a memory-usage regression.
   ../${WARDEN} +RTS -M128M -RTS check  "${VIEW}"
+  ../${WARDEN} +RTS -M128M -RTS sanity -f "${VIEW}"
 )

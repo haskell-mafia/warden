@@ -107,6 +107,7 @@ data SanityParams =
       sanityVerbosity :: !Verbosity
     , sanityForce :: !Force
     , sanityExitType :: !ExitType
+    , sanityIncludeDotFiles :: !IncludeDotFiles
   } deriving (Eq, Show)
 
 data WardenParams =

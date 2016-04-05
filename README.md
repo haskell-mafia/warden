@@ -17,14 +17,12 @@ Metadata
 --------
 
 The result of warden runs will be stored as metadata in files
-shadowing the actual data. From this metadata the following
-state will be clear:
+shadowing the actual data, or in the metadata store. From this
+metadata the following state will be clear:
 
  - The state of the dataset:
-    - green: all checks complete and ok
-    - red: checks failed
-    - yellow: warnings generated due to concerning values
-    - white: checks in progress
+    - passed: all checks complete and ok
+    - failed: some checks failed
 
  - Statistics about this feed. These statistics will be
    enough to do over-time-comparisons etc...
@@ -41,35 +39,39 @@ state will be clear:
 Running
 -------
 
-Warden is a command line tool, and will be run directly against a
+Warden is a command line tool, and is run directly against a
 local copy of a view.
 
 Where a view is the traditional hive-style,
 `year=..../month=../day=../dataset` partitioning.
 
-Warden will run on all files that require checks. Warden will store
-its metadata back into the view.
+Warden runs on both the view-level and the file-level. View checks are
+run on a complete view, or any nonempty subset of a view; these
+consist of row counts, numeric summaries, et cetera and can be
+schema-aware. File checks perform very basic sanity checks at the file
+level (e.g., does the file have a nonzero size).
+
+Metadata from view checks is to be stored in the metadata store, e.g.,
+`s3://ambiata-prod-live-state/$customer/warden/$view`. Metadata from
+file checks is to be stored back into the view, with the naming schema
+`_${view_filename}.warden`. However, warden does not write to S3
+itself - it writes metadata to the local filesystem, which can then be
+stored in S3 using other tools.
 
 This means you should be always able to run the following on a
 configured view:
 
 ```
+# basic file checks
+warden sanity path/to/view
+# full view checks
 warden check path/to/view
+# infer schema from check metadata
+warden infer _warden/$view/$data_dates/$check_date/*.json
 ```
-
-This will validate all outstanding data-sets. There will also be
-options to:
-
- - Do a dry-run and not write back metadata.
-
- - Only scan a selected subset of data in the view.
-
 
 Future Work
 -----------
 
- - Fixed schema configuration.
- - Automate schema/check inference based on a sample dataset.
  - Tighter integration with monitoring tools (sending alerts, feeding into smarter online checking etc...).
  - warden integration for downstream tools so they only accept warden approved feeds.
- - Work out a clean (hopefully more general than just warden) way of integrating warden as a job pre-condition into hydra.

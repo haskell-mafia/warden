@@ -107,6 +107,7 @@ sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
                              <*> forceP
                              <*> exitTypeP
+                             <*> includeDotFilesP
 
 textFreeformThresholdP :: Parser TextFreeformThreshold
 textFreeformThresholdP = TextFreeformThreshold <$> (option auto $
