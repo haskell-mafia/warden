@@ -55,7 +55,9 @@ renderUniqueTextCount (UniqueTextCount us) = T.concat [
 newtype TextFreeformThreshold =
   TextFreeformThreshold {
     unTextFreeformThreshold :: Int
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData TextFreeformThreshold
 
 renderTextFreeformThreshold :: TextFreeformThreshold -> Text
 renderTextFreeformThreshold = renderIntegral . unTextFreeformThreshold

@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Marker (
     CheckResultSummary(..)
@@ -34,6 +35,8 @@ import qualified Data.Text as T
 import           Delorean.Local.Date (Date, renderDate)
 import           Delorean.Local.DateTime (DateTime(..))
 
+import           GHC.Generics (Generic)
+
 import           System.FilePath (takeFileName, replaceFileName, joinPath)
 import           System.IO (FilePath)
 
@@ -49,29 +52,39 @@ import           Warden.Data.View
 data CheckResultType =
     FileResult
   | RowResult
-  deriving (Eq, Show, Ord, Bounded, Enum)
+  deriving (Eq, Show, Ord, Bounded, Enum, Generic)
+
+instance NFData CheckResultType
 
 newtype MarkerFailure =
   MarkerFailure {
     unMarkerFailure :: NonEmpty Text
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData MarkerFailure
 
 data MarkerStatus =
     MarkerPass
   | MarkerFail !MarkerFailure
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData MarkerStatus
 
 data CheckResultSummary =
   CheckResultSummary {
       summaryStatus :: !MarkerStatus
     , summaryDescription :: !CheckDescription
     , summaryResultType :: !CheckResultType
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData CheckResultSummary
 
 data DateRange =
     NoDates
   | DateRange Date Date
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData DateRange
 
 dateRangePartition :: DateRange -> Text
 dateRangePartition (DateRange start end) = T.concat [
@@ -104,7 +117,9 @@ data FileMarker =
   , fmViewFile :: !ViewFile
   , fmTimestamp :: !DateTime
   , fmCheckResults :: ![CheckResultSummary]
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData FileMarker
 
 mkFileMarker :: WardenParams
              -> ViewFile
@@ -181,7 +196,9 @@ data ViewMarker =
   , vmTimestamp :: !DateTime
   , vmCheckResults :: ![CheckResultSummary]
   , vmMetadata :: !ViewMetadata
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData ViewMarker
 
 mkViewMarker :: WardenParams
              -> View
@@ -202,7 +219,9 @@ data RowCountSummary =
   , rcsFieldLooks :: !FieldLookCount
   , rcsTextCounts :: !TextCounts
   , rcsNumericSummaries :: !NumericFieldSummary
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData RowCountSummary
 
 summarizeSVParseState :: SVParseState -> RowCountSummary
 summarizeSVParseState ps =
@@ -220,4 +239,6 @@ data ViewMetadata =
     , vmCheckParams :: !CheckParams
     , vmDates :: !(Set Date)
     , vmViewFiles :: !(Set ViewFile)
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData ViewMetadata

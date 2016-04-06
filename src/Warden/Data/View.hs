@@ -46,7 +46,9 @@ import           P
 newtype View =
   View {
     unView :: FilePath
-  } deriving (Eq, Show, Ord)
+  } deriving (Eq, Show, Ord, Generic)
+
+instance NFData View
 
 renderView :: View -> Text
 renderView = T.pack . unView

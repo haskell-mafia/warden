@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Row (
     FieldCount(..)
@@ -63,12 +64,16 @@ import           Warden.Data.TextCounts
 newtype RawRecord =
   RawRecord {
     unRawRecord :: V.Vector ByteString
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData RawRecord
 
 newtype LineBound =
   LineBound {
     unLineBound :: Int
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
+
+instance NFData LineBound
 
 newtype FieldCount =
   FieldCount {

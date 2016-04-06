@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Warden.Data.Check (
     CheckDescription(..)
@@ -26,6 +27,8 @@ import           Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 
+import           GHC.Generics (Generic)
+
 import           P
 
 import           Warden.Data.FieldAnomaly
@@ -35,7 +38,9 @@ import           Warden.Data.View
 data CheckDescription =
     FileSanityChecks
   | ViewRowCounts
-  deriving (Eq, Show, Bounded, Enum)
+  deriving (Eq, Show, Bounded, Enum, Generic)
+
+instance NFData CheckDescription
 
 renderCheckDescription :: CheckDescription -> Text
 renderCheckDescription FileSanityChecks = "file-sanity-checks"
@@ -49,7 +54,9 @@ parseCheckDescription _                    = Nothing
 data CheckResult =
     FileCheckResult !CheckDescription !ViewFile !CheckStatus
   | RowCheckResult !CheckDescription !CheckStatus
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData CheckResult
 
 isCheckFailure :: CheckResult -> Bool
 isCheckFailure (FileCheckResult _ _ s) = checkStatusFailed s
@@ -76,8 +83,12 @@ renderCheckResult (RowCheckResult cd st) =
       , renderCheckDescription cd
       ]
 
-data CheckStatus = CheckPassed | CheckFailed !(NonEmpty Failure)
-  deriving (Eq, Show)
+data CheckStatus =
+    CheckPassed
+  | CheckFailed !(NonEmpty Failure)
+  deriving (Eq, Show, Generic)
+
+instance NFData CheckStatus
 
 checkStatusFailed :: CheckStatus -> Bool
 checkStatusFailed CheckPassed = False
@@ -109,24 +120,32 @@ data Failure =
     SanityCheckFailure !Insanity
   | RowCheckFailure !RowFailure
   | SchemaCheckFailure !SchemaFailure
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Failure
 
 data Insanity =
     EmptyFile
   | IrregularFile
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData Insanity
 
 data RowFailure =
     FieldCountMismatch !(Set FieldCount)
   | ZeroRows
   | HasBadRows !RowCount
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData RowFailure
 
 data SchemaFailure =
     IncorrectFieldCount FieldCount !(Set FieldCount)
   | FieldCountObservationMismatch FieldCount FieldCount
   | FieldAnomalyFailure AnomalousField
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData SchemaFailure
 
 renderFailure :: Failure -> Text
 renderFailure (SanityCheckFailure f) =
