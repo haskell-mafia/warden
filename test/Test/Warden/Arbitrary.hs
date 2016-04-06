@@ -580,3 +580,9 @@ instance Arbitrary NumericFieldSummary where
       pure NoNumericFieldSummary
     , (NumericFieldSummary . V.fromList) <$> listOf1 arbitrary
     ]
+
+instance Arbitrary MStdDevAcc where
+  arbitrary = oneof [
+      pure NoStdDevAcc
+    , MStdDevAcc <$> arbitrary
+    ]
