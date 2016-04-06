@@ -13,6 +13,7 @@ module Warden.Data.Numeric (
   , MeanAcc(..)
   , MeanDevAcc(..)
   , Median(..)
+  , MStdDevAcc(..)
   , Minimum(..)
   , NumericField(..)
   , NumericState(..)
@@ -155,6 +156,22 @@ instance AEq StdDevAcc where
 
   (StdDevAcc x) ~== (StdDevAcc y) = x ~== y
 
+-- | Possibly-uninitialized 'StdDevAcc'.
+data MStdDevAcc =
+    NoStdDevAcc
+  | MStdDevAcc {-# UNPACK #-} !StdDevAcc
+  deriving (Eq, Show, Generic)
+
+instance NFData MStdDevAcc
+
+instance AEq MStdDevAcc where
+  (===) = (==)
+
+  NoStdDevAcc ~== NoStdDevAcc = True
+  NoStdDevAcc ~== _ = False
+  _ ~== NoStdDevAcc = False
+  (MStdDevAcc sda1) ~== (MStdDevAcc sda2) = sda1 ~== sda2
+
 newtype Variance =
   Variance {
     unVariance :: Double
@@ -210,7 +227,7 @@ instance NFData NumericFieldSummary
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !MeanAcc !(Maybe StdDevAcc) {-# UNPACK #-} !KAcc
+  | MeanDevAcc {-# UNPACK #-} !MeanAcc !MStdDevAcc {-# UNPACK #-} !KAcc
   deriving (Eq, Show, Generic)
 
 instance NFData MeanDevAcc
@@ -304,6 +321,6 @@ finalizeStdDevAcc ka sda =
 
 finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
-finalizeMeanDev (MeanDevAcc _ Nothing _) = (NoMean, NoStdDev)
-finalizeMeanDev (MeanDevAcc mn (Just sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
+finalizeMeanDev (MeanDevAcc _ NoStdDevAcc _) = (NoMean, NoStdDev)
+finalizeMeanDev (MeanDevAcc mn (MStdDevAcc sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
 {-# INLINE finalizeMeanDev #-}

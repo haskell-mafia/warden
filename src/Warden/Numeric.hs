@@ -47,7 +47,7 @@ updateMeanDev !macc x =
   MeanDevInitial ->
     let i = KAcc 1
         m = MeanAcc 0
-        s = Nothing
+        s = NoStdDevAcc
     in update' m s i x'
   (MeanDevAcc m s i) ->
     update' m s i x'
@@ -57,10 +57,10 @@ updateMeanDev !macc x =
           m'    = MeanAcc $ m + delta / (fromIntegral i)
           i'    = KAcc $ i + 1
           s'    = case s of
-                    Nothing ->
-                      Just $ StdDevAcc 0
-                    Just (StdDevAcc sda) ->
-                      Just . StdDevAcc $ sda + (delta * (v - (unMeanAcc m')))
+                    NoStdDevAcc ->
+                      MStdDevAcc $ StdDevAcc 0
+                    MStdDevAcc (StdDevAcc sda) ->
+                      MStdDevAcc . StdDevAcc $!! sda + (delta * (v - (unMeanAcc m')))
       in MeanDevAcc m' s' i'
 {-# INLINE updateMeanDev #-}
 
@@ -93,19 +93,19 @@ combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
 --
 -- There's almost certainly a better way to do this.
 combineStdDevAcc :: MeanAcc -- ^ Combined mean.
-                -> (MeanAcc, Maybe StdDevAcc, KAcc) -- ^ First subset.
-                -> (MeanAcc, Maybe StdDevAcc, KAcc) -- ^ Second subset.
-                -> Maybe StdDevAcc
-combineStdDevAcc _ (_, Nothing, _) (_, Nothing, _) =
-  Nothing
-combineStdDevAcc _ (_, Just (StdDevAcc s1), _) (_, Nothing, _) =
-  Just $ StdDevAcc s1
-combineStdDevAcc _ (_, Nothing, _) (_, Just (StdDevAcc s2), _) =
-  Just $ StdDevAcc s2
-combineStdDevAcc muHat (mu1, Just sda1, c1) (mu2, Just sda2, c2) =
+                -> (MeanAcc, MStdDevAcc, KAcc) -- ^ First subset.
+                -> (MeanAcc, MStdDevAcc, KAcc) -- ^ Second subset.
+                -> MStdDevAcc
+combineStdDevAcc _ (_, NoStdDevAcc, _) (_, NoStdDevAcc, _) =
+  NoStdDevAcc
+combineStdDevAcc _ (_, MStdDevAcc (StdDevAcc s1), _) (_, NoStdDevAcc, _) =
+  MStdDevAcc $ StdDevAcc s1
+combineStdDevAcc _ (_, NoStdDevAcc, _) (_, MStdDevAcc (StdDevAcc s2), _) =
+  MStdDevAcc $ StdDevAcc s2
+combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
   let var1 = varianceFromStdDevAcc c1 sda1
       var2 = varianceFromStdDevAcc c2 sda2 in
-  Just . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
+  MStdDevAcc . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
     combineVariance muHat (mu1, var1, c1) (mu2, var2, c2)
 {-# INLINE combineStdDevAcc #-}
 

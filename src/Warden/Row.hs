@@ -237,7 +237,7 @@ combineSVParseState fft s !acc =
   . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
   . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
   . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
-  $! acc
+  $!! acc
   where
     combineTextCounts' = combineTextCounts fft
 {-# INLINE combineSVParseState #-}
