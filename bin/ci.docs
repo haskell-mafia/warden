@@ -1,9 +1,7 @@
 #! /bin/sh -eux
 
-cabal install pandoc
-cabal install pandoc-citeproc
-
-GHC_VER=$(ghc --version | perl -pe 's/^.* ([\d.]+)$/$1/g')
+./mafia install pandoc
+MAFIA_PATH=$(./mafia install pandoc-citeproc)
 
 cd doc
-PATH=$(pwd)/.cabal-sandbox/${GHC_VER}/bin:$PATH make
+PATH=$MAFIA_PATH:$PATH make
