@@ -48,6 +48,16 @@ $$\mu_{1:n+m} = \frac{n(\mu_{1:n}) + m(\mu_{n:n+m})}{m + n}$$
 
 ### Variance/standard deviation
 
+With respect to variance, many methods are available; some are
+decidedly worse than others, but even the best perform badly on
+certain types of data. Thus, the correct choice here
+depends on the distribution of the data we expect to validate, and as
+`warden` is designed to work on almost all real-world datasets there
+is no single optimal algorithm, and adapting the algorithm to the
+dataset being examined is not practical as the optimal algorithm
+depends on (among other properties of the data distribution) its
+variance. [@Ling1974]
+
 The accumulator is first converted to population variance. Then the
 two subset variances are combined:
 
