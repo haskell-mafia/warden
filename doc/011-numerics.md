@@ -46,6 +46,16 @@ elements:
 
 $$\mu_{1:n+m} = \frac{n(\mu_{1:n}) + m(\mu_{n:n+m})}{m + n}$$
 
+#### Derivation
+
+$$\mu_{1:n+m} = \frac{1}{m+n} \sum\limits_{i=1}^{m+n} x_i$$
+
+$$\begin{aligned}(m + n) \mu_{1:n+m} &= \sum\limits_{i=1}^{n+m} x_i \\
+                                     &= \sum\limits_{i=1}^n x_i + \sum\limits_{i=n}^{n+m} x_i \\
+                                     &= n\mu_{1:n} + m\mu_{n:n+m}\end{aligned}$$
+
+$$\mu_{1:n+m} = \frac{n\mu_{1:n} + m\mu_{n:n+m}}{m + n}$$
+
 ### Variance/standard deviation
 
 With respect to variance, many methods are available; some are
