@@ -79,15 +79,7 @@ $$\sigma_{1:n+m}^2 = \frac{m(\sigma_{1:m}^2 + \mu_{1:m}^2) + n(\sigma_{m:n}^2 + 
 
 The naive floating-point computation of this value was found to be
 numerically unstable and was optimised with the help of Herbie
-[@panchekha2015] to the following (using Knuth's notation for the
-floating-point operations, in which \oplus, \otimes and \oslash are
-the floating-point equivalents of the exact operations addition,
-multiplication and division respectively):
-
-$$\sigma_{1:n+m}^2 =
-  m \otimes \sigma_{1:m}^2 \oplus m \otimes \mu_{1:m} \otimes \mu_{1:m} \oplus
-  n \otimes \sigma_{m:n+m}^2 \oplus n \otimes \mu_{m:n+m} \otimes \mu_{m:n+m}
-  \otimes (1 \oslash (m \oplus n))$$
+[@panchekha2015], resulting in the current Haskell implementation.
 
 Finally, the combined variance is converted back to an accumulator:
 
