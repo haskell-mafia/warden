@@ -111,6 +111,9 @@ combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
 
 -- | Combine variances of two subsets of a sample (that is, exact variance of
 -- datasets rather than estimate of variance of population).
+--
+-- The derivation of this formula is in the Numerics section of the
+-- documentation.
 combineVariance :: MeanAcc -- ^ Combined mean.
                 -> (MeanAcc, Variance, KAcc) -- ^ First subset.
                 -> (MeanAcc, Variance, KAcc) -- ^ Second subset.

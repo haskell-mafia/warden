@@ -1,7 +1,0 @@
-#! /bin/sh -eux
-
-./mafia install pandoc
-MAFIA_PATH=$(./mafia install pandoc-citeproc)
-
-cd doc
-PATH=$MAFIA_PATH:$PATH make
