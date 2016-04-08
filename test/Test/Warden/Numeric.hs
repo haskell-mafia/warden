@@ -115,6 +115,10 @@ prop_combineMeanDevAcc_associative :: [MeanDevAcc] -> Property
 prop_combineMeanDevAcc_associative mdas =
   associativity combineMeanDevAcc MeanDevInitial mdas id
 
+prop_combineMeanDevAcc_commutative :: UniquePair MeanDevAcc -> Property
+prop_combineMeanDevAcc_commutative =
+  commutativity combineMeanDevAcc
+
 return []
 tests :: IO Bool
 tests = $quickCheckAll
