@@ -73,12 +73,21 @@ two subset variances are combined:
 
 $$\sigma_{1:n+m}^2 = \frac{m(\sigma_{1:m}^2 + \mu_{1:m}^2) + n(\sigma_{m:n}^2 + \mu_{m:n}^2)}{m + n} - \mu_{1:n+m}^2$$
 
+The naive floating-point computation of this value was found to be
+numerically unstable and was optimised with the help of Herbie
+[@panchekha2015] to the following:
+
+$$\sigma_{1:n+m}^2 =
+  m \otimes \sigma_{1:m}^2 \oplus m \otimes \mu_{1:m} \otimes \mu_{1:m} \oplus
+  n \otimes \sigma_{m:n+m}^2 \oplus n \otimes \mu_{m:n+m} \otimes \mu_{m:n+m}
+  \otimes (1 \oslash (m \oplus n))$$
+
 Finally, the combined variance is converted back to an accumulator:
 
 $$S_n = \sigma^2(n - 1)$$
 
-This method is problematic as the repeated squaring leads to
-accumulation of floating-point error, and requires some refinement.
+This method remains problematic due to accumulation of floating-point
+error, and requires some refinement.
 
 #### Derivation
 
