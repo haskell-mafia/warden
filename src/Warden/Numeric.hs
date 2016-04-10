@@ -119,15 +119,13 @@ combineVariance :: MeanAcc -- ^ Combined mean.
                 -> (MeanAcc, Variance, KAcc) -- ^ Second subset.
                 -> Variance
 combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) =
-  let t1 = c1' * (var1 + (mu1 ** two))
-      t2 = c2' * (var2 + (mu2 ** two)) in
-  Variance $ ((t1 + t2) / (c1' + c2')) - (muHat ** two)
+  let t1 = (c1' * var1) + (c1' * mu1 * mu1)
+      t2 = (c2' * var2) + (c2' * mu2 * mu2) in
+  Variance $ ((t1 + t2) * (1.0 / (c1' + c2'))) - (muHat * muHat)
   where
     c1' = fromIntegral $ c1 - 1
 
     c2' = fromIntegral $ c2 - 1
-
-    two = 2.0 :: Double
 {-# INLINE combineVariance #-}
 
 -- | Combine mean of two subsets, given subset means and size.

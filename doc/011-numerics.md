@@ -42,7 +42,11 @@ arrive at the final result.
 
 The two terms are scaled according to the corresponding number of
 observed values and then divided by the total number of observed
-elements:
+elements.
+
+Letting $\mu_{a:b}$ represent the mean of data points $a$ through $b$
+inclusive, and taking $x_{1:m}$ and $x_{m+1:n+m}$ to be the subsets we
+wish to combine:
 
 $$\mu_{1:n+m} = \frac{n(\mu_{1:n}) + m(\mu_{n:n+m})}{m + n}$$
 
@@ -73,24 +77,37 @@ two subset variances are combined:
 
 $$\sigma_{1:n+m}^2 = \frac{m(\sigma_{1:m}^2 + \mu_{1:m}^2) + n(\sigma_{m:n}^2 + \mu_{m:n}^2)}{m + n} - \mu_{1:n+m}^2$$
 
+The naive floating-point computation of this value was found to be
+numerically unstable and was optimised with the help of Herbie
+[@panchekha2015], resulting in the current Haskell implementation.
+
 Finally, the combined variance is converted back to an accumulator:
 
 $$S_n = \sigma^2(n - 1)$$
 
-This method is problematic as the repeated squaring leads to
-accumulation of floating-point error, and requires some refinement.
+This method remains problematic due to accumulation of floating-point
+error, and requires some refinement.
 
 #### Derivation
 
-Derivation of the combination of two subset variances[^whuber]:
-
-From the definitions of mean and variance:
+Letting $\sigma_{a:b}^2$ represent the variance of data points $a$
+through $b$ inclusive, and giving $\mu_{a:b}$ and $x_{a:b}$ the same
+meanings as for the mean, we start from the definitions of mean and
+variance:
 
 $$\mu_{1:n} = \frac{1}{n} \sum\limits_{i=1}^n x_i$$
 
 $$\sigma_{1:n}^2 = \frac{1}{n} \sum\limits_{i=1}^n (x_i - \mu_{1:n})^2$$
 
-We have:
+We rearrange to isolate the sum-of-squares:
+
+$$\begin{aligned}\sigma_{1:m+n}^2 &= \frac{1}{n+m} \sum\limits_{i=1}^{n+m} (x_i^2 - 2\mu_{1:n+m}x_i + \mu^2) \\
+  &= \frac{\sum\limits_{i=1}^{n+m} x_i^2}{n+m} - \frac{2\mu_{1:n+m}\sum\limits_{i=1}^{n+m} x_i}{n+m} + \frac{(n + m)\mu_{1:m+n}^2}{n+m} \\
+  &= \frac{\sum\limits_{i=1}^{n+m} x_i^2}{n+m} - 2\mu_{1:m+n}^2 + \mu_{1:m+n}^2 \\
+  &= \frac{\sum\limits_{i=1}^{n+m} x_i^2}{n+m} - \mu_{1:m+n}^2 \\
+  \sigma_{1:n+m}^2 + \mu_{1:n+m}^2 &= \frac{1}{n+m} \sum\limits_{i=1}^{n+m} x_i^2\end{aligned}$$
+
+And express the sum in terms of the subsets $x_{1:m}$ and $x_{m+1:n+m}$:
 
 $$\begin{aligned}(m + n)(\sigma_{1:m+n}^2 + \mu_{1:m+n}^2) &= \sum\limits_{i=1}^{n+m} x_i^2 \\
   &= \sum_{i=1}^n x_i^2 + \sum_{i=n+1}^{n+m} x_i^2 \\
@@ -99,6 +116,3 @@ $$\begin{aligned}(m + n)(\sigma_{1:m+n}^2 + \mu_{1:m+n}^2) &= \sum\limits_{i=1}^
 Solving:
 
 $$\sigma_{1:m+n}^2 = \frac{n(\sigma_{1:n}^2 + \mu_{1:n}^2) + m(\sigma_{1+n:m+n}^2 + \mu_{1+n:m+n}^2)}{m+n} - \mu_{1:m+n}^2$$
-
-[^whuber]: Originally from
-           https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-groups-given-known-group-variances-mean
