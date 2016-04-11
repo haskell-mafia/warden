@@ -7,7 +7,7 @@ module Warden.Check.Row (
   ) where
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
-import           Control.Foldl (Fold(..), FoldM(..), generalize)
+import           Control.Foldl (FoldM(..))
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Lens ((^.))
 import           Control.Monad.Trans.Class (lift)
@@ -88,11 +88,11 @@ parseViewFile caps verb s lb fft vf = do
     , renderIntegral (NE.length cs)
     , " chunks."
     ]
-  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (generalize (parseViewFile' fft))) $ NE.toList cs
+  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (parseViewFile' fft)) $ NE.toList cs
   pure $ resolveSVParseState fft ss
 
-parseViewFile' :: TextFreeformThreshold -> Fold Row SVParseState
-parseViewFile' fft = Fold (updateSVParseState fft) initialSVParseState id
+parseViewFile' :: TextFreeformThreshold -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
+parseViewFile' fft = FoldM (\x y -> pure (updateSVParseState fft x y)) (pure initialSVParseState) pure
 
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema
