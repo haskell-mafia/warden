@@ -7,6 +7,7 @@ module Warden.Data.Param (
   , ExitType(..)
   , Force(..)
   , IncludeDotFiles(..)
+  , InferUsingFailedChecks(..)
   , NumCPUs(..)
   , RunId(..)
   , SanityParams(..)
@@ -130,5 +131,10 @@ data WardenParams =
     , wpWardenVersion :: WardenVersion
     , wpRunId :: RunId
   } deriving (Eq, Show, Generic)
+
+data InferUsingFailedChecks =
+    InferUsingFailedChecks
+  | NoInferUsingFailedChecks
+  deriving (Eq, Show)
 
 instance NFData WardenParams
