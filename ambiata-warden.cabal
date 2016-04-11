@@ -79,6 +79,7 @@ library
                        Warden.Data.Param
                        Warden.Data.Poset
                        Warden.Data.Row
+                       Warden.Data.Sampling.Reservoir
                        Warden.Data.Schema
                        Warden.Data.TextCounts
                        Warden.Data.View

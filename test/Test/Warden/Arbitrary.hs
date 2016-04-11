@@ -175,6 +175,9 @@ instance Arbitrary NumericSummary where
                      <*> arbitrary
     ]
 
+instance Arbitrary ReservoirSize where
+  arbitrary = ReservoirSize <$> choose (1, 100)
+
 instance Arbitrary a => Arbitrary (NonEmpty a) where
   arbitrary = NE.fromList <$> listOf1 arbitrary
 

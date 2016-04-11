@@ -14,6 +14,7 @@ import           Warden.Data.Numeric as X
 import           Warden.Data.Param as X
 import           Warden.Data.Poset as X
 import           Warden.Data.Row as X
+import           Warden.Data.Sampling.Reservoir as X
 import           Warden.Data.Schema as X
 import           Warden.Data.TextCounts as X
 import           Warden.Data.View as X
