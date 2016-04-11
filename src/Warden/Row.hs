@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 module Warden.Row (
     combineSVParseState
@@ -75,14 +76,18 @@ decodeByteString sep (LineBound lb) _vf =
   where
     decodeByteString' = awaitForever $ \l ->
       yield . second unRawRecord $ AB.parseOnly (rawRecordP sep) l
+#ifndef NOINLINE
 {-# INLINE decodeByteString #-}
+#endif
 
 decodeRecord :: Separator
              -> LineBound
              -> ViewFile
              -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeRecord = decodeByteString
+#ifndef NOINLINE
 {-# INLINE decodeRecord #-}
+#endif
 
 readView :: Separator
          -> LineBound
@@ -139,14 +144,18 @@ toRow (Right !rs) =
       RowFailure . T.pack $ show e
 toRow (Left !e) =
   RowFailure $ T.pack e
+#ifndef NOINLINE
 {-# INLINE toRow #-}
+#endif
 
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
 -- add 32 to the character if it's in the ASCII uppercase range.
 asciiToLower :: ByteString -> ByteString
 asciiToLower = BS.map (flip (.|.) 0x20)
+#ifndef NOINLINE
 {-# INLINE asciiToLower #-}
+#endif
 
 parseField :: ByteString -> FieldLooks
 parseField "" = LooksEmpty
@@ -155,12 +164,16 @@ parseField t = case AB.parseOnly fieldP (asciiToLower t) of
   Right ParsedIntegral -> LooksIntegral
   Right ParsedReal -> LooksReal
   Right ParsedBoolean -> LooksBoolean
+#ifndef NOINLINE
 {-# INLINE parseField #-}
+#endif
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
 updateFieldLooks !t !a =
   VU.accum (+) a [(fromEnum (parseField t), 1)]
+#ifndef NOINLINE
 {-# INLINE updateFieldLooks #-}
+#endif
 
 updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
 updateTextCounts fft (SVFields vs) NoTextCounts =
@@ -169,7 +182,9 @@ updateTextCounts fft (SVFields vs) NoTextCounts =
 updateTextCounts fft (SVFields vs) (TextCounts tcs) =
   TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs tcs
 updateTextCounts _ _ tc = tc
+#ifndef NOINLINE
 {-# INLINE updateTextCounts #-}
+#endif
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: TextFreeformThreshold
@@ -192,14 +207,18 @@ updateSVParseState fft !st row =
 
   countBad (SVFields _)    = RowCount 0
   countBad (RowFailure _)  = RowCount 1
+#ifndef NOINLINE
 {-# INLINE updateSVParseState #-}
+#endif
 
 updateNumFields :: Row -> Set FieldCount -> Set FieldCount
 updateNumFields (SVFields !v) !ns =
   let n = FieldCount $ V.length v in
   S.insert n ns
 updateNumFields _ !ns = ns
+#ifndef NOINLINE
 {-# INLINE updateNumFields #-}
+#endif
 
 updateFields :: Row -> FieldLookCount -> FieldLookCount
 updateFields (SVFields !v) NoFieldLookCount =
@@ -208,7 +227,9 @@ updateFields (SVFields !v) NoFieldLookCount =
 updateFields (SVFields !v) (FieldLookCount !a) =
   FieldLookCount $!! V.zipWith updateFieldLooks v a
 updateFields _ !a = a
+#ifndef NOINLINE
 {-# INLINE updateFields #-}
+#endif
 
 updateFieldNumericState :: Row -> FieldNumericState -> FieldNumericState
 updateFieldNumericState (SVFields !v) NoFieldNumericState =
@@ -217,7 +238,9 @@ updateFieldNumericState (SVFields !v) NoFieldNumericState =
 updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
   FieldNumericState $!! V.zipWith updateFieldNumericState' v a
 updateFieldNumericState _ !a = a
+#ifndef NOINLINE
 {-# INLINE updateFieldNumericState #-}
+#endif
 
 -- FIXME: parsing fields twice
 updateFieldNumericState' :: ByteString -> NumericState -> NumericState
@@ -227,7 +250,9 @@ updateFieldNumericState' t !acc =
       acc
     Right (NumericField n) ->
       updateNumericState acc n
+#ifndef NOINLINE
 {-# INLINE updateFieldNumericState' #-}
+#endif
 
 combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
 combineSVParseState fft s !acc =
@@ -240,8 +265,12 @@ combineSVParseState fft s !acc =
   $!! acc
   where
     combineTextCounts' = combineTextCounts fft
+#ifndef NOINLINE
 {-# INLINE combineSVParseState #-}
+#endif
 
 resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
 resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
+#ifndef NOINLINE
 {-# INLINE resolveSVParseState #-}
+#endif
