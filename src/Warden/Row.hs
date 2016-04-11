@@ -6,7 +6,8 @@
 {-# LANGUAGE CPP #-}
 
 module Warden.Row (
-    combineSVParseState
+    asciiToLower
+  , combineSVParseState
   , decodeByteString
   , fieldP
   , parseField
