@@ -42,6 +42,16 @@ prop_updateFieldNumericState' m n =
       ms = updateFieldNumericState' mb initialNumericState in
   (ns == initialNumericState, ms == initialNumericState) === (False, False)
 
+prop_parseField :: TestField -> Property
+prop_parseField tf =
+  let bs = packTestField tf
+      fl = parseField bs in
+  case tf of
+    TestIntegral _ -> fl === LooksIntegral
+    TestReal _ -> fl === LooksReal
+    TestText _ -> fl === LooksText
+    TestBoolean _ -> fl === LooksBoolean
+
 return []
 tests :: IO Bool
 tests = $quickCheckAll
