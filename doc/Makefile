@@ -3,6 +3,7 @@ OUT=$(DOC).pdf
 
 all: $(OUT)
 
+# Duplication intentional here, the latex-bibtex dance requires multiple steps.
 $(OUT): $(DOC).tex $(DOC).bib
 	pdflatex $(DOC).tex
 	bibtex $(DOC).aux
