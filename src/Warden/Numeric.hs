@@ -115,18 +115,18 @@ combineStdDevAcc _ (_, MStdDevAcc (StdDevAcc s1), _) (_, NoStdDevAcc, _) =
   MStdDevAcc $ StdDevAcc s1
 combineStdDevAcc _ (_, NoStdDevAcc, _) (_, MStdDevAcc (StdDevAcc s2), _) =
   MStdDevAcc $ StdDevAcc s2
-combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
+combineStdDevAcc _muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
   MStdDevAcc combinedSOS
   where
     combinedSOS =
-      let muHat' = unMeanAcc muHat
-          sda1' = unStdDevAcc sda1
+      let sda1' = unStdDevAcc sda1
           mu1' = unMeanAcc mu1
           c1' = fromIntegral $ unKAcc c1
           sda2' = unStdDevAcc sda2
           mu2' = unMeanAcc mu2
-          c2' = fromIntegral $ unKAcc c2 in
-      StdDevAcc $ sda1' + sda2' + (c1' * mu1' * mu1') + (c2' * mu2' * mu2') - ((c1' + c2') * muHat' * muHat')
+          c2' = fromIntegral $ unKAcc c2
+          delta = mu1' - mu2' in
+      StdDevAcc $ sda1' + sda2' + (delta * delta) * ((c1' * c2') / (c1' + c2'))
 #ifndef NOINLINE
 {-# INLINE combineStdDevAcc #-}
 #endif
