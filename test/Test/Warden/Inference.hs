@@ -59,13 +59,18 @@ prop_viewMarkerMismatch_different_fft vm (UniquePair ta tb) =
 prop_validateViewMarkers_same :: Property
 prop_validateViewMarkers_same = forAll ((,) <$> passedViewMarker <*> choose (1, 100)) $ \(vm, n) ->
   let vms = NE.fromList . take n $ repeat vm in
-  isRight (validateViewMarkers vms) === True
+  isRight (validateViewMarkers NoInferUsingFailedChecks vms) === True
 
 prop_validateViewMarkers_failed :: NonEmpty ViewMarker -> Property
 prop_validateViewMarkers_failed vms = forAll (fmap NE.fromList $ listOf1 failedViewMarker) $ \fvms ->
   let vms1 = vms <> fvms
       vms2 = fvms <> vms in
-  (isLeft (validateViewMarkers vms1), isLeft (validateViewMarkers vms2)) === (True, True)
+  (isLeft (validateViewMarkers NoInferUsingFailedChecks vms1), isLeft (validateViewMarkers NoInferUsingFailedChecks vms2)) === (True, True)
+
+prop_validateViewMarkers_failed_force :: Property
+prop_validateViewMarkers_failed_force = forAll ((,) <$> failedViewMarker <*> choose (1, 100)) $ \(vm, n) ->
+  let vms = NE.fromList . take n $ repeat vm in
+  (isRight (validateViewMarkers InferUsingFailedChecks vms)) === True
 
 prop_compatibleEntries_text :: ObservationCount -> Property
 prop_compatibleEntries_text oc = forAll (elements muppets) $ \t ->

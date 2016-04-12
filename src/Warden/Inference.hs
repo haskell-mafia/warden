@@ -59,8 +59,10 @@ viewMarkerMismatch a b = do
 
 -- | Sanity-check view markers to prevent human error, e.g., trying to run
 -- `infer` on markers from multiple views.
-validateViewMarkers :: NonEmpty ViewMarker -> Either InferenceError ValidViewMarkers
-validateViewMarkers (m:|ms) = go m ms >> checkFails
+validateViewMarkers :: InferUsingFailedChecks -> NonEmpty ViewMarker -> Either InferenceError ValidViewMarkers
+validateViewMarkers fc (m:|ms) = go m ms >> case fc of
+    InferUsingFailedChecks -> pure $ ValidViewMarkers (m:|ms)
+    NoInferUsingFailedChecks -> checkFails
   where
     go _ [] = pure ()
     go prev !(m':ms') = case viewMarkerMismatch prev m' of

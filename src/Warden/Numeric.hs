@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 
 module Warden.Numeric (
     combineFieldNumericState
@@ -26,14 +27,18 @@ updateMinimum :: Real a
 updateMinimum !acc x =
   let x' = (Minimum . fromRational . toRational) x
   in acc <> x'
+#ifndef NOINLINE
 {-# INLINE updateMinimum #-}
+#endif
 
 updateMaximum :: Real a
               => Maximum -> a -> Maximum
 updateMaximum !acc x =
   let x' = (Maximum . fromRational . toRational) x
   in acc <> x'
+#ifndef NOINLINE
 {-# INLINE updateMaximum #-}
+#endif
 
 -- | Minimal-error mean and standard deviation.
 --
@@ -62,7 +67,9 @@ updateMeanDev !macc x =
                     MStdDevAcc (StdDevAcc sda) ->
                       MStdDevAcc . StdDevAcc $!! sda + (delta * (v - (unMeanAcc m')))
       in MeanDevAcc m' s' i'
+#ifndef NOINLINE
 {-# INLINE updateMeanDev #-}
+#endif
 
 -- FIXME: median
 updateNumericState :: Real a
@@ -72,7 +79,9 @@ updateNumericState acc x =
   . (stateMaximum %~ (flip updateMaximum x))
   . (stateMeanDev %~ (flip updateMeanDev x))
   $!! acc
+#ifndef NOINLINE
 {-# INLINE updateNumericState #-}
+#endif
 
 -- FIXME: this might commute error, requires further thought.
 combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc
@@ -86,7 +95,9 @@ combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
       -- subtract one from the sum to prevent it becoming off-by-two.
       c' = c1 + c2 - (KAcc 1) in
   MeanDevAcc mu' sda' c'
+#ifndef NOINLINE
 {-# INLINE combineMeanDevAcc #-}
+#endif
 
 -- | Combine stddev accumulators of two subsets by converting to variance
 -- (pretty cheap), combining the variances (less cheap), and converting back.
@@ -107,7 +118,9 @@ combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
       var2 = varianceFromStdDevAcc c2 sda2 in
   MStdDevAcc . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
     combineVariance muHat (mu1, var1, c1) (mu2, var2, c2)
+#ifndef NOINLINE
 {-# INLINE combineStdDevAcc #-}
+#endif
 
 -- | Combine variances of two subsets of a sample (that is, exact variance of
 -- datasets rather than estimate of variance of population).
@@ -126,7 +139,9 @@ combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc m
     c1' = fromIntegral $ c1 - 1
 
     c2' = fromIntegral $ c2 - 1
+#ifndef NOINLINE
 {-# INLINE combineVariance #-}
+#endif
 
 -- | Combine mean of two subsets, given subset means and size.
 combineMeanAcc :: (MeanAcc, KAcc) -> (MeanAcc, KAcc) -> MeanAcc
@@ -134,7 +149,9 @@ combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) =
   let c1' = fromIntegral $ c1 - 1
       c2' = fromIntegral $ c2 - 1 in
   MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
+#ifndef NOINLINE
 {-# INLINE combineMeanAcc #-}
+#endif
 
 -- FIXME: not associative
 combineNumericState :: NumericState -> NumericState -> NumericState
@@ -143,7 +160,9 @@ combineNumericState ns1 ns2 =
   . (stateMaximum %~ (<> (ns1 ^. stateMaximum)))
   . (stateMeanDev %~ (combineMeanDevAcc (ns1 ^. stateMeanDev)))
   $!! ns2
+#ifndef NOINLINE
 {-# INLINE combineNumericState #-}
+#endif
 
 combineFieldNumericState :: FieldNumericState -> FieldNumericState -> FieldNumericState
 combineFieldNumericState NoFieldNumericState NoFieldNumericState =
@@ -154,4 +173,6 @@ combineFieldNumericState fns1 NoFieldNumericState =
   fns1
 combineFieldNumericState (FieldNumericState ns1) (FieldNumericState ns2) =
   FieldNumericState $ V.zipWith combineNumericState ns1 ns2
+#ifndef NOINLINE
 {-# INLINE combineFieldNumericState #-}
+#endif

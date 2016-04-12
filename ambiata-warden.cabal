@@ -10,6 +10,10 @@ cabal-version:         >= 1.8
 build-type:            Custom
 description:           warden.
 
+flag noinline
+  description: Don't use the INLINE pragma (useful for profiling)
+  default: False
+
 library
   build-depends:
                        base                            >= 3          && < 5
@@ -101,6 +105,9 @@ library
                        Warden.Serial.Json.TextCounts
                        Warden.Serial.Json.View
                        Warden.View
+
+  if flag(noinline)
+    CPP-Options: -DNOINLINE
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N

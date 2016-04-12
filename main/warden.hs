@@ -32,7 +32,7 @@ import           X.Options.Applicative
 data Command =
     Check !View !CheckParams
   | SingleFileCheck !ViewFile !CheckParams
-  | Infer !Verbosity !FieldMatchRatio !SchemaFile ![FilePath]
+  | Infer !Verbosity !FieldMatchRatio !InferUsingFailedChecks !SchemaFile ![FilePath]
   | Sanity !View !SanityParams
   deriving (Eq, Show)
 
@@ -56,8 +56,8 @@ run wps (Check v ps) = do
 run wps (SingleFileCheck vf ps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ fileCheck wps vf ps
   finishCheck (checkVerbosity ps) (checkExitType ps) r
-run _wps (Infer v fmr sf fs) = do
-  s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fs
+run _wps (Infer v fmr fc sf fs) = do
+  s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fc fs
   T.writeFile (unSchemaFile sf) $ renderSchema s
 run wps (Sanity v sps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
@@ -90,6 +90,7 @@ sanityP = Sanity <$> viewP <*> sanityParamsP
 inferP :: Parser Command
 inferP = Infer <$> verbosityP
                <*> fieldMatchRatioP
+               <*> inferUsingFailedChecksP
                <*> outputSchemaP
                <*> some markerFileP
 
@@ -206,3 +207,10 @@ includeDotFilesP =
        long "include-dot-files"
     <> short 'd'
     <> help "Don't ignore dotfiles when traversing view."
+
+inferUsingFailedChecksP :: Parser InferUsingFailedChecks
+inferUsingFailedChecksP =
+  flag NoInferUsingFailedChecks InferUsingFailedChecks $
+       long "include-failed-checks"
+    <> short 'i'
+    <> help "Allow use of metadata from failed checks (useful for updating obsolete schemas)."

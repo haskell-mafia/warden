@@ -1,13 +1,18 @@
-MARKDOWNS=$(sort $(wildcard *.md))
-BIB=warden.bib
-OUT=warden.pdf
+DOC=warden
+OUT=$(DOC).pdf
 
 all: $(OUT)
 
-$(OUT): $(MARKDOWNS) $(BIB)
-	pandoc --toc --smart --filter pandoc-citeproc --bibliography $(BIB) -f markdown+tex_math_dollars $(MARKDOWNS) -o $@
+# Duplication intentional here, the latex-bibtex dance requires multiple steps.
+$(OUT): $(DOC).tex $(DOC).bib
+	pdflatex $(DOC).tex
+	bibtex $(DOC).aux
+	pdflatex $(DOC).tex
+	pdflatex $(DOC).tex
 
 clean:
 	rm -f $(OUT)
+	rm -f *.aux
+	rm -f *.log
 
 .PHONY: clean

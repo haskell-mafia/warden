@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE CPP #-}
 
 {-
 Keep track of the number of Text values we've seen in a field by hashing them
@@ -73,7 +74,9 @@ instance NFData TextCounts
 hashText :: ByteString -> Int
 hashText =
   fromIntegral . cityHash64
+#ifndef NOINLINE
 {-# INLINE hashText #-}
+#endif
 
 updateUniqueTextCount :: TextFreeformThreshold -> ByteString -> UniqueTextCount -> UniqueTextCount
 updateUniqueTextCount _ _ LooksFreeform = LooksFreeform
@@ -83,7 +86,9 @@ updateUniqueTextCount fft t (UniqueTextCount c)
   | otherwise =
       let h = hashText t in
       UniqueTextCount $ S.insert h c
+#ifndef NOINLINE
 {-# INLINE updateUniqueTextCount #-}
+#endif
 
 combineTextCounts :: TextFreeformThreshold -> TextCounts -> TextCounts -> TextCounts
 combineTextCounts _ NoTextCounts NoTextCounts = NoTextCounts

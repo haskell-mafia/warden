@@ -11,3 +11,10 @@ cabal.sandbox.config
 warden-test*
 /gen
 doc/*.pdf
+doc/*.aux
+doc/*.aux
+doc/*.blg
+doc/*.log
+doc/*.out
+doc/*.toc
+doc/*.bbl

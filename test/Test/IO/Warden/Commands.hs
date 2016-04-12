@@ -46,7 +46,7 @@ prop_infer_tripping wps cps = testIO $ withTestView $ \(View vd) ->
     case fs of
       [] -> fail "No view marker files written."
       [vmf] -> do
-        sch <- infer Quiet (FieldMatchRatio 0.99) [vmf]
+        sch <- infer Quiet (FieldMatchRatio 0.99) NoInferUsingFailedChecks [vmf]
         writeSchema sch (SchemaFile "test-schema.json")
         let cps'' = cps' {
                         checkSchemaFile = Just (SchemaFile "test-schema.json")

@@ -1,3 +1,0 @@
----
-link-citations: true
----

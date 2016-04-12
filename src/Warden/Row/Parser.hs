@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE CPP #-}
 
 module Warden.Row.Parser (
     escapedFieldP
@@ -31,7 +32,9 @@ import           Warden.Data.Row
 
 rawRecordP :: Separator -> Parser RawRecord
 rawRecordP sep = (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
+#ifndef NOINLINE
 {-# INLINE rawRecordP #-}
+#endif
 
 sepByByte1P :: Parser a -> Separator -> Parser [a]
 sepByByte1P p !sep =
@@ -45,7 +48,9 @@ sepByByte1P p !sep =
         Nothing -> pure []
 
     sep' = unSeparator sep
+#ifndef NOINLINE
 {-# INLINE sepByByte1P #-}
+#endif
       
 rawFieldP :: Separator -> Parser ByteString
 rawFieldP !sep =
@@ -54,7 +59,9 @@ rawFieldP !sep =
                 then escapedFieldP
                 else unescapedFieldP sep
     Nothing -> unescapedFieldP sep
+#ifndef NOINLINE
 {-# INLINE rawFieldP #-}
+#endif
 
 -- | We do not unescape the content of escaped fields, as the number of
 -- double-quotes present in a text field (as long as it remains consistent)
@@ -77,7 +84,9 @@ escapedFieldP = do
         else if st
           then Nothing
           else Just False
+#ifndef NOINLINE
 {-# INLINE escapedFieldP #-}
+#endif
 
 unescapedFieldP :: Separator -> Parser ByteString
 unescapedFieldP !sep =
@@ -90,19 +99,27 @@ unescapedFieldP !sep =
       && c /= doubleQuote
 
     sep' = unSeparator sep
+#ifndef NOINLINE
 {-# INLINE unescapedFieldP #-}
+#endif
 
 lineFeed :: Word8
 lineFeed = fromIntegral $ ord '\n'
+#ifndef NOINLINE
 {-# INLINE lineFeed #-}
+#endif
 
 carriageReturn :: Word8
 carriageReturn = fromIntegral $ ord '\r'
+#ifndef NOINLINE
 {-# INLINE carriageReturn #-}
+#endif
 
 doubleQuote :: Word8
 doubleQuote = fromIntegral $ ord '"'
+#ifndef NOINLINE
 {-# INLINE doubleQuote #-}
+#endif
 
 fieldP :: Parser ParsedField
 fieldP = choice [
@@ -110,22 +127,30 @@ fieldP = choice [
   , void realFieldP >> pure ParsedReal
   , void (boolP <* endOfInput) >> pure ParsedBoolean
   ]
+#ifndef NOINLINE
 {-# INLINE fieldP #-}
+#endif
 
 integralFieldP :: Parser Integer
 integralFieldP = signed (decimal :: Parser Integer) <* endOfInput
+#ifndef NOINLINE
 {-# INLINE integralFieldP #-}
+#endif
 
 realFieldP :: Parser Double
 realFieldP = double <* endOfInput
+#ifndef NOINLINE
 {-# INLINE realFieldP #-}
+#endif
 
 numericFieldP :: Parser NumericField
 numericFieldP = choice [
     NumericField <$> realFieldP
   , (NumericField . fromIntegral) <$> integralFieldP
   ]
+#ifndef NOINLINE
 {-# INLINE numericFieldP #-}
+#endif
 
 boolP :: Parser ()
 boolP = trueP <|> falseP
@@ -141,4 +166,6 @@ boolP = trueP <|> falseP
       peekWord8 >>= \case
         Nothing -> pure ()
         Just _ -> void $ string "alse"
+#ifndef NOINLINE
 {-# INLINE boolP #-}
+#endif

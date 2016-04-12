@@ -69,19 +69,21 @@ checkViewFiles :: WardenParams
                -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
 checkViewFiles wps ps v vfs = do
   schema <- maybe (pure Nothing) (fmap Just . readSchema) $ checkSchemaFile ps
-  frs <- fmap join . traverse (forM File.fileChecks) $ (File.runFileCheck wps (checkVerbosity ps) (checkForce ps)) <$> vfs
+  frs <- fmap join . traverse (forM File.fileChecks) $
+    (File.runFileCheck wps (checkVerbosity ps) (checkForce ps)) <$> vfs
   rr <- Row.runRowCheck wps ps schema v vfs
   pure $ rr <| frs
 
 infer :: Verbosity
       -> FieldMatchRatio
+      -> InferUsingFailedChecks
       -> [FilePath]
       -> EitherT WardenError (ResourceT IO) Schema
-infer v fmr fps = case nonEmpty fps of
+infer v fmr fc fps = case nonEmpty fps of
   Nothing -> left $ WardenInferenceError NoViewMarkersError
   Just fps' -> do
     vms <- mapM readViewMarker fps'
-    vms' <- withErr $ validateViewMarkers vms
+    vms' <- withErr $ validateViewMarkers fc vms
     cs <- withErr $ countCompatibleFields vms'
     liftIO . debugPrintLn v $ renderFieldHistogramVector cs
     tcs <- withErr $ inferForms vms'
