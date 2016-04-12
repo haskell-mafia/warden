@@ -8,7 +8,6 @@ module Warden.Numeric (
   , combineMeanDevAcc
   , combineNumericState
   , combineStdDevAcc
-  , jackknifeMedian
   , sampleMedian
   , unsafeMedian
   , updateMinimum
@@ -25,9 +24,6 @@ import           Data.Vector.Unboxed ((!))
 import qualified Data.Vector.Unboxed as VU
 
 import           P
-
-import           Statistics.Resampling (jackknife)
-import qualified Statistics.Types as Stat
 
 import           Warden.Data
 
@@ -201,13 +197,3 @@ sampleMedian (Sample v) =
       NoMedian
     else
       Median $ unsafeMedian v
-
--- | Jackknife resampling to estimate the error in our median estimate.
-jackknifeMedian :: Sample -> Jackknife
-jackknifeMedian (Sample v) =
-  let n = VU.length v in
-  if n < 2
-    then
-      NoJackknife
-    else
-      Jackknife $ jackknife (Stat.Function unsafeMedian) v

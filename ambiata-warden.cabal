@@ -45,7 +45,6 @@ library
                      , primitive                       == 0.6.*
                      , resourcet                       == 1.1.*
                      , semigroups                      >= 0.16 && < 0.19
-                     , statistics                      == 0.13.*
                      , text                            == 1.2.*
                      , tz                              == 0.1.0.*
                      , transformers                    >= 0.3 && < 5
