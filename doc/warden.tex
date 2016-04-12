@@ -207,6 +207,22 @@ Solving:
 
 \[\sigma_{1:m+n}^2 = \frac{n(\sigma_{1:n}^2 + \mu_{1:n}^2) + m(\sigma_{1+n:m+n}^2 + \mu_{1+n:m+n}^2)}{m+n} - \mu_{1:m+n}^2\]
 
+\subsection{Quantiles}\label{quantiles}
+
+Quantiles are computed in one pass using a basic reservoir
+sampling\cite{vitter1985} method. A reservoir \(\mathbf{R}\) is maintained of
+the desired final sample size \(n\), and filled as follows:
+
+\begin{itemize}
+\item
+The first \(n\) records seen are added to the reservoir.
+
+\item
+For all records beyond \(n\), a value is drawn uniformly from the
+interval \([1, t]\), where \(t\) is the number of records seen so
+far. If \(t \leq n\), the record \(\mathbf{R}_t\) is replaced with the current value.
+\end{itemize}
+
 \bibliographystyle{plain}
 \bibliography{warden.bib}
 
