@@ -42,6 +42,7 @@ library
                      , lens                            == 4.9.*
                      , lifted-async                    == 0.5.*
                      , mwc-random                      == 0.13.*
+                     , primitive                       == 0.6.*
                      , resourcet                       == 1.1.*
                      , semigroups                      >= 0.16 && < 0.19
                      , text                            == 1.2.*
@@ -79,6 +80,7 @@ library
                        Warden.Data.Param
                        Warden.Data.Poset
                        Warden.Data.Row
+                       Warden.Data.Sampling
                        Warden.Data.Sampling.Reservoir
                        Warden.Data.Schema
                        Warden.Data.TextCounts
@@ -91,6 +93,7 @@ library
                        Warden.Param
                        Warden.Row
                        Warden.Row.Parser
+                       Warden.Sampling.Reservoir
                        Warden.Schema
                        Warden.Serial.Json
                        Warden.Serial.Json.Check
