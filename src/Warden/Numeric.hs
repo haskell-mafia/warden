@@ -8,6 +8,9 @@ module Warden.Numeric (
   , combineMeanDevAcc
   , combineNumericState
   , combineStdDevAcc
+  , jackknifeMedian
+  , sampleMedian
+  , unsafeMedian
   , updateMinimum
   , updateMaximum
   , updateMeanDev
@@ -17,8 +20,14 @@ module Warden.Numeric (
 import           Control.Lens ((%~), (^.))
 
 import qualified Data.Vector as V
+import qualified Data.Vector.Algorithms.Intro as Intro
+import           Data.Vector.Unboxed ((!))
+import qualified Data.Vector.Unboxed as VU
 
 import           P
+
+import           Statistics.Resampling (jackknife)
+import qualified Statistics.Types as Stat
 
 import           Warden.Data
 
@@ -169,3 +178,36 @@ combineFieldNumericState (FieldNumericState ns1) (FieldNumericState ns2) =
 #ifndef NOINLINE
 {-# INLINE combineFieldNumericState #-}
 #endif
+
+-- | Exact median of sample data. Unsafe, don't call this directly
+-- unless you know what you're doing.
+unsafeMedian :: VU.Vector Double -> Double
+unsafeMedian v =
+  let n = VU.length v
+      v' = VU.modify Intro.sort v in
+    case n `mod` 2 of
+      0 ->
+        let right = n `div` 2
+            left = right - 1 in
+        ((v' ! left) + (v' ! right)) / 2
+      _ ->
+        v' ! (n `div` 2)
+
+sampleMedian :: Sample -> Median
+sampleMedian (Sample v) =
+  let n = VU.length v in
+  if n < 2
+    then
+      NoMedian
+    else
+      Median $ unsafeMedian v
+
+-- | Jackknife resampling to estimate the error in our median estimate.
+jackknifeMedian :: Sample -> Jackknife
+jackknifeMedian (Sample v) =
+  let n = VU.length v in
+  if n < 2
+    then
+      NoJackknife
+    else
+      Jackknife $ jackknife (Stat.Function unsafeMedian) v

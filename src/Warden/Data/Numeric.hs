@@ -8,6 +8,7 @@
 
 module Warden.Data.Numeric (
     FieldNumericState(..)
+  , Jackknife(..)
   , KAcc(..)
   , Maximum(..)
   , Mean(..)
@@ -40,6 +41,7 @@ import           Control.Lens (makeLenses, (^.))
 
 import           Data.AEq (AEq, (===), (~==))
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 
 import           GHC.Generics (Generic)
 
@@ -339,3 +341,10 @@ finalizeMeanDev (MeanDevAcc mn (MStdDevAcc sda) n) = (Mean (unMeanAcc mn), final
 #ifndef NOINLINE
 {-# INLINE finalizeMeanDev #-}
 #endif
+
+data Jackknife =
+    NoJackknife
+  | Jackknife !(VU.Vector Double)
+  deriving (Eq, Show, Generic)
+
+instance NFData Jackknife
