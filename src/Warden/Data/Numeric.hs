@@ -98,7 +98,7 @@ instance Monoid Maximum where
 -- of records seen.
 newtype KAcc =
   KAcc {
-    getKAcc :: Int
+    unKAcc :: Int
   } deriving (Eq, Show, Generic, Num)
 
 instance NFData KAcc
