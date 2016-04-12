@@ -112,6 +112,10 @@ prop_tripping_StdDevAcc ka sda =
   let sda' = stdDevAccFromVariance ka $ varianceFromStdDevAcc ka sda in
   sda ~~~ sda'
 
+prop_combineMeanDevAcc_associative :: [MeanDevAcc] -> Property
+prop_combineMeanDevAcc_associative mdas =
+  associativity combineMeanDevAcc MeanDevInitial mdas id
+
 prop_combineMeanDevAcc_commutative :: UniquePair MeanDevAcc -> Property
 prop_combineMeanDevAcc_commutative =
   commutativity combineMeanDevAcc
