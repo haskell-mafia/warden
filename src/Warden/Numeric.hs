@@ -22,20 +22,16 @@ import           P
 
 import           Warden.Data
 
-updateMinimum :: Real a
-              => Minimum -> a -> Minimum
+updateMinimum :: Minimum -> Double -> Minimum
 updateMinimum !acc x =
-  let x' = (Minimum . fromRational . toRational) x
-  in acc <> x'
+  acc <> (Minimum x)
 #ifndef NOINLINE
 {-# INLINE updateMinimum #-}
 #endif
 
-updateMaximum :: Real a
-              => Maximum -> a -> Maximum
+updateMaximum :: Maximum -> Double -> Maximum
 updateMaximum !acc x =
-  let x' = (Maximum . fromRational . toRational) x
-  in acc <> x'
+  acc <> (Maximum x)
 #ifndef NOINLINE
 {-# INLINE updateMaximum #-}
 #endif
@@ -45,17 +41,15 @@ updateMaximum !acc x =
 -- From Knuth (TAoCP v2, Seminumerical Algorithms, p232).
 --
 -- \( \frac{1}{n} \sum_{x \in X} x \equiv M_1 = X_1, M_k = M_{k-1} + \frac{(X_k - M_{k-1})}{k} \)
-updateMeanDev :: Real a
-              => MeanDevAcc -> a -> MeanDevAcc
-updateMeanDev !macc x =
-  let x' = (fromRational . toRational) x in case macc of
+updateMeanDev :: MeanDevAcc -> Double -> MeanDevAcc
+updateMeanDev !macc x = case macc of
   MeanDevInitial ->
     let i = KAcc 1
         m = MeanAcc 0
         s = NoStdDevAcc
-    in update' m s i x'
+    in update' m s i x
   (MeanDevAcc m s i) ->
-    update' m s i x'
+    update' m s i x
   where
     update' (MeanAcc m) s (KAcc i) v =
       let delta = v - m
@@ -72,8 +66,7 @@ updateMeanDev !macc x =
 #endif
 
 -- FIXME: median
-updateNumericState :: Real a
-                   => NumericState -> a -> NumericState
+updateNumericState :: NumericState -> Double -> NumericState
 updateNumericState acc x =
     (stateMinimum %~ (flip updateMinimum x))
   . (stateMaximum %~ (flip updateMaximum x))
