@@ -91,6 +91,7 @@ library
                        Warden.Marker
                        Warden.Numeric
                        Warden.Param
+                       Warden.Random
                        Warden.Row
                        Warden.Row.Parser
                        Warden.Sampling.Reservoir
@@ -246,6 +247,7 @@ test-suite test-io
                      , transformers                    >= 0.3 && < 5
                      , unix                            == 2.7.1.*
                      , vector                          == 0.10.*
+                     , vector-algorithms               == 0.7.*
 
 benchmark bench
   type:                exitcode-stdio-1.0
