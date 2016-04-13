@@ -29,6 +29,11 @@ newReservoirAcc :: ReservoirSize -> IO ReservoirAcc
 newReservoirAcc (ReservoirSize n) =
   ReservoirAcc <$> MVU.new n
 
+-- | If we have less than the desired final number of elements (inferred from
+-- the vector size) we take the current value and write it to the end of the
+-- sample. If we have at least the desired final number of elements, we (with
+-- probability decreasing with the number of elements seen) replace a random
+-- element in the sample with the current value.
 updateReservoirAcc :: Gen (PrimState IO)
                    -> RowCount
                    -> ReservoirAcc
@@ -52,6 +57,9 @@ updateReservoirAcc gen seen (ReservoirAcc v) c x =
 {-# INLINE updateReservoirAcc #-}
 #endif
 
+-- | Join two samples to get a new sample of up to the provided 'ReservoirSize',
+-- consisting of elements drawn uniformly from the union of the two original
+-- samples.
 combineReservoirAccs :: Gen (PrimState IO)
                      -> ReservoirSize
                      -> (SampleCount, ReservoirAcc)
@@ -64,6 +72,8 @@ combineReservoirAccs g (ReservoirSize sz) (SampleCount sc1, r1) (SampleCount sc2
   let r = MVU.slice 0 desired pool
   pure $ (SampleCount desired, ReservoirAcc r)
 
+-- | Concatenate two mutable vectors with minimal copying by growing the
+-- first vector.
 concatMutable :: MVU.IOVector Double -> MVU.IOVector Double -> IO (MVU.IOVector Double)
 concatMutable xs ys =
   let nx = MVU.length xs

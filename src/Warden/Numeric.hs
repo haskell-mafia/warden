@@ -41,7 +41,7 @@ updateMaximum !acc x =
 {-# INLINE updateMaximum #-}
 #endif
 
--- | Minimal-error mean and standard deviation.
+-- | Minimal-error mean and standard deviation with Welford's method.
 --
 -- From Knuth (TAoCP v2, Seminumerical Algorithms, p232).
 --
