@@ -4,6 +4,7 @@
 
 module Warden.Sampling.Reservoir(
     combineReservoirAccs
+  , concatMutable
   , finalizeReservoir
   , newReservoirAcc
   , updateReservoirAcc
@@ -58,12 +59,18 @@ combineReservoirAccs :: Gen (PrimState IO)
                      -> IO (SampleCount, ReservoirAcc)
 combineReservoirAccs g (ReservoirSize sz) (SampleCount sc1, r1) (SampleCount sc2, r2) =
   let desired = min sz (sc1 + sc2) in do
-  r1' <- VU.freeze $ unReservoirAcc r1
-  r2' <- VU.freeze $ unReservoirAcc r2
-  pool <- VU.thaw $ r1' VU.++ r2'
+  pool <- (unReservoirAcc r1) `concatMutable` (unReservoirAcc r2)
   uniformShuffle g pool
   let r = MVU.slice 0 desired pool
   pure $ (SampleCount desired, ReservoirAcc r)
+
+concatMutable :: MVU.IOVector Double -> MVU.IOVector Double -> IO (MVU.IOVector Double)
+concatMutable xs ys =
+  let nx = MVU.length xs
+      ny = MVU.length ys in do
+  zs <- MVU.grow xs ny
+  mapM_ (\ix -> MVU.write zs (ix + nx) =<< MVU.read ys ix) [0..(ny-1)]
+  pure zs
 
 finalizeReservoir :: ReservoirAcc -> IO Sample
 finalizeReservoir (ReservoirAcc v) =

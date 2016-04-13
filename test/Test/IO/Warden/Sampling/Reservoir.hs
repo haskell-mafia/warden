@@ -62,6 +62,14 @@ prop_combineReservoirAcc_large (ReservoirSize rs) =
    r' <- VU.freeze r
    pure $ (sc, VU.length r') === (rs, rs)
 
+prop_concatMutable :: VU.Vector Double -> VU.Vector Double -> Property
+prop_concatMutable xs ys =
+  let zs = xs VU.++ ys in testIO $ do
+  xs' <- VU.thaw xs
+  ys' <- VU.thaw ys
+  zs' <- VU.freeze =<< concatMutable xs' ys'
+  pure $ zs === zs'
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
