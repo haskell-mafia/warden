@@ -62,7 +62,7 @@ combineReservoirAccs g (ReservoirSize sz) (SampleCount sc1, r1) (SampleCount sc2
   r2' <- VU.freeze $ unReservoirAcc r2
   pool <- VU.thaw $ r1' VU.++ r2'
   uniformShuffle g pool
-  let r = MVU.slice 0 (desired - 1) pool
+  let r = MVU.slice 0 desired pool
   pure $ (SampleCount desired, ReservoirAcc r)
 
 finalizeReservoir :: ReservoirAcc -> IO Sample
