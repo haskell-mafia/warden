@@ -12,7 +12,6 @@ import qualified Test.Warden.Inference
 import qualified Test.Warden.Numeric
 import qualified Test.Warden.Row
 import qualified Test.Warden.Row.Parser
-import qualified Test.Warden.Sampling.Reservoir
 import qualified Test.Warden.Serial.Json.Marker
 import qualified Test.Warden.Serial.Json.Numeric
 import qualified Test.Warden.Serial.Json.Schema
@@ -31,7 +30,6 @@ main = disorderMain [
   , Test.Warden.Numeric.tests
   , Test.Warden.Row.tests
   , Test.Warden.Row.Parser.tests
-  , Test.Warden.Sampling.Reservoir.tests
   , Test.Warden.Serial.Json.Marker.tests
   , Test.Warden.Serial.Json.Numeric.tests
   , Test.Warden.Serial.Json.Schema.tests

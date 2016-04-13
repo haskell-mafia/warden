@@ -40,7 +40,6 @@ import           Test.QuickCheck.Instances ()
 import           Text.Printf (printf)
 
 import           Warden.Data
-import           Warden.Sampling.Reservoir
 
 newtype ValidRow =
   ValidRow {
@@ -178,15 +177,6 @@ instance Arbitrary NumericSummary where
 
 instance Arbitrary ReservoirSize where
   arbitrary = ReservoirSize <$> choose (1, 100)
-
-instance Arbitrary Seen where
-  arbitrary = Seen <$> choose (1, 10000)
-
-instance Arbitrary XDist where
-  arbitrary = XDist <$> arbitrary <*> arbitrary
-
-instance Arbitrary Probability where
-  arbitrary = Probability <$> choose (0.0, 1.0)
 
 instance Arbitrary a => Arbitrary (NonEmpty a) where
   arbitrary = NE.fromList <$> listOf1 arbitrary

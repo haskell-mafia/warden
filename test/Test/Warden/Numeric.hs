@@ -5,6 +5,7 @@
 module Test.Warden.Numeric where
 
 import           Data.List (take)
+import qualified Data.Vector.Unboxed as VU
 
 import           Disorder.Core.Property ((~~~))
 import           Disorder.Core.UniquePair (UniquePair)
@@ -114,6 +115,26 @@ prop_tripping_StdDevAcc ka sda =
 prop_combineMeanDevAcc_commutative :: UniquePair MeanDevAcc -> Property
 prop_combineMeanDevAcc_commutative =
   commutativity combineMeanDevAcc
+
+prop_unsafeMedian_odd :: Int -> Property
+prop_unsafeMedian_odd md = forAll (choose (0, 100)) $ \k -> forAll ((,) <$> vectorOf k (choose (md, maxBound)) <*> vectorOf k (choose (minBound, md))) $ \(xs, ys) ->
+  forAll (shuffle (xs <> [md] <> ys)) $ \l ->
+    let v = VU.fromList $ fromIntegral <$> l
+        md' = unsafeMedian v in
+  fromIntegral md === md'
+
+prop_unsafeMedian_even :: Int -> Int -> Property
+prop_unsafeMedian_even mda mdb =
+  let md1 = min mda mdb
+      md2 = max mda mdb in
+  forAll (choose (0, 100)) $ \k ->
+  forAll ((,) <$> vectorOf k (choose (md2, maxBound)) <*> vectorOf k (choose (minBound, md1))) $ \(xs, ys) ->
+  forAll (shuffle (xs <> [md1, md2] <> ys)) $ \l ->
+    let v = VU.fromList $ fromIntegral <$> l
+        md' = unsafeMedian v
+        md = ((fromIntegral md1) + (fromIntegral md2)) / 2 in
+  md === md'
+
 
 return []
 tests :: IO Bool
