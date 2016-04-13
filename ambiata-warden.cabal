@@ -206,7 +206,9 @@ test-suite test-io
 
   main-is:             test-io.hs
 
-  ghc-options:         -Wall -threaded -O2
+  -- Simplifier tick increase needed due to extensive use of vector-algorithms
+  -- in sampling-related tests.
+  ghc-options:         -Wall -threaded -O2 -fsimpl-tick-factor=200
 
   hs-source-dirs:
                        test
