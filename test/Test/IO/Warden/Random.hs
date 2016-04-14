@@ -33,4 +33,4 @@ prop_uniformShuffle = testIO $ withSystemRandom $ \g ->
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 100 })

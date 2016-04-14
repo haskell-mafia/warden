@@ -72,4 +72,4 @@ prop_concatMutable xs ys =
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 100 })
