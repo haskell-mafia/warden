@@ -8,8 +8,9 @@ module Warden.Check.Row (
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
 import           Control.Foldl (FoldM(..))
-import           Control.Monad.IO.Class (liftIO)
 import           Control.Lens ((^.))
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Resource (ResourceT)
 
@@ -27,6 +28,7 @@ import           Delorean.Local.Date (Date)
 import           P
 
 import           System.IO (IO)
+import           System.Random.MWC (Gen, createSystemRandom)
 
 import           Warden.Chunk
 import           Warden.Data
@@ -68,18 +70,20 @@ parseCheck caps ps sch vfs =
       fft = checkFreeformThreshold ps
       s = checkSeparator ps
       verb = checkVerbosity ps
-      lb = checkLineBound ps in
+      lb = checkLineBound ps
+      st = checkSamplingType ps in
   fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
-    mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
+    mapM (parseViewFile caps verb s lb fft st) (NE.toList vfs)
 
 parseViewFile :: NumCPUs
               -> Verbosity
               -> Separator
               -> LineBound
               -> TextFreeformThreshold
+              -> SamplingType
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile caps verb s lb fft vf = do
+parseViewFile caps verb s lb fft st vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
@@ -88,11 +92,20 @@ parseViewFile caps verb s lb fft vf = do
     , renderIntegral (NE.length cs)
     , " chunks."
     ]
-  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (parseViewFile' fft)) $ NE.toList cs
+  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkParse) $ NE.toList cs
   pure $ resolveSVParseState fft ss
+  where
+    sinkParse = do
+      g <- liftIO createSystemRandom
+      sinkFoldM (parseViewFile' fft g st)
 
-parseViewFile' :: TextFreeformThreshold -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
-parseViewFile' fft = FoldM (\x y -> pure (updateSVParseState fft x y)) (pure initialSVParseState) pure
+parseViewFile' :: TextFreeformThreshold
+               -> Gen (PrimState IO)
+               -> SamplingType
+               -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
+parseViewFile' fft g st = FoldM update' (pure initialSVParseState) pure
+  where
+    update' x y = updateSVParseState fft g st x y
 
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema

@@ -35,6 +35,7 @@ module Warden.Data.Row (
   , renderObservationCount
   , renderParsedField
   , renderRowCount
+  , reservoirState
   , separatorToChar
   , textCounts
   , totalRows
@@ -167,6 +168,14 @@ data FieldLookCount =
 
 instance NFData FieldLookCount
 
+-- FIXME: generalize
+data FieldReservoirAcc =
+    NoFieldReservoirAcc
+  | FieldReservoirAcc !(V.Vector ReservoirAcc)
+  deriving (Generic)
+
+instance NFData FieldReservoirAcc
+
 data SVParseState =
   SVParseState {
     _badRows :: {-# UNPACK #-} !RowCount
@@ -175,8 +184,8 @@ data SVParseState =
   , _fieldLooks :: !FieldLookCount
   , _textCounts :: !TextCounts
   , _numericState :: !FieldNumericState
---  , _reservoirState :: !FieldReservoirAcc
-  } deriving (Eq, Show, Generic)
+  , _reservoirState :: !FieldReservoirAcc
+  } deriving (Generic)
 
 instance NFData SVParseState
 
@@ -196,14 +205,6 @@ renderParsedField :: ParsedField
                   -> Text
 renderParsedField = T.pack . show
 
--- FIXME: generalize
-data FieldReservoirAcc =
-    NoFieldReservoirAcc
-  | FieldReservoirAcc !(V.Vector ReservoirAcc)
-  deriving (Generic)
-
-instance NFData FieldReservoirAcc
-
 initialSVParseState :: SVParseState
 initialSVParseState =
   SVParseState
@@ -213,4 +214,4 @@ initialSVParseState =
     NoFieldLookCount
     NoTextCounts
     NoFieldNumericState
---    NoFieldReservoirAcc
+    NoFieldReservoirAcc

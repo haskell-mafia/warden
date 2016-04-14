@@ -39,6 +39,7 @@ commandUnitCheckParams = CheckParams {
   , checkSchemaFile = Nothing
   , checkExitType = ExitWithSuccess
   , checkIncludeDotFiles = NoIncludeDotFiles
+  , checkSamplingType = NoSampling
   }
 
 checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property

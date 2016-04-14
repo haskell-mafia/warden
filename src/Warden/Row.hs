@@ -27,7 +27,8 @@ module Warden.Row (
   , updateSVParseState
   ) where
 
-import           Control.Lens ((%~), (^.))
+import           Control.Lens ((%~), (^.), (.~))
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Resource (ResourceT)
 
@@ -196,25 +197,33 @@ updateTextCounts _ _ tc = tc
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: TextFreeformThreshold
+                   -> Gen (PrimState IO)
+                   -> SamplingType
                    -> SVParseState
                    -> Row
-                   -> SVParseState
-updateSVParseState fft !st row =
+                   -> EitherT WardenError (ResourceT IO) SVParseState
+updateSVParseState fft g sType !st row =
   let good = countGood row
-      bad  = countBad row  in
-    (totalRows %~ ((good + bad) +))
-  . (badRows %~ (bad +))
-  . (numFields %~ (updateNumFields row))
-  . (fieldLooks %~ (updateFields row))
-  . (textCounts %~ (updateTextCounts fft row))
-  . (numericState %~ (updateFieldNumericState row))
-  $!! st
- where
-  countGood (SVFields _)   = RowCount 1
-  countGood (RowFailure _) = RowCount 0
+      bad  = countBad row
+      rc = good + bad + (st ^. totalRows)
+      st' =  (totalRows %~ ((good + bad) +))
+           . (badRows %~ (bad +))
+           . (numFields %~ (updateNumFields row))
+           . (fieldLooks %~ (updateFields row))
+           . (textCounts %~ (updateTextCounts fft row))
+           . (numericState %~ (updateFieldNumericState row))
+           $!! st in case sType of
+  NoSampling ->
+    pure st'
+  ReservoirSampling rs -> do
+    fra' <- liftIO $ updateFieldReservoirAcc g rs rc row $ st ^. reservoirState
+    pure $!! st' & reservoirState .~ fra'
+  where
+    countGood (SVFields _)   = RowCount 1
+    countGood (RowFailure _) = RowCount 0
 
-  countBad (SVFields _)    = RowCount 0
-  countBad (RowFailure _)  = RowCount 1
+    countBad (SVFields _)    = RowCount 0
+    countBad (RowFailure _)  = RowCount 1
 #ifndef NOINLINE
 {-# INLINE updateSVParseState #-}
 #endif
@@ -264,13 +273,14 @@ updateFieldNumericState' t !acc =
 
 combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
 combineSVParseState fft s !acc =
-    (badRows %~ ((s ^. badRows) +))
-  . (totalRows %~ ((s ^. totalRows) +))
-  . (numFields %~ ((s ^. numFields) `S.union`))
-  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
-  . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
-  $!! acc
+  let acc' =  (badRows %~ ((s ^. badRows) +))
+            . (totalRows %~ ((s ^. totalRows) +))
+            . (numFields %~ ((s ^. numFields) `S.union`))
+            . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+            . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
+            . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
+            $!! acc
+  in acc'
   where
     combineTextCounts' = combineTextCounts fft
 #ifndef NOINLINE

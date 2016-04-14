@@ -10,6 +10,7 @@ module Warden.Data.Param (
   , InferUsingFailedChecks(..)
   , NumCPUs(..)
   , RunId(..)
+  , SamplingType(..)
   , SanityParams(..)
   , Verbosity(..)
   , WardenParams(..)
@@ -29,6 +30,7 @@ import           GHC.Generics (Generic)
 
 import           Warden.Data.Chunk
 import           Warden.Data.Row
+import           Warden.Data.Sampling.Reservoir
 import           Warden.Data.Schema
 import           Warden.Data.TextCounts
 
@@ -101,6 +103,13 @@ data IncludeDotFiles =
 
 instance NFData IncludeDotFiles
 
+data SamplingType =
+    NoSampling
+  | ReservoirSampling !ReservoirSize
+  deriving (Eq, Show, Generic)
+
+instance NFData SamplingType
+
 data CheckParams =
   CheckParams {
       checkSeparator :: !Separator
@@ -111,6 +120,7 @@ data CheckParams =
     , checkFreeformThreshold :: !TextFreeformThreshold
     , checkExitType :: !ExitType
     , checkIncludeDotFiles :: !IncludeDotFiles
+    , checkSamplingType :: !SamplingType
     } deriving (Eq, Show, Generic)
 
 instance NFData CheckParams

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Warden.Serial.Json.Param(
     fromCheckParams
@@ -50,8 +51,35 @@ toExitType (String "success-exit") = pure ExitWithSuccess
 toExitType (String s) = fail $ "invalid ExitType parameter: " <> T.unpack s
 toExitType x = typeMismatch "Warden.Data.Param.ExitType" x
 
+fromSamplingType :: SamplingType -> Value
+fromSamplingType NoSampling = object [
+    "type" .= String "no-sampling"
+  ]
+fromSamplingType (ReservoirSampling rs) = object [
+    "type" .= String "reservoir-sampling"
+  , "reservoir-size" .= fromReservoirSize rs
+  ]
+
+toSamplingType :: Value -> Parser SamplingType
+toSamplingType (Object o) = do
+  o .: "type" >>= \case
+    String "no-sampling" -> pure NoSampling
+    String "reservoir-sampling" -> do
+      rs <- toReservoirSize =<< (o .: "reservoir-size")
+      pure $ ReservoirSampling rs
+    String s -> fail . T.unpack $ "Invalid sampling type: " <> s
+    x -> typeMismatch "Warden.Data.Param.SamplingType.type" x
+toSamplingType x = typeMismatch "Warden.Data.Param.SamplingType" x
+
+fromReservoirSize :: ReservoirSize -> Value
+fromReservoirSize = toJSON . unReservoirSize
+
+toReservoirSize :: Value -> Parser ReservoirSize
+toReservoirSize (Number n) = fmap ReservoirSize $ parseJSON (Number n)
+toReservoirSize x = typeMismatch "Warden.Data.Sampling.Reservoir.ReservoirSize" x
+
 fromCheckParams :: CheckParams -> Value
-fromCheckParams (CheckParams sep sf lb verb fce fft xt idf) = object [
+fromCheckParams (CheckParams sep sf lb verb fce fft xt idf st) = object [
     "separator" .= fromSeparator sep
   , "line-bound" .= fromLineBound lb
   , "verbosity" .= fromVerbosity verb
@@ -60,6 +88,7 @@ fromCheckParams (CheckParams sep sf lb verb fce fft xt idf) = object [
   , "freeform-text-threshold" .= fromTextFreeformThreshold fft
   , "exit-type" .= fromExitType xt
   , "include-dot-files" .= fromIncludeDotFiles idf
+  , "sampling-type" .= fromSamplingType st
   ]
 
 toCheckParams :: Value -> Parser CheckParams
@@ -72,7 +101,8 @@ toCheckParams (Object o) = do
   fft <- toTextFreeformThreshold =<< (o .: "freeform-text-threshold")
   xt <- toExitType =<< (o .: "exit-type")
   idf <- toIncludeDotFiles =<< (o .: "include-dot-files")
-  pure $ CheckParams sep sf lb verb fce fft xt idf
+  st <- maybe (pure NoSampling) toSamplingType =<< (o .:? "sampling-type")
+  pure $ CheckParams sep sf lb verb fce fft xt idf st
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
 
 fromWardenVersion :: WardenVersion -> Value
