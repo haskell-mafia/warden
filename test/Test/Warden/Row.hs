@@ -3,9 +3,6 @@
 
 module Test.Warden.Row where
 
-import           Control.Lens ((^.))
-
-import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
@@ -20,16 +17,6 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Row
-
-prop_resolveSVParseState :: TextFreeformThreshold -> [Blind SVParseState] -> Property
-prop_resolveSVParseState fft ss =
-  let s' = resolveSVParseState fft $ getBlind <$> ss
-      bad' = s' ^. badRows
-      total' = s' ^. totalRows
-      fns' = S.size $ s' ^. numFields in
-  (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
-                            && total' >= (s'' ^. totalRows)
-                            && fns' >= (S.size $ s'' ^. numFields)) (getBlind <$> ss)
 
 prop_updateFieldNumericState' :: Int -> Double -> Property
 prop_updateFieldNumericState' m n =

@@ -271,24 +271,37 @@ updateFieldNumericState' t !acc =
 {-# INLINE updateFieldNumericState' #-}
 #endif
 
-combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
-combineSVParseState fft s !acc =
+combineSVParseState :: TextFreeformThreshold
+                    -> Gen (PrimState IO)
+                    -> SamplingType
+                    -> SVParseState
+                    -> SVParseState
+                    -> IO SVParseState
+combineSVParseState fft g st s !acc =
   let acc' =  (badRows %~ ((s ^. badRows) +))
             . (totalRows %~ ((s ^. totalRows) +))
             . (numFields %~ ((s ^. numFields) `S.union`))
             . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
             . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
             . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
-            $!! acc
-  in acc'
+            $!! acc in case st of
+  NoSampling ->
+    pure acc'
+  ReservoirSampling rs -> do
+    fra' <- combineFieldReservoirAcc g rs (s ^. reservoirState) (acc ^. reservoirState)
+    pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
 #ifndef NOINLINE
 {-# INLINE combineSVParseState #-}
 #endif
 
-resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
-resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
+resolveSVParseState :: TextFreeformThreshold
+                    -> Gen (PrimState IO)
+                    -> SamplingType
+                    -> [SVParseState]
+                    -> IO SVParseState
+resolveSVParseState fft g st = foldM (combineSVParseState fft g st) initialSVParseState
 #ifndef NOINLINE
 {-# INLINE resolveSVParseState #-}
 #endif
@@ -325,3 +338,17 @@ updateFieldReservoirAcc' g rs rc t !acc =
 #ifndef NOINLINE
 {-# INLINE updateFieldReservoirAcc' #-}
 #endif
+
+combineFieldReservoirAcc :: Gen (PrimState IO)
+                         -> ReservoirSize
+                         -> FieldReservoirAcc
+                         -> FieldReservoirAcc
+                         -> IO FieldReservoirAcc
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc NoFieldReservoirAcc =
+  pure NoFieldReservoirAcc
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc y =
+  pure y
+combineFieldReservoirAcc _g _rs x NoFieldReservoirAcc =
+  pure x
+combineFieldReservoirAcc g rs (FieldReservoirAcc xs) (FieldReservoirAcc ys) =
+  fmap FieldReservoirAcc $ V.zipWithM (combineReservoirAcc g rs) xs ys

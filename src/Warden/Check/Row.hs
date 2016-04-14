@@ -71,9 +71,11 @@ parseCheck caps ps sch vfs =
       s = checkSeparator ps
       verb = checkVerbosity ps
       lb = checkLineBound ps
-      st = checkSamplingType ps in
-  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
-    mapM (parseViewFile caps verb s lb fft st) (NE.toList vfs)
+      st = checkSamplingType ps in do
+  g <- liftIO createSystemRandom
+  ss <- mapM (parseViewFile caps verb s lb fft st) (NE.toList vfs)
+  finalState <- liftIO $ resolveSVParseState fft g st ss
+  pure $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
               -> Verbosity
@@ -93,8 +95,11 @@ parseViewFile caps verb s lb fft st vf = do
     , " chunks."
     ]
   ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkParse) $ NE.toList cs
-  pure $ resolveSVParseState fft ss
+  g <- liftIO createSystemRandom
+  liftIO $ resolveSVParseState fft g st ss
   where
+    -- FIXME: are mwc-random Gens threadsafe? if so, we could create a lot
+    -- fewer of them.
     sinkParse = do
       g <- liftIO createSystemRandom
       sinkFoldM (parseViewFile' fft g st)
