@@ -155,7 +155,10 @@ toRow (Left !e) =
 
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
--- add 32 to the character if it's in the ASCII uppercase range.
+-- bitwise-or with the case bit (2^5).
+--
+-- This will bork some characters (higher-range punctuation), but they're not
+-- digits or bools so we don't care about them.
 asciiToLower :: ByteString -> ByteString
 asciiToLower = BS.map (flip (.|.) 0x20)
 #ifndef NOINLINE
