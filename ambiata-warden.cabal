@@ -91,7 +91,6 @@ library
                        Warden.Marker
                        Warden.Numeric
                        Warden.Param
-                       Warden.Random
                        Warden.Row
                        Warden.Row.Parser
                        Warden.Sampling.Reservoir

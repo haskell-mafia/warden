@@ -19,11 +19,11 @@ import           P
 
 import           System.IO (IO)
 import           System.Random.MWC (Gen, uniformR)
+import           System.Random.MWC.Distributions (uniformShuffleM)
 
 import           Warden.Data.Row
 import           Warden.Data.Sampling
 import           Warden.Data.Sampling.Reservoir
-import           Warden.Random
 
 newReservoirAcc :: ReservoirSize -> IO ReservoirAcc
 newReservoirAcc (ReservoirSize n) =
@@ -68,7 +68,7 @@ combineReservoirAccs :: Gen (PrimState IO)
 combineReservoirAccs g (ReservoirSize sz) (SampleCount sc1, r1) (SampleCount sc2, r2) =
   let desired = min sz (sc1 + sc2) in do
   pool <- (unReservoirAcc r1) `concatMutable` (unReservoirAcc r2)
-  uniformShuffle g pool
+  uniformShuffleM pool g
   let r = MVU.slice 0 desired pool
   pure $ (SampleCount desired, ReservoirAcc r)
 
