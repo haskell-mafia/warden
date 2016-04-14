@@ -96,7 +96,7 @@ only results from fields which are actually numeric are used).
 \subsection{Mean calculation}\label{mean-calculation}
 
 The mean of numeric fields is computed using the following recurrence
-relation\cite{Knuth2007}:
+relation\cite[pp.~232]{Knuth1997}:
 
 \[M_1 = x_1, M_k = M_{k-1} + \frac{x_k - M_{k-1}}{k}\]
 
@@ -114,7 +114,7 @@ precision lost on large datasets when storing the entire sum in one
 \subsection{Standard deviation and
 variance}\label{standard-deviation-and-variance}
 
-The accumulator is computed using the following recurrence relation\cite{Knuth2007}:
+The accumulator is computed using the following recurrence relation\cite[pp.~232]{Knuth1997}:
 
 \[S_1 = 0, S_k = S_{k-1} + (x_k - M_{k-1})(x_k - M_k)\]
 
@@ -210,7 +210,7 @@ Solving:
 \subsection{Quantiles}\label{quantiles}
 
 Quantiles are computed in one pass using a basic reservoir
-sampling\cite{vitter1985} method. A reservoir \(\mathbf{R}\) is maintained of
+sampling\cite{vitter1985}\cite[pp.~144-145]{Knuth1997} method. A reservoir \(R\) is maintained of
 the desired final sample size \(n\), and filled as follows:
 
 \begin{itemize}
@@ -220,8 +220,18 @@ The first \(n\) records seen are added to the reservoir.
 \item
 For all records beyond \(n\), a value is drawn uniformly from the
 interval \([1, t]\), where \(t\) is the number of records seen so
-far. If \(t \leq n\), the record \(\mathbf{R}_t\) is replaced with the current value.
+far. If \(t \leq n\), the record \(R_t\) is replaced with the current value.
 \end{itemize}
+
+\subsubsection{Combining accumulators}
+
+The size of the combined acculumator \(|Z|\) is determined as
+the smaller of the desired final sample size \(n\) and the sum of the
+sizes of the two original samples \(X\) and \(Y\).
+
+\(X\) and \(Y\) are appended, then randomly permuted with a
+Fisher-Yates shuffle\cite[pp.~145-146]{Knuth1997}. Finally, \(|Z|\) elements are drawn from the
+beginning of the combined sample to serve as the new accumulator.
 
 \bibliographystyle{plain}
 \bibliography{warden.bib}
