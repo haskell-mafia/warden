@@ -20,6 +20,7 @@ module Warden.Row (
   , updateFieldLooks
   , updateFieldNumericState
   , updateFieldNumericState'
+  , updateFieldReservoirAcc
   , updateFields
   , updateNumFields
   , updateTextCounts
@@ -27,6 +28,7 @@ module Warden.Row (
   ) where
 
 import           Control.Lens ((%~), (^.))
+import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
@@ -52,11 +54,13 @@ import           P
 import           Prelude (fromEnum)
 
 import           System.IO
+import           System.Random.MWC (Gen)
 
 import           Warden.Data
 import           Warden.Error
 import           Warden.Numeric
 import           Warden.Row.Parser
+import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
 import           X.Control.Monad.Trans.Either (EitherT)
@@ -274,4 +278,37 @@ resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
 resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
 #ifndef NOINLINE
 {-# INLINE resolveSVParseState #-}
+#endif
+
+updateFieldReservoirAcc :: Gen (PrimState IO)
+                        -> ReservoirSize
+                        -> RowCount
+                        -> Row
+                        -> FieldReservoirAcc
+                        -> IO FieldReservoirAcc
+updateFieldReservoirAcc g rs rc (SVFields !v) NoFieldReservoirAcc =
+  fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) v $
+    V.replicate (V.length v) NoReservoirAcc
+updateFieldReservoirAcc g rs rc (SVFields !v) (FieldReservoirAcc !a) =
+  fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) v a
+updateFieldReservoirAcc _ _ _ _ !a = pure a
+#ifndef NOINLINE
+{-# INLINE updateFieldReservoirAcc #-}
+#endif
+
+-- FIXME: parsing fields twice
+updateFieldReservoirAcc' :: Gen (PrimState IO)
+                         -> ReservoirSize
+                         -> RowCount
+                         -> ByteString
+                         -> ReservoirAcc
+                         -> IO ReservoirAcc
+updateFieldReservoirAcc' g rs rc t !acc =
+  case AB.parseOnly numericFieldP t of
+    Left _ ->
+      pure acc
+    Right (NumericField n) ->
+      updateReservoirAcc g rs rc acc n
+#ifndef NOINLINE
+{-# INLINE updateFieldReservoirAcc' #-}
 #endif
