@@ -197,3 +197,4 @@ sampleMedian (Sample v) =
       NoMedian
     else
       Median $ unsafeMedian v
+

@@ -4,7 +4,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Warden.Data.Sampling.Reservoir(
-    ReservoirAcc(..)
+    Reservoir(..)
+  , ReservoirAcc(..)
   , ReservoirSize(..)
   , SampleCount(..)
   , initialSampleCount
@@ -16,12 +17,19 @@ import           GHC.Generics (Generic)
 
 import           P
 
-newtype ReservoirAcc =
-  ReservoirAcc {
-    unReservoirAcc :: MVU.IOVector Double
-  } deriving Generic
+data ReservoirAcc =
+    NoReservoirAcc
+  | ReservoirAcc !Reservoir !SampleCount
+  deriving Generic
 
 instance NFData ReservoirAcc
+
+newtype Reservoir =
+  Reservoir {
+    unReservoir :: MVU.IOVector Double
+  } deriving Generic
+
+instance NFData Reservoir
 
 newtype ReservoirSize =
   ReservoirSize {
