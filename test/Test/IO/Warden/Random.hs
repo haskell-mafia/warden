@@ -20,14 +20,16 @@ import           Test.Warden.Arbitrary ()
 
 import           Warden.Random
 
--- This will fail with probability 1/10000! if everything is working correctly.
+-- This will fail with probability 2/10000! if everything is working correctly.
 prop_uniformShuffle :: Property
 prop_uniformShuffle = testIO $ withSystemRandom $ \g ->
   let xs = VU.fromList ([1..10000] :: [Double]) in do
   v <- VU.thaw xs
   uniformShuffle g v
   ys <- VU.freeze v
-  pure $ (xs /= ys, VU.modify Intro.sort xs) === (True, VU.modify Intro.sort ys)
+  uniformShuffle g v
+  zs <- VU.freeze v
+  pure $ (xs /= ys, ys /= zs, VU.modify Intro.sort xs, VU.modify Intro.sort xs) === (True, True, VU.modify Intro.sort ys, VU.modify Intro.sort zs)
 
 return []
 tests :: IO Bool
