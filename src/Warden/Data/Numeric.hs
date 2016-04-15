@@ -14,6 +14,7 @@ module Warden.Data.Numeric (
   , MeanAcc(..)
   , MeanDevAcc(..)
   , Median(..)
+  , MNumericField(..)
   , MStdDevAcc(..)
   , Minimum(..)
   , NumericField(..)
@@ -279,6 +280,11 @@ newtype NumericField =
   NumericField {
     unNumericField :: Double
   } deriving (Eq, Show)
+
+data MNumericField =
+    NoNumericField
+  | MNumericField !NumericField
+  deriving (Eq, Show)
 
 varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
 varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =

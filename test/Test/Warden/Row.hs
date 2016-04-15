@@ -20,11 +20,13 @@ import           Warden.Row
 
 prop_updateFieldNumericState' :: Int -> Double -> Property
 prop_updateFieldNumericState' m n =
-  let nb = T.encodeUtf8 $ renderFractional n
-      mb = T.encodeUtf8 $ renderIntegral m
+  let nb = MNumericField $ NumericField n
+      mb = MNumericField . NumericField $ fromIntegral m
+      ob = NoNumericField
       ns = updateFieldNumericState' nb initialNumericState
-      ms = updateFieldNumericState' mb initialNumericState in
-  (ns == initialNumericState, ms == initialNumericState) === (False, False)
+      ms = updateFieldNumericState' mb initialNumericState
+      os = updateFieldNumericState' ob initialNumericState in
+  (ns == initialNumericState, ms == initialNumericState, os == initialNumericState) === (False, False, True)
 
 prop_asciiToLower :: Property
 prop_asciiToLower = forAll (elements muppets) $ \t ->
