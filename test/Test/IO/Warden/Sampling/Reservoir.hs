@@ -57,8 +57,8 @@ prop_combineReservoirAcc_small (ReservoirSize rs) =
 
 prop_combineReservoirAcc_large :: ReservoirSize -> Property
 prop_combineReservoirAcc_large (ReservoirSize rs) =
- forAll (choose (rs `div` 2, rs * 2)) $ \n ->
- forAll (choose (rs `div` 2, rs * 2)) $ \m ->
+ forAll (choose (rs `div` 2 + 1, rs * 2)) $ \n ->
+ forAll (choose (rs `div` 2 + 1, rs * 2)) $ \m ->
  forAll (fmap VU.fromList $ vectorOf n arbitrary) $ \xs ->
  forAll (fmap VU.fromList $ vectorOf m arbitrary) $ \ys ->
  testIO $ withSystemRandom $ \g -> do
