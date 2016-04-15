@@ -5,7 +5,7 @@
 module Warden.Sampling.Reservoir(
     combineReservoirAcc
   , concatMutable
-  , finalizeReservoir
+  , finalizeReservoirAcc
   , newReservoir
   , updateReservoirAcc
   ) where
@@ -105,6 +105,8 @@ concatMutable xs ys =
   mapM_ (\ix -> MVU.write zs (ix + nx) =<< MVU.read ys ix) [0..(ny-1)]
   pure zs
 
-finalizeReservoir :: Reservoir -> IO Sample
-finalizeReservoir (Reservoir v) =
+finalizeReservoirAcc :: ReservoirAcc -> IO Sample
+finalizeReservoirAcc NoReservoirAcc =
+  pure NoSample
+finalizeReservoirAcc (ReservoirAcc (Reservoir v) _sc) =
   fmap Sample $ VU.freeze v

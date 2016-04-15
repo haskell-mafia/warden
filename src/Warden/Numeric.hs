@@ -9,6 +9,8 @@ module Warden.Numeric (
   , combineNumericState
   , combineStdDevAcc
   , sampleMedian
+  , summarizeFieldNumericState
+  , summarizeNumericState
   , unsafeMedian
   , updateMinimum
   , updateMaximum
@@ -25,7 +27,10 @@ import qualified Data.Vector.Unboxed as VU
 
 import           P
 
+import           System.IO (IO)
+
 import           Warden.Data
+import           Warden.Sampling.Reservoir
 
 updateMinimum :: Minimum -> Double -> Minimum
 updateMinimum !acc x =
@@ -70,7 +75,6 @@ updateMeanDev !macc x = case macc of
 {-# INLINE updateMeanDev #-}
 #endif
 
--- FIXME: median
 updateNumericState :: NumericState -> Double -> NumericState
 updateNumericState acc x =
     (stateMinimum %~ (flip updateMinimum x))
@@ -190,6 +194,7 @@ unsafeMedian v =
         v' ! (n `div` 2)
 
 sampleMedian :: Sample -> Median
+sampleMedian NoSample = NoMedian
 sampleMedian (Sample v) =
   let n = VU.length v in
   if n < 2
@@ -198,3 +203,35 @@ sampleMedian (Sample v) =
     else
       Median $ unsafeMedian v
 
+summarizeNumericState :: NumericState -> Sample -> NumericSummary
+summarizeNumericState st smpl =
+  if st == initialNumericState
+    -- We didn't see any numeric fields, so there's nothing to summarize.
+    then NoNumericSummary
+    else let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
+      NumericSummary
+        (st ^. stateMinimum)
+        (st ^. stateMaximum)
+        mn
+        stddev
+        (sampleMedian smpl)
+
+summarizeFieldNumericState :: FieldNumericState
+                           -> FieldReservoirAcc
+                           -> IO NumericFieldSummary
+summarizeFieldNumericState NoFieldNumericState _ =
+  pure NoNumericFieldSummary
+summarizeFieldNumericState (FieldNumericState ss) NoFieldReservoirAcc =
+  if V.null ss
+    then
+      pure NoNumericFieldSummary
+    else
+      pure . NumericFieldSummary $
+        V.zipWith summarizeNumericState ss (V.replicate (V.length ss) NoSample)
+summarizeFieldNumericState (FieldNumericState ss) (FieldReservoirAcc fra) = do
+  samples <- V.mapM finalizeReservoirAcc fra
+  if V.null ss
+    then
+      pure NoNumericFieldSummary
+    else
+      pure . NumericFieldSummary $ V.zipWith summarizeNumericState ss samples

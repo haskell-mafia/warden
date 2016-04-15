@@ -75,7 +75,7 @@ parseCheck caps ps sch vfs =
   g <- liftIO createSystemRandom
   ss <- mapM (parseViewFile caps verb s lb fft st) (NE.toList vfs)
   finalState <- liftIO $ resolveSVParseState fft g st ss
-  pure $ finalizeSVParseState ps sch dates vfs finalState
+  liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
               -> Verbosity
@@ -98,8 +98,7 @@ parseViewFile caps verb s lb fft st vf = do
   g <- liftIO createSystemRandom
   liftIO $ resolveSVParseState fft g st ss
   where
-    -- FIXME: are mwc-random Gens threadsafe? if so, we could create a lot
-    -- fewer of them.
+    -- FIXME: could probably get away with fewer Gens created
     sinkParse = do
       g <- liftIO createSystemRandom
       sinkFoldM (parseViewFile' fft g st)
@@ -117,7 +116,7 @@ finalizeSVParseState :: CheckParams
                      -> Set Date
                      -> NonEmpty ViewFile
                      -> SVParseState
-                     -> (CheckStatus, ViewMetadata)
+                     -> IO (CheckStatus, ViewMetadata)
 finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkFieldAnomalies sch (sv ^. fieldLooks)
@@ -126,9 +125,9 @@ finalizeSVParseState ps sch ds vfs sv =
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
-      vfs' = S.fromList $ NE.toList vfs
-      rcs = summarizeSVParseState sv in
-  (st, ViewMetadata rcs ps ds vfs')
+      vfs' = S.fromList $ NE.toList vfs in do
+  rcs <- summarizeSVParseState sv
+  pure (st, ViewMetadata rcs ps ds vfs')
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)

@@ -31,12 +31,10 @@ module Warden.Data.Numeric (
   , stateMaximum
   , stateMeanDev
   , stateMinimum
-  , summarizeFieldNumericState
-  , summarizeNumericState
   , varianceFromStdDevAcc
   ) where
 
-import           Control.Lens (makeLenses, (^.))
+import           Control.Lens (makeLenses)
 
 import           Data.AEq (AEq, (===), (~==))
 import qualified Data.Vector as V
@@ -281,29 +279,6 @@ newtype NumericField =
   NumericField {
     unNumericField :: Double
   } deriving (Eq, Show)
-
-summarizeNumericState :: NumericState -> NumericSummary
-summarizeNumericState st =
-  if st == initialNumericState
-    -- We didn't see any numeric fields, so there's nothing to summarize.
-    then NoNumericSummary
-    else let (mn, stddev) = finalizeMeanDev $ st ^. stateMeanDev in
-      NumericSummary
-        (st ^. stateMinimum)
-        (st ^. stateMaximum)
-        mn
-        stddev
-        NoMedian
-
-summarizeFieldNumericState :: FieldNumericState -> NumericFieldSummary
-summarizeFieldNumericState NoFieldNumericState =
-  NoNumericFieldSummary
-summarizeFieldNumericState (FieldNumericState ss) =
-  if V.null ss
-    then
-      NoNumericFieldSummary
-    else
-      NumericFieldSummary . V.map summarizeNumericState $ ss
 
 varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
 varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =
