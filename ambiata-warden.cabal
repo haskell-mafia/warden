@@ -29,7 +29,11 @@ library
                      , async                           == 2.0.*
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
-                     , cityhash                        == 0.3.0.*
+                     -- Changing the cityhash bound may break TextCount
+                     -- combination on view markers if it involves a change
+                     -- in the underlying C library. That doesn't mean you
+                     -- can't do it, but think about it first.
+                     , cityhash                        == 0.3.0.1
                      , conduit                         == 1.2.*
                      , conduit-extra                   == 1.1.*
                      , containers                      == 0.5.*
