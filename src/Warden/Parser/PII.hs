@@ -18,6 +18,8 @@ import           P hiding (count)
 
 import           Warden.Parser.Common
 
+-- | Without any reference to RFC 5321, this parser matches things which look
+-- vaguely like they might be email addresses.
 emailP :: Parser ()
 emailP = do
   void $ takeWhile1 (not . (== at))
