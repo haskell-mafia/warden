@@ -48,9 +48,9 @@ prop_resolveSVParseState fft st ss = testIO . withSystemRandom $ \g -> do
   let bad' = s' ^. badRows
   let total' = s' ^. totalRows
   let fns' = S.size $ s' ^. numFields
-  pure $ (===) True $ all (\s'' ->    bad' >= (s'' ^. badRows)
-                                   && total' >= (s'' ^. totalRows)
-                                   && fns' >= (S.size $ s'' ^. numFields)) (getBlind <$> ss)
+  pure . conjoin . fmap (\s'' ->    bad' >= (s'' ^. badRows)
+                                 && total' >= (s'' ^. totalRows)
+                                 && fns' >= (S.size $ s'' ^. numFields)) $ getBlind <$> ss
 
 prop_valid_svrows :: Separator -> FieldCount -> Property
 prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
