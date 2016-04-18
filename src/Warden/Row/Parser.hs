@@ -5,7 +5,8 @@
 {-# LANGUAGE CPP #-}
 
 module Warden.Row.Parser (
-    escapedFieldP
+    emailP
+  , escapedFieldP
   , fieldP
   , numericFieldP
   , rawFieldP
@@ -16,6 +17,7 @@ module Warden.Row.Parser (
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (word8, peekWord8, takeWhile, anyWord8)
 import           Data.Attoparsec.ByteString (string, endOfInput, choice)
+import           Data.Attoparsec.ByteString (takeWhile1)
 import qualified Data.Attoparsec.ByteString as AB
 import           Data.Attoparsec.ByteString.Char8 (decimal, signed, double)
 import           Data.ByteString (ByteString)
@@ -109,6 +111,12 @@ lineFeed = fromIntegral $ ord '\n'
 {-# INLINE lineFeed #-}
 #endif
 
+space :: Word8
+space = fromIntegral $ ord ' '
+#ifndef NOINLINE
+{-# INLINE space #-}
+#endif
+
 carriageReturn :: Word8
 carriageReturn = fromIntegral $ ord '\r'
 #ifndef NOINLINE
@@ -169,3 +177,18 @@ boolP = trueP <|> falseP
 #ifndef NOINLINE
 {-# INLINE boolP #-}
 #endif
+
+emailP :: Parser ()
+emailP = do
+  void $ takeWhile1 (not . (== at))
+  void $ word8 at
+  void $ takeWhile1 hostPart
+  void $ word8 period
+  void $ takeWhile1 (not . (== at))
+  void $ endOfInput
+  where
+    at = fromIntegral $ ord '@'
+
+    period = fromIntegral $ ord '.'
+
+    hostPart = not . flip elem [space, period, at]
