@@ -4,7 +4,7 @@
 
 module Test.Warden.Parser.Row where
 
-import           Data.Attoparsec.ByteString (parseOnly, notWord8)
+import           Data.Attoparsec.ByteString (parseOnly)
 import qualified Data.ByteString as BS
 import qualified Data.Text.Encoding as T
 

@@ -584,3 +584,11 @@ instance Arbitrary MStdDevAcc where
       pure NoStdDevAcc
     , MStdDevAcc <$> arbitrary
     ]
+
+genEmail :: Gen BS.ByteString
+genEmail = do
+  sep <- elements ["-", ".", "+"]
+  name <- fmap (T.intercalate sep . fmap (T.filter (/= ' '))) $ listOf1 (elements muppets)
+  host <- fmap (T.intercalate sep . fmap (T.filter (/= ' '))) $ listOf1 (elements viruses)
+  tld <- fmap (T.filter (/= ' ')) $ elements southpark
+  pure . encodeUtf8 $ T.concat [name, "@", host, ".", tld]
