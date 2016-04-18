@@ -4,9 +4,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE CPP #-}
 
-module Warden.Row.Parser (
-    emailP
-  , escapedFieldP
+module Warden.Parser.Row (
+    escapedFieldP
   , fieldP
   , numericFieldP
   , rawFieldP
@@ -15,15 +14,13 @@ module Warden.Row.Parser (
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
-import           Data.Attoparsec.ByteString (word8, peekWord8, takeWhile, anyWord8)
+import           Data.Attoparsec.ByteString (word8, peekWord8, takeWhile)
 import           Data.Attoparsec.ByteString (string, endOfInput, choice)
-import           Data.Attoparsec.ByteString (takeWhile1)
 import qualified Data.Attoparsec.ByteString as AB
 import           Data.Attoparsec.ByteString.Char8 (decimal, signed, double)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Char (ord)
-import           Data.Word (Word8)
 
 import qualified Data.Vector as V
 
@@ -31,6 +28,7 @@ import           P
 
 import           Warden.Data.Numeric
 import           Warden.Data.Row
+import           Warden.Parser.Common
 
 rawRecordP :: Separator -> Parser RawRecord
 rawRecordP sep = (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
@@ -38,22 +36,6 @@ rawRecordP sep = (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
 {-# INLINE rawRecordP #-}
 #endif
 
-sepByByte1P :: Parser a -> Separator -> Parser [a]
-sepByByte1P p !sep =
-  liftM2' (:) p go
-  where
-    go = do
-      peekWord8 >>= \case
-        Just c -> if c == sep'
-                    then liftM2' (:) (anyWord8 *> p) go
-                    else pure []
-        Nothing -> pure []
-
-    sep' = unSeparator sep
-#ifndef NOINLINE
-{-# INLINE sepByByte1P #-}
-#endif
-      
 rawFieldP :: Separator -> Parser ByteString
 rawFieldP !sep =
   peekWord8 >>= \case
@@ -105,30 +87,6 @@ unescapedFieldP !sep =
 {-# INLINE unescapedFieldP #-}
 #endif
 
-lineFeed :: Word8
-lineFeed = fromIntegral $ ord '\n'
-#ifndef NOINLINE
-{-# INLINE lineFeed #-}
-#endif
-
-space :: Word8
-space = fromIntegral $ ord ' '
-#ifndef NOINLINE
-{-# INLINE space #-}
-#endif
-
-carriageReturn :: Word8
-carriageReturn = fromIntegral $ ord '\r'
-#ifndef NOINLINE
-{-# INLINE carriageReturn #-}
-#endif
-
-doubleQuote :: Word8
-doubleQuote = fromIntegral $ ord '"'
-#ifndef NOINLINE
-{-# INLINE doubleQuote #-}
-#endif
-
 fieldP :: Parser ParsedField
 fieldP = choice [
     void integralFieldP >> pure ParsedIntegral
@@ -177,18 +135,3 @@ boolP = trueP <|> falseP
 #ifndef NOINLINE
 {-# INLINE boolP #-}
 #endif
-
-emailP :: Parser ()
-emailP = do
-  void $ takeWhile1 (not . (== at))
-  void $ word8 at
-  void $ takeWhile1 hostPart
-  void $ word8 period
-  void $ takeWhile1 (not . (== at))
-  void $ endOfInput
-  where
-    at = fromIntegral $ ord '@'
-
-    period = fromIntegral $ ord '.'
-
-    hostPart = not . flip elem [space, period, at]
