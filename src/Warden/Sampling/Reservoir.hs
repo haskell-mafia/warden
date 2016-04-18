@@ -3,10 +3,10 @@
 {-# LANGUAGE CPP #-}
 
 module Warden.Sampling.Reservoir(
-    combineReservoirAccs
+    combineReservoirAcc
   , concatMutable
-  , finalizeReservoir
-  , newReservoirAcc
+  , finalizeReservoirAcc
+  , newReservoir
   , updateReservoirAcc
   ) where
 
@@ -25,9 +25,9 @@ import           Warden.Data.Row
 import           Warden.Data.Sampling
 import           Warden.Data.Sampling.Reservoir
 
-newReservoirAcc :: ReservoirSize -> IO ReservoirAcc
-newReservoirAcc (ReservoirSize n) =
-  ReservoirAcc <$> MVU.new n
+newReservoir :: ReservoirSize -> IO Reservoir
+newReservoir (ReservoirSize n) =
+  Reservoir <$> MVU.new n
 
 -- | If we have less than the desired final number of elements (inferred from
 -- the vector size) we take the current value and write it to the end of the
@@ -35,42 +35,65 @@ newReservoirAcc (ReservoirSize n) =
 -- probability decreasing with the number of elements seen) replace a random
 -- element in the sample with the current value.
 updateReservoirAcc :: Gen (PrimState IO)
+                   -> ReservoirSize
                    -> RowCount
                    -> ReservoirAcc
-                   -> SampleCount
                    -> Double
-                   -> IO SampleCount
-updateReservoirAcc gen seen (ReservoirAcc v) c x =
+                   -> IO ReservoirAcc
+updateReservoirAcc gen rs seen NoReservoirAcc x = do
+  r <- newReservoir rs
+  updateReservoirAcc' gen seen r initialSampleCount x
+updateReservoirAcc gen _rs seen (ReservoirAcc r c) x =
+  updateReservoirAcc' gen seen r c x
+#ifndef NOINLINE
+{-# INLINE updateReservoirAcc #-}
+#endif
+
+updateReservoirAcc' :: Gen (PrimState IO)
+                    -> RowCount
+                    -> Reservoir
+                    -> SampleCount
+                    -> Double
+                    -> IO ReservoirAcc
+updateReservoirAcc' gen seen (Reservoir v) c x =
   let target = MVU.length v
       c' = unSampleCount c
       seen' = unRowCount seen in
   if c' < target
     then do
       MVU.write v c' x
-      pure . SampleCount $! c' + 1
+      pure $! ReservoirAcc (Reservoir v) (SampleCount $! c' + 1)
     else do
       u <- uniformR (0 :: Int, fromIntegral seen') gen
       when (u < target) $
         MVU.write v u x
-      pure c
+      pure $! ReservoirAcc (Reservoir v) c
 #ifndef NOINLINE
-{-# INLINE updateReservoirAcc #-}
+{-# INLINE updateReservoirAcc' #-}
 #endif
 
 -- | Join two samples to get a new sample of up to the provided 'ReservoirSize',
 -- consisting of elements drawn uniformly from the union of the two original
 -- samples.
-combineReservoirAccs :: Gen (PrimState IO)
-                     -> ReservoirSize
-                     -> (SampleCount, ReservoirAcc)
-                     -> (SampleCount, ReservoirAcc)
-                     -> IO (SampleCount, ReservoirAcc)
-combineReservoirAccs g (ReservoirSize sz) (SampleCount sc1, r1) (SampleCount sc2, r2) =
-  let desired = min sz (sc1 + sc2) in do
-  pool <- (unReservoirAcc r1) `concatMutable` (unReservoirAcc r2)
+combineReservoirAcc :: Gen (PrimState IO)
+                    -> ReservoirSize
+                    -> ReservoirAcc
+                    -> ReservoirAcc
+                    -> IO ReservoirAcc
+combineReservoirAcc _g _rs NoReservoirAcc NoReservoirAcc =
+  pure NoReservoirAcc
+combineReservoirAcc _g _rs NoReservoirAcc y =
+  pure y
+combineReservoirAcc _g _rs x NoReservoirAcc =
+  pure x
+combineReservoirAcc g (ReservoirSize sz) (ReservoirAcc r1 sc1) (ReservoirAcc r2 sc2) =
+  let sc1' = unSampleCount sc1
+      sc2' = unSampleCount sc2
+      desired = min sz (sc1' + sc2') in do
+  pool <- (unReservoir r1) `concatMutable` (unReservoir r2)
   uniformShuffleM pool g
   let r = MVU.slice 0 desired pool
-  pure $ (SampleCount desired, ReservoirAcc r)
+  pure $! ReservoirAcc (Reservoir r) (SampleCount desired)
 
 -- | Concatenate two mutable vectors with minimal copying by growing the
 -- first vector.
@@ -82,6 +105,8 @@ concatMutable xs ys =
   mapM_ (\ix -> MVU.write zs (ix + nx) =<< MVU.read ys ix) [0..(ny-1)]
   pure zs
 
-finalizeReservoir :: ReservoirAcc -> IO Sample
-finalizeReservoir (ReservoirAcc v) =
+finalizeReservoirAcc :: ReservoirAcc -> IO Sample
+finalizeReservoirAcc NoReservoirAcc =
+  pure NoSample
+finalizeReservoirAcc (ReservoirAcc (Reservoir v) _sc) =
   fmap Sample $ VU.freeze v

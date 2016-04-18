@@ -13,9 +13,9 @@ import           GHC.Generics (Generic)
 
 import           P
 
-newtype Sample =
-  Sample {
-    unSample :: VU.Vector Double
-  } deriving (Eq, Show, Generic)
+data Sample =
+    NoSample
+  | Sample {-# UNPACK #-} !(VU.Vector Double)
+  deriving (Eq, Show, Generic)
 
 instance NFData Sample

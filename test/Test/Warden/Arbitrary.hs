@@ -358,6 +358,7 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
                            <*> arbitrary
+                           <*> pure NoFieldReservoirAcc
 
 instance Arbitrary WardenVersion where
   arbitrary = WardenVersion <$> elements southpark
@@ -430,8 +431,15 @@ instance Arbitrary SchemaFile where
 instance Arbitrary LineBound where
   arbitrary = (LineBound . unNPlus) <$> arbitrary
 
+instance Arbitrary SamplingType where
+  arbitrary = oneof [
+      pure NoSampling
+    , ReservoirSampling <$> arbitrary
+    ]
+
 instance Arbitrary CheckParams where
   arbitrary = CheckParams <$> arbitrary
+                          <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary

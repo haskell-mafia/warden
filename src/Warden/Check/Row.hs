@@ -8,8 +8,9 @@ module Warden.Check.Row (
 
 import           Control.Concurrent.Async.Lifted (mapConcurrently)
 import           Control.Foldl (FoldM(..))
-import           Control.Monad.IO.Class (liftIO)
 import           Control.Lens ((^.))
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Resource (ResourceT)
 
@@ -27,6 +28,7 @@ import           Delorean.Local.Date (Date)
 import           P
 
 import           System.IO (IO)
+import           System.Random.MWC (Gen, createSystemRandom)
 
 import           Warden.Chunk
 import           Warden.Data
@@ -68,18 +70,23 @@ parseCheck caps ps sch vfs =
       fft = checkFreeformThreshold ps
       s = checkSeparator ps
       verb = checkVerbosity ps
-      lb = checkLineBound ps in
-  fmap (finalizeSVParseState ps sch dates vfs . (resolveSVParseState fft)) $
-    mapM (parseViewFile caps verb s lb fft) (NE.toList vfs)
+      lb = checkLineBound ps
+      st = checkSamplingType ps in do
+  g <- liftIO createSystemRandom
+  ss <- mapM (parseViewFile caps verb g s lb fft st) (NE.toList vfs)
+  finalState <- liftIO $ resolveSVParseState fft g st ss
+  liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
               -> Verbosity
+              -> Gen (PrimState IO)
               -> Separator
               -> LineBound
               -> TextFreeformThreshold
+              -> SamplingType
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile caps verb s lb fft vf = do
+parseViewFile caps verb g s lb fft st vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
@@ -88,18 +95,28 @@ parseViewFile caps verb s lb fft vf = do
     , renderIntegral (NE.length cs)
     , " chunks."
     ]
-  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkFoldM (parseViewFile' fft)) $ NE.toList cs
-  pure $ resolveSVParseState fft ss
+  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkParse) $ NE.toList cs
+  liftIO $ resolveSVParseState fft g st ss
+  where
+    -- FIXME: could probably get away with fewer Gens created
+    sinkParse = do
+      g' <- liftIO createSystemRandom
+      sinkFoldM (parseViewFile' fft g' st)
 
-parseViewFile' :: TextFreeformThreshold -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
-parseViewFile' fft = FoldM (\x y -> pure (updateSVParseState fft x y)) (pure initialSVParseState) pure
+parseViewFile' :: TextFreeformThreshold
+               -> Gen (PrimState IO)
+               -> SamplingType
+               -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
+parseViewFile' fft g st = FoldM update' (pure initialSVParseState) pure
+  where
+    update' x y = updateSVParseState fft g st x y
 
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema
                      -> Set Date
                      -> NonEmpty ViewFile
                      -> SVParseState
-                     -> (CheckStatus, ViewMetadata)
+                     -> IO (CheckStatus, ViewMetadata)
 finalizeSVParseState ps sch ds vfs sv =
   let st = resolveCheckStatus . NE.fromList $ [
                checkFieldAnomalies sch (sv ^. fieldLooks)
@@ -108,9 +125,9 @@ finalizeSVParseState ps sch ds vfs sv =
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
              ]
-      vfs' = S.fromList $ NE.toList vfs
-      rcs = summarizeSVParseState sv in
-  (st, ViewMetadata rcs ps ds vfs')
+      vfs' = S.fromList $ NE.toList vfs in do
+  rcs <- summarizeSVParseState sv
+  pure (st, ViewMetadata rcs ps ds vfs')
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)

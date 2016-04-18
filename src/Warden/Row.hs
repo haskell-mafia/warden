@@ -20,13 +20,16 @@ module Warden.Row (
   , updateFieldLooks
   , updateFieldNumericState
   , updateFieldNumericState'
+  , updateFieldReservoirAcc
   , updateFields
   , updateNumFields
   , updateTextCounts
   , updateSVParseState
   ) where
 
-import           Control.Lens ((%~), (^.))
+import           Control.Lens ((%~), (^.), (.~))
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
@@ -52,11 +55,13 @@ import           P
 import           Prelude (fromEnum)
 
 import           System.IO
+import           System.Random.MWC (Gen)
 
 import           Warden.Data
 import           Warden.Error
 import           Warden.Numeric
 import           Warden.Row.Parser
+import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
 import           X.Control.Monad.Trans.Either (EitherT)
@@ -151,7 +156,10 @@ toRow (Left !e) =
 
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
--- add 32 to the character if it's in the ASCII uppercase range.
+-- bitwise-or with the case bit (2^5).
+--
+-- This will bork some characters (higher-range punctuation), but they're not
+-- digits or bools so we don't care about them.
 asciiToLower :: ByteString -> ByteString
 asciiToLower = BS.map (flip (.|.) 0x20)
 #ifndef NOINLINE
@@ -189,25 +197,33 @@ updateTextCounts _ _ tc = tc
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: TextFreeformThreshold
+                   -> Gen (PrimState IO)
+                   -> SamplingType
                    -> SVParseState
                    -> Row
-                   -> SVParseState
-updateSVParseState fft !st row =
+                   -> EitherT WardenError (ResourceT IO) SVParseState
+updateSVParseState fft g sType !st row =
   let good = countGood row
-      bad  = countBad row  in
-    (totalRows %~ ((good + bad) +))
-  . (badRows %~ (bad +))
-  . (numFields %~ (updateNumFields row))
-  . (fieldLooks %~ (updateFields row))
-  . (textCounts %~ (updateTextCounts fft row))
-  . (numericState %~ (updateFieldNumericState row))
-  $!! st
- where
-  countGood (SVFields _)   = RowCount 1
-  countGood (RowFailure _) = RowCount 0
+      bad  = countBad row
+      rc = good + bad + (st ^. totalRows)
+      fns = st ^. numericState
+      fra = st ^. reservoirState
+      st' =  (totalRows %~ ((good + bad) +))
+           . (badRows %~ (bad +))
+           . (numFields %~ (updateNumFields row))
+           . (fieldLooks %~ (updateFields row))
+           . (textCounts %~ (updateTextCounts fft row))
+           $!! st in do
+  -- Do all the numeric stuff at once so we don't have to determine if the
+  -- values are numeric multiple times.
+  (fns', fra') <- liftIO $ updateFieldNumerics g rc sType row fns fra
+  pure $!! st' & numericState .~ fns' & reservoirState .~ fra'
+  where
+    countGood (SVFields _)   = RowCount 1
+    countGood (RowFailure _) = RowCount 0
 
-  countBad (SVFields _)    = RowCount 0
-  countBad (RowFailure _)  = RowCount 1
+    countBad (SVFields _)    = RowCount 0
+    countBad (RowFailure _)  = RowCount 1
 #ifndef NOINLINE
 {-# INLINE updateSVParseState #-}
 #endif
@@ -232,46 +248,130 @@ updateFields _ !a = a
 {-# INLINE updateFields #-}
 #endif
 
-updateFieldNumericState :: Row -> FieldNumericState -> FieldNumericState
-updateFieldNumericState (SVFields !v) NoFieldNumericState =
-  FieldNumericState $ V.zipWith updateFieldNumericState' v $
-    V.replicate (V.length v) initialNumericState
-updateFieldNumericState (SVFields !v) (FieldNumericState !a) =
-  FieldNumericState $!! V.zipWith updateFieldNumericState' v a
-updateFieldNumericState _ !a = a
+-- FIXME: parsing fields twice
+updateFieldNumerics :: Gen (PrimState IO)
+                    -> RowCount
+                    -> SamplingType
+                    -> Row
+                    -> FieldNumericState
+                    -> FieldReservoirAcc
+                    -> IO (FieldNumericState, FieldReservoirAcc)
+updateFieldNumerics g rc st (SVFields v) fns fra =
+  let ns = V.map (toMNumericField . AB.parseOnly numericFieldP) v
+      fns' = updateFieldNumericState ns fns in do
+  fra' <- case st of
+    NoSampling -> pure fra
+    ReservoirSampling rs -> updateFieldReservoirAcc g rs rc ns fra
+  pure (fns', fra')
+  where
+    toMNumericField (Left _) = NoNumericField
+    toMNumericField (Right x) = MNumericField x
+updateFieldNumerics _ _ _ _ fns fra =
+  pure (fns, fra)
+#ifndef NOINLINE
+{-# INLINE updateFieldNumerics #-}
+#endif
+
+updateFieldNumericState :: V.Vector MNumericField -> FieldNumericState -> FieldNumericState
+updateFieldNumericState ns NoFieldNumericState =
+  FieldNumericState $ V.zipWith updateFieldNumericState' ns $
+    V.replicate (V.length ns) initialNumericState
+updateFieldNumericState ns (FieldNumericState !a) =
+  FieldNumericState $!! V.zipWith updateFieldNumericState' ns a
 #ifndef NOINLINE
 {-# INLINE updateFieldNumericState #-}
 #endif
 
--- FIXME: parsing fields twice
-updateFieldNumericState' :: ByteString -> NumericState -> NumericState
-updateFieldNumericState' t !acc =
-  case AB.parseOnly numericFieldP t of
-    Left _ ->
+updateFieldNumericState' :: MNumericField -> NumericState -> NumericState
+updateFieldNumericState' mn !acc =
+  case mn of
+    NoNumericField ->
       acc
-    Right (NumericField n) ->
+    MNumericField (NumericField n) ->
       updateNumericState acc n
 #ifndef NOINLINE
 {-# INLINE updateFieldNumericState' #-}
 #endif
 
-combineSVParseState :: TextFreeformThreshold -> SVParseState -> SVParseState -> SVParseState
-combineSVParseState fft s !acc =
-    (badRows %~ ((s ^. badRows) +))
-  . (totalRows %~ ((s ^. totalRows) +))
-  . (numFields %~ ((s ^. numFields) `S.union`))
-  . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
-  . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
-  . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
-  $!! acc
+updateFieldReservoirAcc :: Gen (PrimState IO)
+                        -> ReservoirSize
+                        -> RowCount
+                        -> V.Vector MNumericField
+                        -> FieldReservoirAcc
+                        -> IO FieldReservoirAcc
+updateFieldReservoirAcc g rs rc ns NoFieldReservoirAcc =
+  fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) ns $
+    V.replicate (V.length ns) NoReservoirAcc
+updateFieldReservoirAcc g rs rc ns (FieldReservoirAcc !a) =
+  fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) ns a
+#ifndef NOINLINE
+{-# INLINE updateFieldReservoirAcc #-}
+#endif
+
+updateFieldReservoirAcc' :: Gen (PrimState IO)
+                         -> ReservoirSize
+                         -> RowCount
+                         -> MNumericField
+                         -> ReservoirAcc
+                         -> IO ReservoirAcc
+updateFieldReservoirAcc' g rs rc mn !acc =
+  case mn of
+    NoNumericField ->
+      pure acc
+    MNumericField (NumericField n) ->
+      updateReservoirAcc g rs rc acc n
+#ifndef NOINLINE
+{-# INLINE updateFieldReservoirAcc' #-}
+#endif
+
+combineSVParseState :: TextFreeformThreshold
+                    -> Gen (PrimState IO)
+                    -> SamplingType
+                    -> SVParseState
+                    -> SVParseState
+                    -> IO SVParseState
+combineSVParseState fft g st s !acc =
+  let acc' =  (badRows %~ ((s ^. badRows) +))
+            . (totalRows %~ ((s ^. totalRows) +))
+            . (numFields %~ ((s ^. numFields) `S.union`))
+            . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
+            . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
+            . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
+            $!! acc in case st of
+  NoSampling ->
+    pure acc'
+  ReservoirSampling rs -> do
+    fra' <- combineFieldReservoirAcc g rs (s ^. reservoirState) (acc ^. reservoirState)
+    pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
 #ifndef NOINLINE
 {-# INLINE combineSVParseState #-}
 #endif
 
-resolveSVParseState :: TextFreeformThreshold -> [SVParseState] -> SVParseState
-resolveSVParseState fft = foldr (combineSVParseState fft) initialSVParseState
+resolveSVParseState :: TextFreeformThreshold
+                    -> Gen (PrimState IO)
+                    -> SamplingType
+                    -> [SVParseState]
+                    -> IO SVParseState
+resolveSVParseState fft g st = foldM (combineSVParseState fft g st) initialSVParseState
 #ifndef NOINLINE
 {-# INLINE resolveSVParseState #-}
+#endif
+
+combineFieldReservoirAcc :: Gen (PrimState IO)
+                         -> ReservoirSize
+                         -> FieldReservoirAcc
+                         -> FieldReservoirAcc
+                         -> IO FieldReservoirAcc
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc NoFieldReservoirAcc =
+  pure NoFieldReservoirAcc
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc y =
+  pure y
+combineFieldReservoirAcc _g _rs x NoFieldReservoirAcc =
+  pure x
+combineFieldReservoirAcc g rs (FieldReservoirAcc xs) (FieldReservoirAcc ys) =
+  fmap FieldReservoirAcc $ V.zipWithM (combineReservoirAcc g rs) xs ys
+#ifndef NOINLINE
+{-# INLINE combineFieldReservoirAcc #-}
 #endif

@@ -103,6 +103,7 @@ checkParamsP = CheckParams <$> separatorP
                            <*> textFreeformThresholdP
                            <*> exitTypeP
                            <*> includeDotFilesP
+                           <*> samplingTypeP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
@@ -214,3 +215,10 @@ inferUsingFailedChecksP =
        long "include-failed-checks"
     <> short 'i'
     <> help "Allow use of metadata from failed checks (useful for updating obsolete schemas)."
+
+samplingTypeP :: Parser SamplingType
+samplingTypeP = maybe NoSampling (ReservoirSampling . ReservoirSize) <$> (optional . option auto $
+     long "reservoir-sampling"
+  <> short 'r'
+  <> metavar "RESERVOIR-SIZE"
+  <> help "Reservoir size for sampling, enables quantile computation. Defaults to disabled.")

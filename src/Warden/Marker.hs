@@ -6,12 +6,14 @@ module Warden.Marker(
   , readFileMarker
   , readFileMarker'
   , readViewMarker
+  , summarizeSVParseState
+  , utcNow
   , viewMarkerExists
   , writeFileMarker
   , writeViewMarker
-  , utcNow
   ) where
 
+import           Control.Lens ((^.))
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
@@ -32,6 +34,7 @@ import           System.IO (IO, FilePath)
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Numeric
 import           Warden.Serial.Json.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, firstEitherT, hoistEither, eitherTFromMaybe)
@@ -81,3 +84,14 @@ fileMarkerExists =
 
 utcNow :: IO DateTime
 utcNow = local utcTZ
+
+summarizeSVParseState :: SVParseState -> IO RowCountSummary
+summarizeSVParseState ps = do
+  nfs <- summarizeFieldNumericState (ps ^. numericState) (ps ^. reservoirState)
+  pure $ RowCountSummary
+    (ps ^. badRows)
+    (ps ^. totalRows)
+    (ps ^. numFields)
+    (ps ^. fieldLooks)
+    (ps ^. textCounts)
+    nfs

@@ -18,11 +18,8 @@ module Warden.Data.Marker (
   , markerToFile
   , mkFileMarker
   , mkViewMarker
-  , summarizeSVParseState
   , viewMarkerPath
   ) where
-
-import           Control.Lens ((^.))
 
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill')
@@ -222,16 +219,6 @@ data RowCountSummary =
   } deriving (Eq, Show, Generic)
 
 instance NFData RowCountSummary
-
-summarizeSVParseState :: SVParseState -> RowCountSummary
-summarizeSVParseState ps =
-  RowCountSummary
-    (ps ^. badRows)
-    (ps ^. totalRows)
-    (ps ^. numFields)
-    (ps ^. fieldLooks)
-    (ps ^. textCounts)
-    (summarizeFieldNumericState $ ps ^. numericState)
 
 data ViewMetadata =
   ViewMetadata {

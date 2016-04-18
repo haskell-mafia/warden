@@ -14,6 +14,7 @@
 module Warden.Data.Row (
     FieldCount(..)
   , FieldLookCount(..)
+  , FieldReservoirAcc(..)
   , LineBound(..)
   , ObservationCount(..)
   , ParsedField(..)
@@ -34,6 +35,7 @@ module Warden.Data.Row (
   , renderObservationCount
   , renderParsedField
   , renderRowCount
+  , reservoirState
   , separatorToChar
   , textCounts
   , totalRows
@@ -59,6 +61,7 @@ import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 import           Warden.Data.Numeric
+import           Warden.Data.Sampling.Reservoir
 import           Warden.Data.TextCounts
 
 newtype RawRecord =
@@ -165,6 +168,14 @@ data FieldLookCount =
 
 instance NFData FieldLookCount
 
+-- FIXME: generalize
+data FieldReservoirAcc =
+    NoFieldReservoirAcc
+  | FieldReservoirAcc !(V.Vector ReservoirAcc)
+  deriving (Generic)
+
+instance NFData FieldReservoirAcc
+
 data SVParseState =
   SVParseState {
     _badRows :: {-# UNPACK #-} !RowCount
@@ -173,7 +184,8 @@ data SVParseState =
   , _fieldLooks :: !FieldLookCount
   , _textCounts :: !TextCounts
   , _numericState :: !FieldNumericState
-  } deriving (Eq, Show, Generic)
+  , _reservoirState :: !FieldReservoirAcc
+  } deriving (Generic)
 
 instance NFData SVParseState
 
@@ -195,4 +207,11 @@ renderParsedField = T.pack . show
 
 initialSVParseState :: SVParseState
 initialSVParseState =
-  SVParseState 0 0 S.empty NoFieldLookCount NoTextCounts NoFieldNumericState
+  SVParseState
+    0
+    0
+    S.empty
+    NoFieldLookCount
+    NoTextCounts
+    NoFieldNumericState
+    NoFieldReservoirAcc

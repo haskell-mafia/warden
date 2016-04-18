@@ -19,6 +19,7 @@ import           P
 
 import           System.IO
 import           System.IO.Temp (withTempDirectory)
+import           System.Random.MWC (createSystemRandom)
 
 import           Test.IO.Warden
 import           Test.QuickCheck (vectorOf, arbitrary)
@@ -84,8 +85,10 @@ benchABDecode vfs =
 benchFieldParse :: [ByteString] -> [FieldLooks]
 benchFieldParse = fmap parseField
 
-benchUpdateSVParseState :: [Row] -> SVParseState
-benchUpdateSVParseState rs = foldl' (updateSVParseState (TextFreeformThreshold 100)) initialSVParseState rs
+benchUpdateSVParseState :: [Row] -> IO SVParseState
+benchUpdateSVParseState rs = do
+  g <- createSystemRandom
+  unsafeWarden $ foldM (updateSVParseState (TextFreeformThreshold 100) g (ReservoirSampling $ ReservoirSize 100)) initialSVParseState rs
 
 benchHashText :: [ByteString] -> [Int]
 benchHashText = fmap hashText
@@ -114,9 +117,9 @@ main = do
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
             ]
-        , env prepareFolds $ \ ~(rs,ts) ->
+        , env prepareFolds $ \ ~(rs, ts) ->
             bgroup "folds" $ [
-                bench "updateSVParseState/1000" $ nf benchUpdateSVParseState rs
+                bench "updateSVParseState/1000" $ nfIO (benchUpdateSVParseState rs)
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
             ]

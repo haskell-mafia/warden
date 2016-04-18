@@ -1,0 +1,19 @@
+{
+    "results": [
+        {
+            "status": {
+                "status": "pass"
+            },
+            "type": "file",
+            "description": "file-sanity-checks"
+        }
+    ],
+    "warden-params": {
+        "warden-version": "0.0.1-20160414023022-1b7f161-M",
+        "num-caps": 8,
+        "run-id": "f59cb71df54ab7c2"
+    },
+    "version": "v2",
+    "view-file": "warden-gen-waldorf/measles/year=9801/month=11/day=27/chickenpox/chef",
+    "timestamp": "2016-04-14 02:59:22"
+}

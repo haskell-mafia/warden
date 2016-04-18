@@ -4,6 +4,7 @@
 
 module Test.IO.Warden.Row where
 
+import           Control.Lens ((^.))
 import           Control.Monad.Trans.Resource (runResourceT)
 
 import qualified Data.ByteString.Lazy as BL
@@ -11,14 +12,16 @@ import           Data.Conduit (($$))
 import qualified Data.Conduit.List as CL
 import           Data.Csv
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Text                  as T
-import qualified Data.Vector                as V
+import qualified Data.Set as S
+import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import           Disorder.Core.IO
 
 import           P
 
 import           System.IO
+import           System.Random.MWC (withSystemRandom)
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances  ()
@@ -32,6 +35,22 @@ import           Warden.Error
 import           Warden.Row
 
 import           X.Control.Monad.Trans.Either
+
+prop_updateSVParseState :: TextFreeformThreshold -> SamplingType -> [ValidRow] -> Property
+prop_updateSVParseState fft st rs = testIO . withSystemRandom $ \g -> unsafeWarden $ do
+  let rs' = unValidRow <$> rs
+  s <- foldM (updateSVParseState fft g st) initialSVParseState rs'
+  pure $ (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
+
+prop_resolveSVParseState :: TextFreeformThreshold -> SamplingType -> [Blind SVParseState] -> Property
+prop_resolveSVParseState fft st ss = testIO . withSystemRandom $ \g -> do
+  s' <- resolveSVParseState fft g st $ getBlind <$> ss
+  let bad' = s' ^. badRows
+  let total' = s' ^. totalRows
+  let fns' = S.size $ s' ^. numFields
+  pure . conjoin . fmap (\s'' ->    bad' >= (s'' ^. badRows)
+                                 && total' >= (s'' ^. totalRows)
+                                 && fns' >= (S.size $ s'' ^. numFields)) $ getBlind <$> ss
 
 prop_valid_svrows :: Separator -> FieldCount -> Property
 prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
