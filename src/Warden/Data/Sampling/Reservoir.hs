@@ -19,7 +19,7 @@ import           P
 
 data ReservoirAcc =
     NoReservoirAcc
-  | ReservoirAcc !Reservoir !SampleCount
+  | ReservoirAcc {-# UNPACK #-} !Reservoir {-# UNPACK #-} !SampleCount
   deriving Generic
 
 instance NFData ReservoirAcc
