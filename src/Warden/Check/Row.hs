@@ -73,19 +73,20 @@ parseCheck caps ps sch vfs =
       lb = checkLineBound ps
       st = checkSamplingType ps in do
   g <- liftIO createSystemRandom
-  ss <- mapM (parseViewFile caps verb s lb fft st) (NE.toList vfs)
+  ss <- mapM (parseViewFile caps verb g s lb fft st) (NE.toList vfs)
   finalState <- liftIO $ resolveSVParseState fft g st ss
   liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
               -> Verbosity
+              -> Gen (PrimState IO)
               -> Separator
               -> LineBound
               -> TextFreeformThreshold
               -> SamplingType
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile caps verb s lb fft st vf = do
+parseViewFile caps verb g s lb fft st vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
@@ -95,13 +96,12 @@ parseViewFile caps verb s lb fft st vf = do
     , " chunks."
     ]
   ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkParse) $ NE.toList cs
-  g <- liftIO createSystemRandom
   liftIO $ resolveSVParseState fft g st ss
   where
     -- FIXME: could probably get away with fewer Gens created
     sinkParse = do
-      g <- liftIO createSystemRandom
-      sinkFoldM (parseViewFile' fft g st)
+      g' <- liftIO createSystemRandom
+      sinkFoldM (parseViewFile' fft g' st)
 
 parseViewFile' :: TextFreeformThreshold
                -> Gen (PrimState IO)
