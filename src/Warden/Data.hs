@@ -12,6 +12,7 @@ import           Warden.Data.Inference as X
 import           Warden.Data.Marker as X
 import           Warden.Data.Numeric as X
 import           Warden.Data.Param as X
+import           Warden.Data.PII as X
 import           Warden.Data.Poset as X
 import           Warden.Data.Row as X
 import           Warden.Data.Sampling as X
