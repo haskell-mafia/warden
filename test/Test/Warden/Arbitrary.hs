@@ -618,3 +618,9 @@ phoneDigit =
     unsepped = do
       d <- choose ('0', '9')
       pure . T.pack $ pure d
+
+genPII :: Gen BS.ByteString
+genPII = oneof [
+    genPhoneNumber
+  , genEmail
+  ]

@@ -99,6 +99,7 @@ library
                        Warden.Parser.Common
                        Warden.Parser.PII
                        Warden.Parser.Row
+                       Warden.PII
                        Warden.Row
                        Warden.Sampling.Reservoir
                        Warden.Schema
