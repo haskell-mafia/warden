@@ -94,4 +94,4 @@ prop_invalid_svrows s = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n (inv
 
 return []
 tests :: IO Bool
-tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 10 })
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 100 })

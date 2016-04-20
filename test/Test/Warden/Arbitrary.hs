@@ -584,3 +584,37 @@ instance Arbitrary MStdDevAcc where
       pure NoStdDevAcc
     , MStdDevAcc <$> arbitrary
     ]
+
+genEmail :: Gen BS.ByteString
+genEmail = do
+  sep <- elements ["-", ".", "+"]
+  name <- fmap (T.intercalate sep . fmap (T.filter (/= ' '))) $ listOf1 (elements muppets)
+  host <- fmap (T.intercalate sep . fmap (T.filter (/= ' '))) $ listOf1 (elements viruses)
+  tld <- fmap (T.filter (/= ' ')) $ elements southpark
+  pure . encodeUtf8 $ T.concat [name, "@", host, ".", tld]
+
+genPhoneNumber :: Gen BS.ByteString
+genPhoneNumber = oneof [australianPhoneNumber, internationalPhoneNumber]
+
+australianPhoneNumber :: Gen BS.ByteString
+australianPhoneNumber = do
+  fd <- fmap T.pack $ vectorOf 2 (choose ('0', '9'))
+  fmap (encodeUtf8 . (("0" <> fd) <>) . T.concat) $ vectorOf 7 phoneDigit
+
+internationalPhoneNumber :: Gen BS.ByteString
+internationalPhoneNumber = do
+  fd <- fmap T.pack $ vectorOf 2 (choose ('0', '9'))
+  fmap (encodeUtf8 . (("+" <> fd) <>) . T.concat) $ vectorOf 9 phoneDigit
+
+phoneDigit :: Gen Text
+phoneDigit =
+  oneof [sepped, unsepped]
+  where
+    sepped = do
+      sep <- elements ['-', '.']
+      d <- choose ('0', '9')
+      pure $ T.pack [sep, d]
+
+    unsepped = do
+      d <- choose ('0', '9')
+      pure . T.pack $ pure d

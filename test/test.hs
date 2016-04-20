@@ -10,8 +10,10 @@ import qualified Test.Warden.Data.TextCounts
 import qualified Test.Warden.Data.View
 import qualified Test.Warden.Inference
 import qualified Test.Warden.Numeric
+import qualified Test.Warden.Parser.Common
+import qualified Test.Warden.Parser.PII
+import qualified Test.Warden.Parser.Row
 import qualified Test.Warden.Row
-import qualified Test.Warden.Row.Parser
 import qualified Test.Warden.Serial.Json.Marker
 import qualified Test.Warden.Serial.Json.Numeric
 import qualified Test.Warden.Serial.Json.Schema
@@ -28,8 +30,10 @@ main = disorderMain [
   , Test.Warden.Data.View.tests
   , Test.Warden.Inference.tests
   , Test.Warden.Numeric.tests
+  , Test.Warden.Parser.Common.tests
+  , Test.Warden.Parser.PII.tests
+  , Test.Warden.Parser.Row.tests
   , Test.Warden.Row.tests
-  , Test.Warden.Row.Parser.tests
   , Test.Warden.Serial.Json.Marker.tests
   , Test.Warden.Serial.Json.Numeric.tests
   , Test.Warden.Serial.Json.Schema.tests

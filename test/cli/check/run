@@ -12,8 +12,8 @@ trap "rm -rf ${ROOT}" EXIT
 (
   set -eux
   cd $ROOT
-  VIEW=$(../${WARDEN_GEN} gen -d 14142 -s 1 -c 10000)
+  VIEW=$(../${WARDEN_GEN} +RTS -N4 -RTS gen -d 14142 -s 1 -c 10000)
   # Restrict heap usage in order to fail if there's a memory-usage regression.
-  ../${WARDEN} +RTS -M64M -RTS check -r 300 "${VIEW}"
-  ../${WARDEN} +RTS -M64M -RTS sanity -f "${VIEW}"
+  ../${WARDEN} +RTS -N1 -M64M -RTS check -r 300 "${VIEW}"
+  ../${WARDEN} +RTS -N1 -M64M -RTS sanity -f "${VIEW}"
 )
