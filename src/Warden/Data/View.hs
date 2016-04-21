@@ -4,7 +4,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Data.View(
     DirTree(..)
@@ -78,14 +77,13 @@ renderViewFile :: ViewFile -> Text
 renderViewFile = T.pack . viewFilePath
 
 manyAnd' :: Parser a -> Parser b -> Parser ([a], b)
-manyAnd' p end = go
+manyAnd' p end = {-# SCC manyAnd' #-}
+  go
   where
     go = (end >>= (pure . ((,) []))) `mplus` liftM2' f p go
 
     f x (xs, y) = (x : xs, y)
-#ifndef NOINLINE
 {-# INLINE manyAnd' #-}
-#endif
 
 viewFile :: FilePath -> Either FilePath ViewFile
 viewFile fp =

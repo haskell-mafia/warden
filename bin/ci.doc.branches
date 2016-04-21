@@ -1,0 +1,9 @@
+#! /bin/sh -eux
+
+: ${AMBIATA_DOC_BRANCHES:="s3://ambiata-dispensary-v2/doc/branches"}
+
+$(dirname $0)/ci.doc.common
+
+version=$(cat gen/version.txt)
+
+aws s3 cp --sse doc/warden.pdf ${AMBIATA_DOC_BRANCHES}/warden/${version}/warden-${version}.pdf

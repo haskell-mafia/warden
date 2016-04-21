@@ -594,7 +594,8 @@ genEmail = do
   pure . encodeUtf8 $ T.concat [name, "@", host, ".", tld]
 
 genPhoneNumber :: Gen BS.ByteString
-genPhoneNumber = oneof [australianPhoneNumber, internationalPhoneNumber]
+genPhoneNumber =
+  oneof [australianPhoneNumber, internationalPhoneNumber]
 
 australianPhoneNumber :: Gen BS.ByteString
 australianPhoneNumber = do
@@ -618,3 +619,25 @@ phoneDigit =
     unsepped = do
       d <- choose ('0', '9')
       pure . T.pack $ pure d
+
+genPII :: Gen (BS.ByteString, PIIType)
+genPII = oneof [
+    (fmap (flip (,) PhoneNumber)) genPhoneNumber
+  , (fmap (flip (,) EmailAddress)) genEmail
+  ]
+
+instance Arbitrary MaxPIIObservations where
+  arbitrary = fmap MaxPIIObservations $ choose (1000, 1000000)
+
+instance Arbitrary PIIObservations where
+  arbitrary = oneof [
+      pure NoPIIObservations
+    , pure TooManyPIIObservations
+    , PIIObservations <$> arbitrary
+    ]
+
+instance Arbitrary PotentialPII where
+  arbitrary = PotentialPII <$> arbitrary <*> arbitrary
+
+instance Arbitrary PIIType where
+  arbitrary = elements [minBound..maxBound]

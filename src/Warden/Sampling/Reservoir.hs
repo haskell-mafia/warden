@@ -1,6 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Sampling.Reservoir(
     combineReservoirAcc
@@ -40,14 +39,12 @@ updateReservoirAcc :: Gen (PrimState IO)
                    -> ReservoirAcc
                    -> Double
                    -> IO ReservoirAcc
-updateReservoirAcc gen rs seen NoReservoirAcc x = do
+updateReservoirAcc gen rs seen NoReservoirAcc x = {-# SCC updateReservoirAcc #-} do
   r <- newReservoir rs
   updateReservoirAcc' gen seen r initialSampleCount x
-updateReservoirAcc gen _rs seen (ReservoirAcc r c) x =
+updateReservoirAcc gen _rs seen (ReservoirAcc r c) x = {-# SCC updateReservoirAcc #-}
   updateReservoirAcc' gen seen r c x
-#ifndef NOINLINE
 {-# INLINE updateReservoirAcc #-}
-#endif
 
 updateReservoirAcc' :: Gen (PrimState IO)
                     -> RowCount
@@ -55,7 +52,7 @@ updateReservoirAcc' :: Gen (PrimState IO)
                     -> SampleCount
                     -> Double
                     -> IO ReservoirAcc
-updateReservoirAcc' gen seen (Reservoir v) c x =
+updateReservoirAcc' gen seen (Reservoir v) c x = {-# SCC updateReservoirAcc' #-}
   let target = MVU.length v
       c' = unSampleCount c
       seen' = unRowCount seen in
@@ -68,9 +65,7 @@ updateReservoirAcc' gen seen (Reservoir v) c x =
       when (u < target) $
         MVU.write v u x
       pure $! ReservoirAcc (Reservoir v) c
-#ifndef NOINLINE
 {-# INLINE updateReservoirAcc' #-}
-#endif
 
 -- | Join two samples to get a new sample of up to the provided 'ReservoirSize',
 -- consisting of elements drawn uniformly from the union of the two original

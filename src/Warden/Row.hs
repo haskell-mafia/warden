@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Row (
     asciiToLower
@@ -70,7 +69,7 @@ decodeByteString :: Separator
                  -> LineBound
                  -> ViewFile
                  -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeByteString sep (LineBound lb) _vf =
+decodeByteString sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
       -- This deliberately doesn't try to handle different line-ending formats
       -- differently - RFC 4180-style files with CRLF line endings will have
       -- a junk \r at the end of each line, but this doesn't matter for
@@ -82,18 +81,14 @@ decodeByteString sep (LineBound lb) _vf =
   where
     decodeByteString' = awaitForever $ \l ->
       yield . second unRawRecord $ AB.parseOnly (rawRecordP sep) l
-#ifndef NOINLINE
 {-# INLINE decodeByteString #-}
-#endif
 
 decodeRecord :: Separator
              -> LineBound
              -> ViewFile
              -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeRecord = decodeByteString
-#ifndef NOINLINE
+decodeRecord = {-# SCC decodeRecord #-} decodeByteString
 {-# INLINE decodeRecord #-}
-#endif
 
 readView :: Separator
          -> LineBound
@@ -112,7 +107,8 @@ readViewFile :: Separator
              -> LineBound
              -> ViewFile
              -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewFile sep lb = readViewFile' (decodeRecord sep lb)
+readViewFile sep lb =
+  readViewFile' (decodeRecord sep lb)
 
 readViewFile' :: (ViewFile -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row)
               -> ViewFile
@@ -140,7 +136,7 @@ readViewChunk' c vf (Chunk offset size) =
     =$= c vf
 
 toRow :: Either String (Vector ByteString) -> Row
-toRow (Right !rs) =
+toRow (Right !rs) = {-# SCC toRow #-}
   -- Decode everything here for validation purposes, we won't have a chance
   -- to do it cleanly later.
   case T.decodeUtf8' (BS.concat $ V.toList rs) of
@@ -148,11 +144,9 @@ toRow (Right !rs) =
       SVFields rs
     Left !e ->
       RowFailure . T.pack $ show e
-toRow (Left !e) =
+toRow (Left !e) = {-# SCC toRow #-}
   RowFailure $ T.pack e
-#ifndef NOINLINE
 {-# INLINE toRow #-}
-#endif
 
 -- | We only care about ASCII characters here (true, false et cetera)
 -- and converting unicode to lowercase is really expensive, so just
@@ -161,39 +155,34 @@ toRow (Left !e) =
 -- This will bork some characters (higher-range punctuation), but they're not
 -- digits or bools so we don't care about them.
 asciiToLower :: ByteString -> ByteString
-asciiToLower = BS.map (flip (.|.) 0x20)
-#ifndef NOINLINE
+asciiToLower = {-# SCC asciiToLower #-}
+  BS.map (flip (.|.) 0x20)
 {-# INLINE asciiToLower #-}
-#endif
 
 parseField :: ByteString -> FieldLooks
-parseField "" = LooksEmpty
-parseField t = case AB.parseOnly fieldP (asciiToLower t) of
-  Left _ -> LooksText
-  Right ParsedIntegral -> LooksIntegral
-  Right ParsedReal -> LooksReal
-  Right ParsedBoolean -> LooksBoolean
-#ifndef NOINLINE
+parseField "" = {-# SCC parseField #-}
+  LooksEmpty
+parseField t = {-# SCC parseField #-}
+  case AB.parseOnly fieldP (asciiToLower t) of
+    Left _ -> LooksText
+    Right ParsedIntegral -> LooksIntegral
+    Right ParsedReal -> LooksReal
+    Right ParsedBoolean -> LooksBoolean
 {-# INLINE parseField #-}
-#endif
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
-updateFieldLooks !t !a =
+updateFieldLooks !t !a = {-# SCC updateFieldLooks #-}
   VU.accum (+) a [(fromEnum (parseField t), 1)]
-#ifndef NOINLINE
 {-# INLINE updateFieldLooks #-}
-#endif
 
 updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
-updateTextCounts fft (SVFields vs) NoTextCounts =
+updateTextCounts fft (SVFields vs) NoTextCounts = {-# SCC updateTextCounts #-}
   TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs $
       V.replicate (V.length vs) emptyUniqueTextCount
-updateTextCounts fft (SVFields vs) (TextCounts tcs) =
+updateTextCounts fft (SVFields vs) (TextCounts tcs) = {-# SCC updateTextCounts #-}
   TextCounts $!! V.zipWith (updateUniqueTextCount fft) vs tcs
-updateTextCounts _ _ tc = tc
-#ifndef NOINLINE
+updateTextCounts _ _ tc = {-# SCC updateTextCounts #-} tc
 {-# INLINE updateTextCounts #-}
-#endif
 
 -- | Accumulator for field/row counts on tokenized raw data.
 updateSVParseState :: TextFreeformThreshold
@@ -202,7 +191,7 @@ updateSVParseState :: TextFreeformThreshold
                    -> SVParseState
                    -> Row
                    -> EitherT WardenError (ResourceT IO) SVParseState
-updateSVParseState fft g sType !st row =
+updateSVParseState fft g sType !st row = {-# SCC updateSVParseState #-}
   let good = countGood row
       bad  = countBad row
       rc = good + bad + (st ^. totalRows)
@@ -224,29 +213,23 @@ updateSVParseState fft g sType !st row =
 
     countBad (SVFields _)    = RowCount 0
     countBad (RowFailure _)  = RowCount 1
-#ifndef NOINLINE
 {-# INLINE updateSVParseState #-}
-#endif
 
 updateNumFields :: Row -> Set FieldCount -> Set FieldCount
-updateNumFields (SVFields !v) !ns =
+updateNumFields (SVFields !v) !ns = {-# SCC updateNumFields #-}
   let n = FieldCount $ V.length v in
   S.insert n ns
-updateNumFields _ !ns = ns
-#ifndef NOINLINE
+updateNumFields _ !ns = {-# SCC updateNumFields #-} ns
 {-# INLINE updateNumFields #-}
-#endif
 
 updateFields :: Row -> FieldLookCount -> FieldLookCount
-updateFields (SVFields !v) NoFieldLookCount =
+updateFields (SVFields !v) NoFieldLookCount = {-# SCC updateFields #-}
   FieldLookCount $ V.zipWith updateFieldLooks v $
     V.replicate (V.length v) emptyLookCountVector
-updateFields (SVFields !v) (FieldLookCount !a) =
+updateFields (SVFields !v) (FieldLookCount !a) = {-# SCC updateFields #-}
   FieldLookCount $!! V.zipWith updateFieldLooks v a
-updateFields _ !a = a
-#ifndef NOINLINE
+updateFields _ !a = {-# SCC updateFields #-} a
 {-# INLINE updateFields #-}
-#endif
 
 -- FIXME: parsing fields twice
 updateFieldNumerics :: Gen (PrimState IO)
@@ -256,7 +239,7 @@ updateFieldNumerics :: Gen (PrimState IO)
                     -> FieldNumericState
                     -> FieldReservoirAcc
                     -> IO (FieldNumericState, FieldReservoirAcc)
-updateFieldNumerics g rc st (SVFields v) fns fra =
+updateFieldNumerics g rc st (SVFields v) fns fra = {-# SCC updateFieldNumerics #-}
   let ns = V.map (toMNumericField . AB.parseOnly numericFieldP) v
       fns' = updateFieldNumericState ns fns in do
   fra' <- case st of
@@ -266,32 +249,26 @@ updateFieldNumerics g rc st (SVFields v) fns fra =
   where
     toMNumericField (Left _) = NoNumericField
     toMNumericField (Right x) = MNumericField x
-updateFieldNumerics _ _ _ _ fns fra =
+updateFieldNumerics _ _ _ _ fns fra = {-# SCC updateFieldNumerics #-}
   pure (fns, fra)
-#ifndef NOINLINE
 {-# INLINE updateFieldNumerics #-}
-#endif
 
 updateFieldNumericState :: V.Vector MNumericField -> FieldNumericState -> FieldNumericState
-updateFieldNumericState ns NoFieldNumericState =
+updateFieldNumericState ns NoFieldNumericState = {-# SCC updateFieldNumericState #-}
   FieldNumericState $ V.zipWith updateFieldNumericState' ns $
     V.replicate (V.length ns) initialNumericState
-updateFieldNumericState ns (FieldNumericState !a) =
+updateFieldNumericState ns (FieldNumericState !a) = {-# SCC updateFieldNumericState #-}
   FieldNumericState $!! V.zipWith updateFieldNumericState' ns a
-#ifndef NOINLINE
 {-# INLINE updateFieldNumericState #-}
-#endif
 
 updateFieldNumericState' :: MNumericField -> NumericState -> NumericState
-updateFieldNumericState' mn !acc =
+updateFieldNumericState' mn !acc = {-# SCC updateFieldNumericState' #-}
   case mn of
     NoNumericField ->
       acc
     MNumericField (NumericField n) ->
       updateNumericState acc n
-#ifndef NOINLINE
 {-# INLINE updateFieldNumericState' #-}
-#endif
 
 updateFieldReservoirAcc :: Gen (PrimState IO)
                         -> ReservoirSize
@@ -299,14 +276,12 @@ updateFieldReservoirAcc :: Gen (PrimState IO)
                         -> V.Vector MNumericField
                         -> FieldReservoirAcc
                         -> IO FieldReservoirAcc
-updateFieldReservoirAcc g rs rc ns NoFieldReservoirAcc =
+updateFieldReservoirAcc g rs rc ns NoFieldReservoirAcc = {-# SCC updateFieldReservoirAcc #-}
   fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) ns $
     V.replicate (V.length ns) NoReservoirAcc
-updateFieldReservoirAcc g rs rc ns (FieldReservoirAcc !a) =
+updateFieldReservoirAcc g rs rc ns (FieldReservoirAcc !a) = {-# SCC updateFieldReservoirAcc #-}
   fmap FieldReservoirAcc $ V.zipWithM (updateFieldReservoirAcc' g rs rc) ns a
-#ifndef NOINLINE
 {-# INLINE updateFieldReservoirAcc #-}
-#endif
 
 updateFieldReservoirAcc' :: Gen (PrimState IO)
                          -> ReservoirSize
@@ -314,15 +289,13 @@ updateFieldReservoirAcc' :: Gen (PrimState IO)
                          -> MNumericField
                          -> ReservoirAcc
                          -> IO ReservoirAcc
-updateFieldReservoirAcc' g rs rc mn !acc =
+updateFieldReservoirAcc' g rs rc mn !acc = {-# SCC updateFieldReservoirAcc' #-}
   case mn of
     NoNumericField ->
       pure acc
     MNumericField (NumericField n) ->
       updateReservoirAcc g rs rc acc n
-#ifndef NOINLINE
 {-# INLINE updateFieldReservoirAcc' #-}
-#endif
 
 combineSVParseState :: TextFreeformThreshold
                     -> Gen (PrimState IO)
@@ -330,7 +303,7 @@ combineSVParseState :: TextFreeformThreshold
                     -> SVParseState
                     -> SVParseState
                     -> IO SVParseState
-combineSVParseState fft g st s !acc =
+combineSVParseState fft g st s !acc = {-# SCC combineSVParseState #-}
   let acc' =  (badRows %~ ((s ^. badRows) +))
             . (totalRows %~ ((s ^. totalRows) +))
             . (numFields %~ ((s ^. numFields) `S.union`))
@@ -345,33 +318,28 @@ combineSVParseState fft g st s !acc =
     pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
-#ifndef NOINLINE
 {-# INLINE combineSVParseState #-}
-#endif
 
 resolveSVParseState :: TextFreeformThreshold
                     -> Gen (PrimState IO)
                     -> SamplingType
                     -> [SVParseState]
                     -> IO SVParseState
-resolveSVParseState fft g st = foldM (combineSVParseState fft g st) initialSVParseState
-#ifndef NOINLINE
+resolveSVParseState fft g st = {-# SCC resolveSVParseState #-}
+  foldM (combineSVParseState fft g st) initialSVParseState
 {-# INLINE resolveSVParseState #-}
-#endif
 
 combineFieldReservoirAcc :: Gen (PrimState IO)
                          -> ReservoirSize
                          -> FieldReservoirAcc
                          -> FieldReservoirAcc
                          -> IO FieldReservoirAcc
-combineFieldReservoirAcc _g _rs NoFieldReservoirAcc NoFieldReservoirAcc =
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc NoFieldReservoirAcc = {-# SCC combineFieldReservoirAcc #-}
   pure NoFieldReservoirAcc
-combineFieldReservoirAcc _g _rs NoFieldReservoirAcc y =
+combineFieldReservoirAcc _g _rs NoFieldReservoirAcc y = {-# SCC combineFieldReservoirAcc #-}
   pure y
-combineFieldReservoirAcc _g _rs x NoFieldReservoirAcc =
+combineFieldReservoirAcc _g _rs x NoFieldReservoirAcc = {-# SCC combineFieldReservoirAcc #-}
   pure x
-combineFieldReservoirAcc g rs (FieldReservoirAcc xs) (FieldReservoirAcc ys) =
+combineFieldReservoirAcc g rs (FieldReservoirAcc xs) (FieldReservoirAcc ys) = {-# SCC combineFieldReservoirAcc #-}
   fmap FieldReservoirAcc $ V.zipWithM (combineReservoirAcc g rs) xs ys
-#ifndef NOINLINE
 {-# INLINE combineFieldReservoirAcc #-}
-#endif
