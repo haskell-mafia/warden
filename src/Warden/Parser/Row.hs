@@ -30,11 +30,12 @@ import           Warden.Data.Row
 import           Warden.Parser.Common
 
 rawRecordP :: Separator -> Parser RawRecord
-rawRecordP sep = (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
+rawRecordP sep = {-# SCC rawRecordP #-}
+  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
 {-# INLINE rawRecordP #-}
 
 rawFieldP :: Separator -> Parser ByteString
-rawFieldP !sep =
+rawFieldP !sep = {-# SCC rawFieldP #-}
   peekWord8 >>= \case
     Just c -> if c == doubleQuote
                 then escapedFieldP
@@ -46,7 +47,7 @@ rawFieldP !sep =
 -- double-quotes present in a text field (as long as it remains consistent)
 -- shouldn't affect validation at all.
 escapedFieldP :: Parser ByteString
-escapedFieldP = do
+escapedFieldP = {-# SCC escapedFieldP #-} do
   void $ word8 doubleQuote
   s <- AB.scan False endOfField
   case BS.unsnoc s of
@@ -66,7 +67,7 @@ escapedFieldP = do
 {-# INLINE escapedFieldP #-}
 
 unescapedFieldP :: Separator -> Parser ByteString
-unescapedFieldP !sep =
+unescapedFieldP !sep = {-# SCC unescapedFieldP #-}
   takeWhile fieldByte
   where
     fieldByte c =
@@ -79,7 +80,7 @@ unescapedFieldP !sep =
 {-# INLINE unescapedFieldP #-}
 
 fieldP :: Parser ParsedField
-fieldP = choice [
+fieldP = {-# SCC fieldP #-} choice [
     void integralFieldP >> pure ParsedIntegral
   , void realFieldP >> pure ParsedReal
   , void (boolP <* endOfInput) >> pure ParsedBoolean
@@ -87,22 +88,26 @@ fieldP = choice [
 {-# INLINE fieldP #-}
 
 integralFieldP :: Parser Integer
-integralFieldP = signed (decimal :: Parser Integer) <* endOfInput
+integralFieldP = {-# SCC integralFieldP #-}
+  signed (decimal :: Parser Integer) <* endOfInput
 {-# INLINE integralFieldP #-}
 
 realFieldP :: Parser Double
-realFieldP = double <* endOfInput
+realFieldP = {-# SCC realFieldP #-}
+  double <* endOfInput
 {-# INLINE realFieldP #-}
 
 numericFieldP :: Parser NumericField
-numericFieldP = choice [
+numericFieldP = {-# SCC numericFieldP #-}
+  choice [
     NumericField <$> realFieldP
   , (NumericField . fromIntegral) <$> integralFieldP
   ]
 {-# INLINE numericFieldP #-}
 
 boolP :: Parser ()
-boolP = trueP <|> falseP
+boolP = {-# SCC boolP #-}
+  trueP <|> falseP
   where
     trueP = do
       void . word8 . fromIntegral $ ord 't'

@@ -32,12 +32,12 @@ import           Warden.Data
 import           Warden.Sampling.Reservoir
 
 updateMinimum :: Minimum -> Double -> Minimum
-updateMinimum !acc x =
+updateMinimum !acc x = {-# SCC updateMinimum #-}
   acc <> (Minimum x)
 {-# INLINE updateMinimum #-}
 
 updateMaximum :: Maximum -> Double -> Maximum
-updateMaximum !acc x =
+updateMaximum !acc x = {-# SCC updateMaximum #-}
   acc <> (Maximum x)
 {-# INLINE updateMaximum #-}
 
@@ -47,7 +47,7 @@ updateMaximum !acc x =
 --
 -- \( \frac{1}{n} \sum_{x \in X} x \equiv M_1 = X_1, M_k = M_{k-1} + \frac{(X_k - M_{k-1})}{k} \)
 updateMeanDev :: MeanDevAcc -> Double -> MeanDevAcc
-updateMeanDev !macc x = case macc of
+updateMeanDev !macc x = {-# SCC updateMeanDev #-} case macc of
   MeanDevInitial ->
     let i = KAcc 1
         m = MeanAcc 0
@@ -69,7 +69,7 @@ updateMeanDev !macc x = case macc of
 {-# INLINE updateMeanDev #-}
 
 updateNumericState :: NumericState -> Double -> NumericState
-updateNumericState acc x =
+updateNumericState acc x = {-# SCC updateNumericState #-}
     (stateMinimum %~ (flip updateMinimum x))
   . (stateMaximum %~ (flip updateMaximum x))
   . (stateMeanDev %~ (flip updateMeanDev x))
@@ -78,10 +78,13 @@ updateNumericState acc x =
 
 -- FIXME: this might commute error, requires further thought.
 combineMeanDevAcc :: MeanDevAcc -> MeanDevAcc -> MeanDevAcc
-combineMeanDevAcc MeanDevInitial MeanDevInitial = MeanDevInitial
-combineMeanDevAcc MeanDevInitial md2 = md2
-combineMeanDevAcc md1 MeanDevInitial = md1
-combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) =
+combineMeanDevAcc MeanDevInitial MeanDevInitial = {-# SCC combineMeanDevAcc #-}
+  MeanDevInitial
+combineMeanDevAcc MeanDevInitial md2 = {-# SCC combineMeanDevAcc #-}
+  md2
+combineMeanDevAcc md1 MeanDevInitial = {-# SCC combineMeanDevAcc #-}
+  md1
+combineMeanDevAcc (MeanDevAcc mu1 s1 c1) (MeanDevAcc mu2 s2 c2) = {-# SCC combineMeanDevAcc #-}
   let mu' = combineMeanAcc (mu1, c1) (mu2, c2)
       sda' = combineStdDevAcc mu' (mu1, s1, c1) (mu2, s2, c2)
       -- KAccs are off-by-one from the actual number of values seen, so
@@ -98,13 +101,13 @@ combineStdDevAcc :: MeanAcc -- ^ Combined mean.
                 -> (MeanAcc, MStdDevAcc, KAcc) -- ^ First subset.
                 -> (MeanAcc, MStdDevAcc, KAcc) -- ^ Second subset.
                 -> MStdDevAcc
-combineStdDevAcc _ (_, NoStdDevAcc, _) (_, NoStdDevAcc, _) =
+combineStdDevAcc _ (_, NoStdDevAcc, _) (_, NoStdDevAcc, _) = {-# SCC combineStdDevAcc #-}
   NoStdDevAcc
-combineStdDevAcc _ (_, MStdDevAcc (StdDevAcc s1), _) (_, NoStdDevAcc, _) =
+combineStdDevAcc _ (_, MStdDevAcc (StdDevAcc s1), _) (_, NoStdDevAcc, _) = {-# SCC combineStdDevAcc #-}
   MStdDevAcc $ StdDevAcc s1
-combineStdDevAcc _ (_, NoStdDevAcc, _) (_, MStdDevAcc (StdDevAcc s2), _) =
+combineStdDevAcc _ (_, NoStdDevAcc, _) (_, MStdDevAcc (StdDevAcc s2), _) = {-# SCC combineStdDevAcc #-}
   MStdDevAcc $ StdDevAcc s2
-combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) =
+combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) = {-# SCC combineStdDevAcc #-}
   let var1 = varianceFromStdDevAcc c1 sda1
       var2 = varianceFromStdDevAcc c2 sda2 in
   MStdDevAcc . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
@@ -120,7 +123,7 @@ combineVariance :: MeanAcc -- ^ Combined mean.
                 -> (MeanAcc, Variance, KAcc) -- ^ First subset.
                 -> (MeanAcc, Variance, KAcc) -- ^ Second subset.
                 -> Variance
-combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) =
+combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) = {-# SCC combineVariance #-}
   let t1 = (c1' * var1) + (c1' * mu1 * mu1)
       t2 = (c2' * var2) + (c2' * mu2 * mu2) in
   Variance $ ((t1 + t2) * (1.0 / (c1' + c2'))) - (muHat * muHat)
@@ -132,7 +135,7 @@ combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc m
 
 -- | Combine mean of two subsets, given subset means and size.
 combineMeanAcc :: (MeanAcc, KAcc) -> (MeanAcc, KAcc) -> MeanAcc
-combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) =
+combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) = {-# SCC combineMeanAcc #-}
   let c1' = fromIntegral $ c1 - 1
       c2' = fromIntegral $ c2 - 1 in
   MeanAcc $ ((mu1 * c1') + (mu2 * c2')) / (c1' + c2')
@@ -140,7 +143,7 @@ combineMeanAcc (MeanAcc mu1, KAcc c1) (MeanAcc mu2, KAcc c2) =
 
 -- FIXME: not associative
 combineNumericState :: NumericState -> NumericState -> NumericState
-combineNumericState ns1 ns2 =
+combineNumericState ns1 ns2 = {-# SCC combineNumericState #-}
     (stateMinimum %~ (<> (ns1 ^. stateMinimum)))
   . (stateMaximum %~ (<> (ns1 ^. stateMaximum)))
   . (stateMeanDev %~ (combineMeanDevAcc (ns1 ^. stateMeanDev)))
@@ -148,13 +151,13 @@ combineNumericState ns1 ns2 =
 {-# INLINE combineNumericState #-}
 
 combineFieldNumericState :: FieldNumericState -> FieldNumericState -> FieldNumericState
-combineFieldNumericState NoFieldNumericState NoFieldNumericState =
+combineFieldNumericState NoFieldNumericState NoFieldNumericState = {-# SCC combineFieldNumericState #-}
   NoFieldNumericState
-combineFieldNumericState NoFieldNumericState fns2 =
+combineFieldNumericState NoFieldNumericState fns2 = {-# SCC combineFieldNumericState #-}
   fns2
-combineFieldNumericState fns1 NoFieldNumericState =
+combineFieldNumericState fns1 NoFieldNumericState = {-# SCC combineFieldNumericState #-}
   fns1
-combineFieldNumericState (FieldNumericState ns1) (FieldNumericState ns2) =
+combineFieldNumericState (FieldNumericState ns1) (FieldNumericState ns2) = {-# SCC combineFieldNumericState #-}
   FieldNumericState $ V.zipWith combineNumericState ns1 ns2
 {-# INLINE combineFieldNumericState #-}
 

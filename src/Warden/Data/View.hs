@@ -77,7 +77,8 @@ renderViewFile :: ViewFile -> Text
 renderViewFile = T.pack . viewFilePath
 
 manyAnd' :: Parser a -> Parser b -> Parser ([a], b)
-manyAnd' p end = go
+manyAnd' p end = {-# SCC manyAnd' #-}
+  go
   where
     go = (end >>= (pure . ((,) []))) `mplus` liftM2' f p go
 

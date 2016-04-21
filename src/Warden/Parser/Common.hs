@@ -21,7 +21,7 @@ import           P
 import           Warden.Data.Row
 
 sepByByte1P :: Parser a -> Separator -> Parser [a]
-sepByByte1P p !sep =
+sepByByte1P p !sep = {-# SCC sepByByte1P #-}
   liftM2' (:) p go
   where
     go = do
@@ -35,17 +35,21 @@ sepByByte1P p !sep =
 {-# INLINE sepByByte1P #-}
 
 lineFeed :: Word8
-lineFeed = fromIntegral $ ord '\n'
+lineFeed = {-# SCC lineFeed #-}
+  fromIntegral $ ord '\n'
 {-# INLINE lineFeed #-}
 
 space :: Word8
-space = fromIntegral $ ord ' '
+space = {-# SCC space #-}
+  fromIntegral $ ord ' '
 {-# INLINE space #-}
 
 carriageReturn :: Word8
-carriageReturn = fromIntegral $ ord '\r'
+carriageReturn = {-# SCC carriageReturn #-}
+  fromIntegral $ ord '\r'
 {-# INLINE carriageReturn #-}
 
 doubleQuote :: Word8
-doubleQuote = fromIntegral $ ord '"'
+doubleQuote = {-# SCC doubleQuote #-}
+  fromIntegral $ ord '"'
 {-# INLINE doubleQuote #-}

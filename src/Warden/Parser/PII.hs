@@ -20,7 +20,7 @@ import           Warden.Parser.Common
 -- | Without any reference to RFC 5321, this parser matches things which look
 -- vaguely like they might be email addresses.
 emailP :: Parser ()
-emailP = do
+emailP = {-# SCC emailP #-} do
   void $ takeWhile1 (not . (== at))
   void $ word8 at
   void $ takeWhile1 hostPart
@@ -38,12 +38,12 @@ emailP = do
 -- | Matches Australian phone numbers or fully-qualified international phone
 -- numbers.
 phoneNumberP :: Parser ()
-phoneNumberP =
+phoneNumberP = {-# SCC phoneNumberP #-}
   void $ choice [australianNumberP, internationalNumberP]
 {-# INLINE phoneNumberP #-}
 
 australianNumberP :: Parser ()
-australianNumberP = do
+australianNumberP = {-# SCC australianPhoneNumberP #-} do
   void $ word8 zero
   void $ count 9 phoneCharP
   where
@@ -51,7 +51,7 @@ australianNumberP = do
 {-# INLINE australianNumberP #-}
 
 internationalNumberP :: Parser ()
-internationalNumberP = do
+internationalNumberP = {-# SCC internationalNumberP #-} do
   void $ word8 plus
   void $ count 11 phoneCharP
   where
@@ -59,13 +59,15 @@ internationalNumberP = do
 {-# INLINE internationalNumberP #-}
 
 phoneCharP :: Parser ()
-phoneCharP = satisfy isPhoneChar >> skipPhoneFiller
+phoneCharP = {-# SCC phoneCharP #-}
+  satisfy isPhoneChar >> skipPhoneFiller
   where
     isPhoneChar c = c >= 0x30 && c <= 0x39 -- 0-9
 {-# INLINE phoneCharP #-}
 
 skipPhoneFiller :: Parser ()
-skipPhoneFiller = skipMany (satisfy valid)
+skipPhoneFiller = {-# SCC skipPhoneFiller #-}
+  skipMany (satisfy valid)
   where
     valid 0x20 = True -- space
     valid 0x2d = True -- hyphen
