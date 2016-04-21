@@ -4,7 +4,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Data.Numeric (
     FieldNumericState(..)
@@ -65,9 +64,7 @@ instance Monoid Minimum where
         if cur < prev
           then Minimum cur
           else Minimum prev
-#ifndef NOINLINE
   {-# INLINE mappend #-}
-#endif
 
 data Maximum =
     Maximum {-# UNPACK #-} !Double
@@ -90,9 +87,7 @@ instance Monoid Maximum where
         if cur > prev
           then Maximum cur
           else Maximum prev
-#ifndef NOINLINE
   {-# INLINE mappend #-}
-#endif
 
 -- | Counter param for mean/stddev calculation. Equal to one plus the number
 -- of records seen.
@@ -289,34 +284,24 @@ data MNumericField =
 varianceFromStdDevAcc :: KAcc -> StdDevAcc -> Variance
 varianceFromStdDevAcc (KAcc n) (StdDevAcc sda) =
   Variance $ sda / fromIntegral (n - 1)
-#ifndef NOINLINE
 {-# INLINE varianceFromStdDevAcc #-}
-#endif
 
 stdDevAccFromVariance :: KAcc -> Variance -> StdDevAcc
 stdDevAccFromVariance (KAcc n) (Variance var) =
   StdDevAcc $ var * fromIntegral (n - 1)
-#ifndef NOINLINE
 {-# INLINE stdDevAccFromVariance #-}
-#endif
 
 stdDevFromVariance :: Variance -> StdDev
 stdDevFromVariance = StdDev . sqrt . unVariance
-#ifndef NOINLINE
 {-# INLINE stdDevFromVariance #-}
-#endif
 
 finalizeStdDevAcc :: KAcc -> StdDevAcc -> StdDev
 finalizeStdDevAcc ka sda =
   stdDevFromVariance $ varianceFromStdDevAcc ka sda
-#ifndef NOINLINE
 {-# INLINE finalizeStdDevAcc #-}
-#endif
 
 finalizeMeanDev :: MeanDevAcc -> (Mean, StdDev)
 finalizeMeanDev MeanDevInitial = (NoMean, NoStdDev)
 finalizeMeanDev (MeanDevAcc _ NoStdDevAcc _) = (NoMean, NoStdDev)
 finalizeMeanDev (MeanDevAcc mn (MStdDevAcc sda) n) = (Mean (unMeanAcc mn), finalizeStdDevAcc n sda)
-#ifndef NOINLINE
 {-# INLINE finalizeMeanDev #-}
-#endif

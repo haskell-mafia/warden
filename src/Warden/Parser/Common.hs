@@ -2,7 +2,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Parser.Common (
     carriageReturn
@@ -33,30 +32,20 @@ sepByByte1P p !sep =
         Nothing -> pure []
 
     sep' = unSeparator sep
-#ifndef NOINLINE
 {-# INLINE sepByByte1P #-}
-#endif
 
 lineFeed :: Word8
 lineFeed = fromIntegral $ ord '\n'
-#ifndef NOINLINE
 {-# INLINE lineFeed #-}
-#endif
 
 space :: Word8
 space = fromIntegral $ ord ' '
-#ifndef NOINLINE
 {-# INLINE space #-}
-#endif
 
 carriageReturn :: Word8
 carriageReturn = fromIntegral $ ord '\r'
-#ifndef NOINLINE
 {-# INLINE carriageReturn #-}
-#endif
 
 doubleQuote :: Word8
 doubleQuote = fromIntegral $ ord '"'
-#ifndef NOINLINE
 {-# INLINE doubleQuote #-}
-#endif

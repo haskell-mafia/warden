@@ -2,7 +2,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE CPP #-}
 
 module Warden.Parser.PII (
     emailP
@@ -34,18 +33,14 @@ emailP = do
     period = fromIntegral $ ord '.'
 
     hostPart = not . flip elem [space, period, at]
-#ifndef NOINLINE
 {-# INLINE emailP #-}
-#endif
 
 -- | Matches Australian phone numbers or fully-qualified international phone
 -- numbers.
 phoneNumberP :: Parser ()
 phoneNumberP =
   void $ choice [australianNumberP, internationalNumberP]
-#ifndef NOINLINE
 {-# INLINE phoneNumberP #-}
-#endif
 
 australianNumberP :: Parser ()
 australianNumberP = do
@@ -53,9 +48,7 @@ australianNumberP = do
   void $ count 9 phoneCharP
   where
     zero = fromIntegral $ ord '0'
-#ifndef NOINLINE
 {-# INLINE australianNumberP #-}
-#endif
 
 internationalNumberP :: Parser ()
 internationalNumberP = do
@@ -63,17 +56,13 @@ internationalNumberP = do
   void $ count 11 phoneCharP
   where
     plus = fromIntegral $ ord '+'
-#ifndef NOINLINE
 {-# INLINE internationalNumberP #-}
-#endif
 
 phoneCharP :: Parser ()
 phoneCharP = satisfy isPhoneChar >> skipPhoneFiller
   where
     isPhoneChar c = c >= 0x30 && c <= 0x39 -- 0-9
-#ifndef NOINLINE
 {-# INLINE phoneCharP #-}
-#endif
 
 skipPhoneFiller :: Parser ()
 skipPhoneFiller = skipMany (satisfy valid)
@@ -82,6 +71,4 @@ skipPhoneFiller = skipMany (satisfy valid)
     valid 0x2d = True -- hyphen
     valid 0x2e = True -- period
     valid _ = False
-#ifndef NOINLINE
 {-# INLINE skipPhoneFiller #-}
-#endif
