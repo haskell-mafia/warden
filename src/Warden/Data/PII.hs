@@ -24,7 +24,7 @@ data PIIType =
   | PhoneNumber
   | Address
   | DateOfBirth
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Enum, Bounded)
 
 instance NFData PIIType
 
