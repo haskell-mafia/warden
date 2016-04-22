@@ -1,12 +1,13 @@
 \documentclass[a4paper]{article}
 
-\title{Warden}
+\title{warden}
 
 \author{Sharif Olorin}
 
 \usepackage{amssymb,amsmath}
 \usepackage{hyperref}
 \usepackage[nottoc,numbib]{tocbibind}
+\usepackage{listings}
 
 \begin{document}
 
@@ -15,6 +16,86 @@
 \tableofcontents
 
 \newpage
+
+\section{Purpose}\label{usage}
+
+\texttt{warden} validates feeds of separated-value-format data (CSV,
+PSV, et cetera). It is designed to be run at approximately the same
+frequency as the feed's land/extract jobs. \texttt{warden check}
+consists of in-depth view-level checks and is run following the
+extract phase. \texttt{warden sanity} consists of rudimentary
+file-level checks and can be run either before or after the extract
+phase.
+
+\section{Monitoring a new feed}\label{monitoring-a-new-feed}
+
+\subsection{Initial checks}
+
+To set up monitoring for a new feed, the first step is to run
+\texttt{warden check} without a schema until it has accumulated
+sufficient metadata to infer an accurate schema.
+
+First, determine the feed's separator manually (or implement this
+functionality in \texttt{warden}, whichever is easier). Then construct
+a \texttt{warden check} command as follows:
+
+\begin{lstlisting}[language=bash]
+warden check \
+  -s ${separator} \
+  -r ${reservoir_size} \
+  --exit-success \
+  ${feed_name}
+\end{lstlisting}
+
+The \texttt{reservoir\_size} is an integer number of 64-bit words to
+store for each numeric field in the feed. It should not be larger than
+the expected number of new records \texttt{warden} will check at one
+time, but otherwise can be as large as memory will comfortably allow;
+greater values mean less error in the estimation of quantiles.
+
+This check command should be run from a script (e.g., \texttt{o2} job
+run by \texttt{hydra}) which syncs down data files which are not
+marked as having been validated (\texttt{relic} mark \texttt{validate}
+is \texttt{unprocessed}), runs \texttt{warden check} and syncs the
+resulting markers back to \texttt{S3}. For example:
+
+\lstinputlisting[language=bash]{vapour-validate.sh}
+
+\subsection{Generating a schema}
+
+Running without a schema, \texttt{warden} will only detect a few
+basic classes of feed errors, such as an inconsistent field count. If
+these early checks fail, you will need to contact the customer and get
+them to deal with the invalid records before proceeding.
+
+Once the check has run successfully a few times, sync down all the
+view markers it has written for the relevant feed and run
+\texttt{warden infer} on them:
+
+\begin{lstlisting}[language=bash]
+find _warden -type f -name \*.warden -print0 |\
+    xargs -0 warden infer -o schema.json
+\end{lstlisting}
+
+This will write a file called \texttt{schema.json} in the current
+directory. Inspect both it and the data to sanity-check each field;
+most schemas will need some human editing before being accurate. For
+example, one common case which requires human intervention is date
+fields (e.g., date of a customer phone call) - given that this is an
+initial run on a few days' of data, the range of dates present may be
+quite limited and thus \texttt{warden} might infer that this is a
+categorical field, when in fact more data would indicate that it is
+freeform.
+
+Once you have a schema, run \texttt{warden check} again with the
+\texttt{--schema} option to verify that it still passes. If it does
+not, you'll need to use your own judgement (and possibly communicate
+with the customer) to determine whether this is an issue with the
+schema or the feed.
+
+Once the check has been running stably for a while with the schema in
+place, remove the \textbf{--exit-success} option so that failures will
+cause a notification to be sent.
 
 \section{Schema inference}\label{schema-inference}
 
@@ -128,7 +209,7 @@ This quantity related to the variance with
 
 \subsection{Combining accumulators}\label{combining-accumulators}
 
-Warden computes summaries of chunks of data in parallel, which results
+\texttt{warden} computes summaries of chunks of data in parallel, which results
 in the need to combine accumulators of subsets of the dataset to arrive
 at the final result.
 
