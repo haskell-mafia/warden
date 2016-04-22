@@ -115,8 +115,8 @@ textFreeformThresholdP :: Parser TextFreeformThreshold
 textFreeformThresholdP = TextFreeformThreshold <$> (option auto $
      long "text-freeform-threshold"
   <> metavar "FREEFORM-THRESHOLD"
-  <> help "Number of unique text hashes to store before deciding a field is freeform (affects memory usage and check performance). Defaults to 100."
-  <> value 100)
+  <> help "Number of unique text hashes to store before deciding a field is freeform (affects memory usage and check performance). Defaults to 50."
+  <> value 50)
 
 markerFileP :: Parser FilePath
 markerFileP = strArgument $
