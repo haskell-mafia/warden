@@ -95,6 +95,7 @@ library
                        Warden.Parser.Common
                        Warden.Parser.Field
                        Warden.Parser.PII
+                       Warden.Parser.Row.DelimitedText
                        Warden.Parser.Row.RFC4180
                        Warden.PII
                        Warden.Row

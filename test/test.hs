@@ -14,6 +14,7 @@ import qualified Test.Warden.Numeric
 import qualified Test.Warden.Parser.Common
 import qualified Test.Warden.Parser.Field
 import qualified Test.Warden.Parser.PII
+import qualified Test.Warden.Parser.Row.DelimitedText
 import qualified Test.Warden.Parser.Row.RFC4180
 import qualified Test.Warden.PII
 import qualified Test.Warden.Row
@@ -37,6 +38,7 @@ main = disorderMain [
   , Test.Warden.Parser.Common.tests
   , Test.Warden.Parser.Field.tests
   , Test.Warden.Parser.PII.tests
+  , Test.Warden.Parser.Row.DelimitedText.tests
   , Test.Warden.Parser.Row.RFC4180.tests
   , Test.Warden.PII.tests
   , Test.Warden.Row.tests
