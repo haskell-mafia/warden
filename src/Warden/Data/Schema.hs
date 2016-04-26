@@ -8,12 +8,15 @@
 module Warden.Data.Schema (
     FieldForm(..)
   , FieldUniques(..)
+  , FileFormat(..)
   , Schema(..)
   , SchemaField(..)
   , SchemaFile(..)
   , SchemaVersion(..)
   , currentSchemaVersion
+  , parseFileFormat
   , renderFieldUniques
+  , renderFileFormat
   , renderSchemaFile
   ) where
 
@@ -27,6 +30,23 @@ import           P
 import           System.IO (FilePath)
 
 import           Warden.Data.Field
+
+data FileFormat =
+    SeparatedValues
+  -- | Not actually RFC4180, but pretty close.
+  | RFC4180
+  deriving (Eq, Show, Generic, Enum, Bounded)
+
+instance NFData FileFormat
+
+renderFileFormat :: FileFormat -> Text
+renderFileFormat DelimitedText = "delimited-text"
+renderFileFormat RFC4180 = "rfc4180"
+
+parseFileFormat :: Text -> Maybe FileFormat
+parseFileFormat "delimited-text" = pure DelimitedText
+parseFileFormat "rfc4180" = pure RFC4180
+parseFileFormat _ = Nothing
 
 newtype SchemaFile =
   SchemaFile {

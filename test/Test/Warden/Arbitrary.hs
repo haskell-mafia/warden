@@ -641,3 +641,6 @@ instance Arbitrary PotentialPII where
 
 instance Arbitrary PIIType where
   arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary FileFormat where
+  arbitrary = elements [minBound..maxBound]
