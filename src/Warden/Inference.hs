@@ -175,9 +175,19 @@ inferField :: FieldMatchRatio
 inferField fmr totalRowCount ix h = do
   fcs <- fieldCandidates fmr totalRowCount h
   case S.toList (minima fcs) of
-    [] -> Left NoMinimalFieldTypes
+    [] -> Left $ NoMinimalFieldTypes ix
     [ft] -> pure ft
-    fts -> Left $ CannotResolveCandidates ix fts
+    -- If there are multiple "winning" candidates, one of two things has
+    -- happened:
+    -- 
+    -- - Multiple equally-specific field types (e.g., integers and bools)
+    --   are equally-represented in the field data. In this case, the field 
+    --   can't sensibly be resolved as either and needs to be Text.
+    --
+    -- - All observations were compatible with all field types (i.e., they
+    --   were all empty). In this case we have no information about the type
+    --   of the field and should revert to the most general, Text.
+    _fts -> pure TextField
 
 generateSchema :: FieldMatchRatio
                -> TextCountSummary

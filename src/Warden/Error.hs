@@ -144,8 +144,7 @@ data InferenceError =
     NoViewMarkersError
   | MarkerValidationFailure ValidationFailure
   | EmptyFieldHistogram
-  | NoMinimalFieldTypes
-  | CannotResolveCandidates FieldIndex [FieldType]
+  | NoMinimalFieldTypes FieldIndex
   | ZeroRowCountError
   | NoTextCountError
   | NoTextCountForField FieldIndex
@@ -162,13 +161,10 @@ renderInferenceError = ("inference error: " <>) . render'
       "Invalid view markers: " <> renderValidationFailure vf
     render' EmptyFieldHistogram =
       "No counts in field histogram. This should be impossible."
-    render' NoMinimalFieldTypes =
-      "No minimal field types in field histogram. This should be impossible."
-    render' (CannotResolveCandidates idx fts) = T.concat [
-        "Multiple candidates with equally high score. Field "
-      , renderFieldIndex idx
-      , " must be resolved manually between: "
-      , T.intercalate ", " (renderFieldType <$> fts)
+    render' (NoMinimalFieldTypes ix) = T.concat [
+        "No minimal field types in field histogram for field "
+      , renderFieldIndex ix
+      , ". This should be impossible."
       ]
     render' ZeroRowCountError =
       "Total row count reported by view markers is zero."
