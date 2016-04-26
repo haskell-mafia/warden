@@ -30,7 +30,6 @@ rawFieldP !sep = {-# SCC rawFieldP #-}
     fieldByte c =
          c /= sep'
       && c /= lineFeed
-      && c /= carriageReturn
 
     sep' = unSeparator sep
 {-# INLINE rawFieldP #-}

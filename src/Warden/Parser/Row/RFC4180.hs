@@ -67,7 +67,6 @@ unescapedFieldP !sep = {-# SCC unescapedFieldP #-}
     fieldByte c =
          c /= sep'
       && c /= lineFeed
-      && c /= carriageReturn
       && c /= doubleQuote
 
     sep' = unSeparator sep
