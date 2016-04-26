@@ -82,7 +82,12 @@ Roughly:
   all-inclusive).
 \item
   Take the minimum (most specific) type by set inclusion from the
-  candidates. If there are multiple minima, fail.
+  candidates. If there are multiple minima, revert to the most general
+  \texttt{FieldType}, \texttt{Text}.\footnote{In this case, one of two
+    things has happened: the field is an amalgam of two types with
+    equal representation in the data, or all observations are
+    \texttt{LooksEmpty}. In both of these cases, we can't infer
+    anything more specific than the most general field type.}
 \end{itemize}
 
 \section{Numerics}\label{numerics}
