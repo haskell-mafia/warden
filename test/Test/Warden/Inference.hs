@@ -11,6 +11,7 @@ import           Data.Semigroup ((<>))
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import           Data.Vector.Unboxed ((//))
 import qualified Data.Vector.Unboxed as VU
 
 import           Disorder.Core.Property (failWith)
@@ -18,6 +19,8 @@ import           Disorder.Core.UniquePair (UniquePair(..))
 import           Disorder.Corpus (muppets)
 
 import           P hiding ((<>))
+
+import           Prelude (fromEnum)
 
 import           System.IO (IO)
 
@@ -163,6 +166,15 @@ prop_inferForms_insufficient_rows vm = forAll (TextFreeformThreshold <$> choose 
       vm'' = vm' { vmMetadata = ((vmMetadata vm') { vmCheckParams = ((vmCheckParams (vmMetadata vm')) { checkFreeformThreshold = fft })})}
       vms = pure vm'' in
   isLeft (inferForms $ ValidViewMarkers vms) === True
+
+prop_inferField_empty :: FieldMatchRatio -> FieldIndex -> Property
+prop_inferField_empty fmr fi = forAll (choose (1, 10000)) $ \n ->
+  let rc = RowCount n
+      ce = CompatibleEntries n
+      fhv = VU.map (CompatibleEntries . unObservationCount) emptyLookCountVector
+      fh = FieldHistogram $ fhv // [(fromEnum LooksEmpty, ce)]
+      r = inferField fmr rc fi fh in
+  r === Right TextField
 
 return []
 tests :: IO Bool
