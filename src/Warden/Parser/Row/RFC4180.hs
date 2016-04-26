@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Warden.Parser.Row (
+module Warden.Parser.Row.RFC4180 (
     escapedFieldP
   , fieldP
   , numericFieldP

@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Warden.Parser.Row where
+module Test.Warden.Parser.Row.RFC4180 where
 
 import           Data.Attoparsec.ByteString (parseOnly)
 import qualified Data.ByteString as BS
@@ -18,7 +18,7 @@ import           Test.QuickCheck
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
-import           Warden.Parser.Row
+import           Warden.Parser.Row.RFC4180
 
 prop_unescapedFieldP :: Separator -> Property
 prop_unescapedFieldP s = forAll (validSVField s) $ \f ->
