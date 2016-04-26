@@ -93,6 +93,7 @@ library
                        Warden.Numeric
                        Warden.Param
                        Warden.Parser.Common
+                       Warden.Parser.Field
                        Warden.Parser.PII
                        Warden.Parser.Row.RFC4180
                        Warden.PII

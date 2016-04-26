@@ -59,6 +59,7 @@ import           System.Random.MWC (Gen)
 import           Warden.Data
 import           Warden.Error
 import           Warden.Numeric
+import           Warden.Parser.Field
 import           Warden.Parser.Row.RFC4180
 import           Warden.Sampling.Reservoir
 

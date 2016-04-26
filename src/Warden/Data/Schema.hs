@@ -32,7 +32,7 @@ import           System.IO (FilePath)
 import           Warden.Data.Field
 
 data FileFormat =
-    SeparatedValues
+    DelimitedText
   -- | Not actually RFC4180, but pretty close.
   | RFC4180
   deriving (Eq, Show, Generic, Enum, Bounded)
