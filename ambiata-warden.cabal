@@ -109,6 +109,7 @@ library
                        Warden.Serial.Json.Marker
                        Warden.Serial.Json.Numeric
                        Warden.Serial.Json.Param
+                       Warden.Serial.Json.PII
                        Warden.Serial.Json.Row
                        Warden.Serial.Json.Schema
                        Warden.Serial.Json.TextCounts

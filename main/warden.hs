@@ -105,6 +105,7 @@ checkParamsP = CheckParams <$> separatorP
                            <*> includeDotFilesP
                            <*> samplingTypeP
                            <*> fileFormatP
+                           <*> pure NoPIIChecks
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP

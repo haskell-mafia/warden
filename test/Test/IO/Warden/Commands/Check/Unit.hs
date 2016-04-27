@@ -41,6 +41,7 @@ commandUnitCheckParams = CheckParams {
   , checkIncludeDotFiles = NoIncludeDotFiles
   , checkSamplingType = NoSampling
   , checkFileFormat = RFC4180
+  , checkPIICheckType = NoPIIChecks
   }
 
 checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property
