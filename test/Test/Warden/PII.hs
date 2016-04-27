@@ -29,19 +29,19 @@ prop_checkPII_neg n = forAll (elements southpark) $ \bs ->
       r2 = checkPII . T.encodeUtf8 $ renderIntegral n in
   (r1, r2) === (Nothing, Nothing)
 
-prop_updateFieldPIIObservations_neg :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
-prop_updateFieldPIIObservations_neg fi mpo o = forAll ((fmap T.encodeUtf8) <$> (vectorOf 1000 (elements muppets))) $ \fs ->
-  let r = foldl (updateFieldPIIObservations mpo fi) o fs in
+prop_updatePIIObservations_neg :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
+prop_updatePIIObservations_neg fi mpo o = forAll ((fmap T.encodeUtf8) <$> (vectorOf 1000 (elements muppets))) $ \fs ->
+  let r = foldl (updatePIIObservations mpo fi) o fs in
   r === o
 
-prop_updateFieldPIIObservations_pos :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
-prop_updateFieldPIIObservations_pos fi mpo o = forAll (vectorOf 1000 genPII) $ \fs ->
-  let r = foldl (updateFieldPIIObservations mpo fi) o (fst <$> fs) in
+prop_updatePIIObservations_pos :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
+prop_updatePIIObservations_pos fi mpo o = forAll (vectorOf 1000 genPII) $ \fs ->
+  let r = foldl (updatePIIObservations mpo fi) o (fst <$> fs) in
   o /= TooManyPIIObservations ==> neg $ r === o
 
-prop_updateFieldPIIObservations_pos_toomany :: FieldIndex -> MaxPIIObservations -> Property
-prop_updateFieldPIIObservations_pos_toomany fi mpo = forAll (vectorOf 1000 genPII) $ \fs ->
-  let r = foldl (updateFieldPIIObservations mpo fi) TooManyPIIObservations (fst <$> fs) in
+prop_updatePIIObservations_pos_toomany :: FieldIndex -> MaxPIIObservations -> Property
+prop_updatePIIObservations_pos_toomany fi mpo = forAll (vectorOf 1000 genPII) $ \fs ->
+  let r = foldl (updatePIIObservations mpo fi) TooManyPIIObservations (fst <$> fs) in
   r === TooManyPIIObservations
 
 return []

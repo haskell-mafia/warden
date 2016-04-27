@@ -118,7 +118,7 @@ benchCombineNumericState :: [NumericState] -> NumericState
 benchCombineNumericState nss = foldl' combineNumericState initialNumericState nss
 
 benchUpdateFieldPIIObservations :: [ByteString] -> PIIObservations
-benchUpdateFieldPIIObservations bss = foldl' (updateFieldPIIObservations (MaxPIIObservations 100000) (FieldIndex 1)) NoPIIObservations bss
+benchUpdateFieldPIIObservations bss = foldl' (updatePIIObservations (MaxPIIObservations 100000) (FieldIndex 1)) NoPIIObservations bss
 
 benchCheckPII :: [ByteString] -> [Maybe PIIType]
 benchCheckPII = fmap checkPII
@@ -141,8 +141,8 @@ main = do
                 bench "updateSVParseState/1000" $ nfIO (benchUpdateSVParseState rs)
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
-              , bench "updateFieldPIIObservations/pii/10000" $ nf benchUpdateFieldPIIObservations piis
-              , bench "updateFieldPIIObservations/nonpii/10000" $ nf benchUpdateFieldPIIObservations nonPiis
+              , bench "updatePIIObservations/pii/10000" $ nf benchUpdateFieldPIIObservations piis
+              , bench "updatePIIObservations/nonpii/10000" $ nf benchUpdateFieldPIIObservations nonPiis
               , bench "checkPII/pii/10000" $ nf benchCheckPII piis
               , bench "checkPII/nonpii/10000" $ nf benchCheckPII nonPiis
             ]

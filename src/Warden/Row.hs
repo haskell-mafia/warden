@@ -226,7 +226,7 @@ updatePIIState (PIIChecks mpo) (SVFields v) ps = {-# SCC updatePIIState #-}
   V.foldl update' ps $ V.indexed v
   where
     update' acc (ix, bs) =
-      updateFieldPIIObservations mpo (FieldIndex ix) acc bs
+      updatePIIObservations mpo (FieldIndex ix) acc bs
 updatePIIState _ _ ps = {-# SCC updatePIIState #-}
   ps
 {-# INLINE updatePIIState #-}

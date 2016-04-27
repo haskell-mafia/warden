@@ -6,7 +6,7 @@
 module Warden.PII (
     checkPII
   , combinePIIObservations
-  , updateFieldPIIObservations
+  , updatePIIObservations
   ) where
 
 import qualified Data.Attoparsec.ByteString as AB
@@ -21,12 +21,12 @@ import           Warden.Data.Field
 import           Warden.Data.PII
 import           Warden.Parser.PII
 
-updateFieldPIIObservations :: MaxPIIObservations
+updatePIIObservations :: MaxPIIObservations
                            -> FieldIndex
                            -> PIIObservations
                            -> ByteString
                            -> PIIObservations
-updateFieldPIIObservations mpo fi acc bs = {-# SCC updateFieldPIIObservations #-}
+updatePIIObservations mpo fi acc bs = {-# SCC updatePIIObservations #-}
   maybe acc update' $ checkPII bs
   where
     update' pii =
@@ -40,7 +40,7 @@ updateFieldPIIObservations mpo fi acc bs = {-# SCC updateFieldPIIObservations #-
             else PIIObservations $!! os'
         TooManyPIIObservations ->
             TooManyPIIObservations
-{-# INLINE updateFieldPIIObservations #-}
+{-# INLINE updatePIIObservations #-}
 
 combinePIIObservations :: MaxPIIObservations -> PIIObservations -> PIIObservations -> PIIObservations
 combinePIIObservations _ NoPIIObservations NoPIIObservations = {-# SCC combinePIIObservations #-}
