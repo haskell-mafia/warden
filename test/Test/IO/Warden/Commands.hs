@@ -36,6 +36,9 @@ prop_infer_tripping wps cps = testIO $ withTestView $ \(View vd) ->
                , checkLineBound = LineBound 65536
                , checkFreeformThreshold = TextFreeformThreshold 10
                , checkSchemaFile = Nothing
+               -- Lots of things look like emails in long strings of random
+               -- bytes.
+               , checkPIICheckType = NoPIIChecks
                } in do
   withCurrentDirectory vd $ unsafeWarden $ do
     v <- liftIO $ generateView NonDeterministic "." (RecordCount 100) (GenSize 1) (LineSize 100)
