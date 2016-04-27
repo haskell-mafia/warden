@@ -8,9 +8,12 @@ module Warden.Data.PII (
   , PIIType(..)
   , PotentialPII(..)
   , PIIObservations(..)
+  , renderPIIType
+  , renderPotentialPII
   ) where
 
 import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.Text as T
 
 import           GHC.Generics (Generic)
 
@@ -28,11 +31,25 @@ data PIIType =
 
 instance NFData PIIType
 
+renderPIIType :: PIIType -> Text
+renderPIIType EmailAddress = "email address"
+renderPIIType PhoneNumber = "phone number"
+renderPIIType Address = "address"
+renderPIIType DateOfBirth = "date of birth"
+
 data PotentialPII =
     PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
   deriving (Eq, Show, Generic)
 
 instance NFData PotentialPII
+
+renderPotentialPII :: PotentialPII -> Text
+renderPotentialPII (PotentialPII typ ix) = T.concat [
+    renderPIIType typ
+  , "(field "
+  , renderFieldIndex ix
+  , ")"
+  ]
 
 newtype MaxPIIObservations =
   MaxPIIObservations {

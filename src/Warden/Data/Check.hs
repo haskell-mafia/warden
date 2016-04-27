@@ -8,6 +8,7 @@ module Warden.Data.Check (
   , CheckStatus(..)
   , Failure(..)
   , Insanity(..)
+  , PIIFailure(..)
   , RowFailure(..)
   , SchemaFailure(..)
   , checkHasFailures
@@ -32,6 +33,7 @@ import           GHC.Generics (Generic)
 import           P
 
 import           Warden.Data.FieldAnomaly
+import           Warden.Data.PII
 import           Warden.Data.Row
 import           Warden.Data.View
 
@@ -120,6 +122,7 @@ data Failure =
     SanityCheckFailure !Insanity
   | RowCheckFailure !RowFailure
   | SchemaCheckFailure !SchemaFailure
+  | PIICheckFailure !PIIFailure
   deriving (Eq, Show, Generic)
 
 instance NFData Failure
@@ -147,6 +150,13 @@ data SchemaFailure =
 
 instance NFData SchemaFailure
 
+data PIIFailure =
+    PotentialPIIFailure !(NonEmpty PotentialPII)
+  | TooManyPotentialPIIFailure
+  deriving (Eq, Show, Generic)
+
+instance NFData PIIFailure
+
 renderFailure :: Failure -> Text
 renderFailure (SanityCheckFailure f) =
   "sanity check failed: " <> renderInsanity f
@@ -154,6 +164,8 @@ renderFailure (RowCheckFailure f) =
   "row check failed: " <> renderRowFailure f
 renderFailure (SchemaCheckFailure f) =
   "schema validation failed: " <> renderSchemaFailure f
+renderFailure (PIICheckFailure f) =
+  "potential PII found: " <> renderPIIFailure f
 
 renderInsanity :: Insanity -> Text
 renderInsanity EmptyFile = "file of zero size"
@@ -188,3 +200,9 @@ renderSchemaFailure (FieldAnomalyFailure a) = T.concat [
     "Field characteristics differ from those specified in schema: "
   , renderAnomalousField a
   ]
+
+renderPIIFailure :: PIIFailure -> Text
+renderPIIFailure (PotentialPIIFailure ps) =
+  T.intercalate ", " . NE.toList $ renderPotentialPII <$> ps
+renderPIIFailure TooManyPotentialPIIFailure =
+  "Observation count exceeded threshold."

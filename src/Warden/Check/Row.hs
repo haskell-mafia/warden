@@ -129,10 +129,19 @@ finalizeSVParseState ps sch ds vfs sv =
              , checkFieldCounts (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
+             , checkPIIState (sv ^. piiState)
              ]
       vfs' = S.fromList $ NE.toList vfs in do
   rcs <- summarizeSVParseState sv
   pure (st, ViewMetadata rcs ps ds vfs')
+
+checkPIIState :: PIIObservations -> CheckStatus
+checkPIIState NoPIIObservations =
+  CheckPassed
+checkPIIState (PIIObservations os) =
+  CheckFailed . pure . PIICheckFailure $ PotentialPIIFailure os
+checkPIIState TooManyPIIObservations =
+  CheckFailed . pure $ PIICheckFailure TooManyPotentialPIIFailure
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)
