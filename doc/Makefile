@@ -4,7 +4,7 @@ OUT=$(DOC).pdf
 all: $(OUT)
 
 # Duplication intentional here, the latex-bibtex dance requires multiple steps.
-$(OUT): $(DOC).tex $(DOC).bib
+$(OUT): $(DOC).tex $(DOC).bib vapour-validate.sh
 	pdflatex $(DOC).tex
 	bibtex $(DOC).aux
 	pdflatex $(DOC).tex

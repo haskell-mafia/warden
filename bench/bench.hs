@@ -13,7 +13,10 @@ import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.Binary as CB
 import qualified Data.Conduit.List as C
 import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
+
+import           Disorder.Corpus (muppets)
 
 import           P
 
@@ -22,11 +25,12 @@ import           System.IO.Temp (withTempDirectory)
 import           System.Random.MWC (createSystemRandom)
 
 import           Test.IO.Warden
-import           Test.QuickCheck (vectorOf, arbitrary)
+import           Test.QuickCheck (vectorOf, arbitrary, elements)
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Numeric
+import           Warden.PII
 import           Warden.Row
 import           Warden.View
 
@@ -61,8 +65,8 @@ prepareNumbers :: IO [Double]
 prepareNumbers =
   generate' (Deterministic 2468) (GenSize 100) $ vectorOf 10000 arbitrary
 
-prepareFolds :: IO ([Row], [ByteString])
-prepareFolds = (,) <$> prepareSVParse <*> prepareHashText
+prepareFolds :: IO ([Row], [ByteString], [ByteString], [ByteString])
+prepareFolds = (,,,) <$> prepareSVParse <*> prepareHashText <*> preparePII <*> prepareNonPII
 
 prepareMeanDevAccs :: IO [MeanDevAcc]
 prepareMeanDevAccs =
@@ -71,6 +75,14 @@ prepareMeanDevAccs =
 prepareNumericStates :: IO [NumericState]
 prepareNumericStates =
   generate' (Deterministic 9876) (GenSize 100) $ vectorOf 10000 arbitrary
+
+preparePII :: IO [ByteString]
+preparePII =
+  fmap (fmap fst) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 10000 genPII
+
+prepareNonPII :: IO [ByteString]
+prepareNonPII =
+  fmap (fmap T.encodeUtf8) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 10000 (elements muppets)
 
 benchABDecode :: NonEmpty ViewFile -> IO ()
 benchABDecode vfs =
@@ -105,6 +117,12 @@ benchCombineMeanDevAcc mdas = foldl' combineMeanDevAcc MeanDevInitial mdas
 benchCombineNumericState :: [NumericState] -> NumericState
 benchCombineNumericState nss = foldl' combineNumericState initialNumericState nss
 
+benchUpdateFieldPIIObservations :: [ByteString] -> PIIObservations
+benchUpdateFieldPIIObservations bss = foldl' (flip (updateFieldPIIObservations (MaxPIIObservations 100000) (FieldIndex 1))) NoPIIObservations bss
+
+benchCheckPII :: [ByteString] -> [Maybe PIIType]
+benchCheckPII = fmap checkPII
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -117,11 +135,15 @@ main = do
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
             ]
-        , env prepareFolds $ \ ~(rs, ts) ->
+        , env prepareFolds $ \ ~(rs, ts, piis, nonPiis) ->
             bgroup "folds" $ [
                 bench "updateSVParseState/1000" $ nfIO (benchUpdateSVParseState rs)
               , bench "hashText/1000" $ nf benchHashText ts
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
+              , bench "updateFieldPIIObservations/pii/10000" $ nf benchUpdateFieldPIIObservations piis
+              , bench "updateFieldPIIObservations/nonpii/10000" $ nf benchUpdateFieldPIIObservations nonPiis
+              , bench "checkPII/pii/10000" $ nf benchCheckPII piis
+              , bench "checkPII/nonpii/10000" $ nf benchCheckPII nonPiis
             ]
         , env ((,,) <$> prepareNumbers <*> prepareMeanDevAccs <*> prepareNumericStates) $ \ ~(ns, mdas, nss) ->
            bgroup "numerics" $ [

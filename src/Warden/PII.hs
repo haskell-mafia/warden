@@ -24,7 +24,7 @@ updateFieldPIIObservations :: MaxPIIObservations
                            -> ByteString
                            -> PIIObservations
                            -> PIIObservations
-updateFieldPIIObservations mpo fi bs acc =
+updateFieldPIIObservations mpo fi bs acc = {-# SCC updateFieldPIIObservations #-}
   maybe acc update' $ checkPII bs
   where
     update' pii =
@@ -38,9 +38,10 @@ updateFieldPIIObservations mpo fi bs acc =
             else PIIObservations $!! os'
         TooManyPIIObservations ->
             TooManyPIIObservations
+{-# INLINE updateFieldPIIObservations #-}
 
 checkPII :: ByteString -> Maybe PIIType
-checkPII bs =
+checkPII bs = {-# SCC checkPII #-}
   let piis = [phoneNumber, emailAddress] in
   case nonEmpty (catMaybes piis) of
     Nothing -> Nothing
@@ -53,3 +54,4 @@ checkPII bs =
     emailAddress = case AB.parseOnly emailP bs of
       Left _ -> Nothing
       Right () -> pure EmailAddress
+{-# INLINE checkPII #-}
