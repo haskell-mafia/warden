@@ -121,6 +121,7 @@ data CheckParams =
     , checkExitType :: !ExitType
     , checkIncludeDotFiles :: !IncludeDotFiles
     , checkSamplingType :: !SamplingType
+    , checkFileFormat :: !FileFormat
     } deriving (Eq, Show, Generic)
 
 instance NFData CheckParams

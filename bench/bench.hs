@@ -84,13 +84,13 @@ prepareNonPII :: IO [ByteString]
 prepareNonPII =
   fmap (fmap T.encodeUtf8) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 10000 (elements muppets)
 
-benchABDecode :: NonEmpty ViewFile -> IO ()
-benchABDecode vfs =
+benchABDecode :: FileFormat -> NonEmpty ViewFile -> IO ()
+benchABDecode ff vfs =
   let sep = Separator . fromIntegral $ ord '|'
       lb = LineBound 65536 in do
   bitbucket <- openFile "/dev/null" WriteMode
   unsafeWarden $
-        readView' (decodeByteString sep lb) vfs
+        readView' (decodeByteString ff sep lb) vfs
     =$= C.map (BS.pack . show)
     $$  CB.sinkHandle bitbucket
 
@@ -129,7 +129,8 @@ main = do
     wardenBench [
           env (prepareView root) $ \ ~(vfs) ->
             bgroup "decoding" $ [
-                bench "decode/conduit+attoparsec-bytestring/1000" $ nfIO (benchABDecode vfs)
+                bench "decode/rfc4180/1000" $ nfIO (benchABDecode RFC4180 vfs)
+              , bench "decode/delimited-text/1000" $ nfIO (benchABDecode DelimitedText vfs)
             ]
         , env prepareRow $ \ ~(rs) ->
             bgroup "field-parsing" $ [

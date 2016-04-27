@@ -447,6 +447,7 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary

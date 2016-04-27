@@ -60,17 +60,18 @@ import           Warden.Data
 import           Warden.Error
 import           Warden.Numeric
 import           Warden.Parser.Field
-import           Warden.Parser.Row.RFC4180
+import           Warden.Parser.Row
 import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
 import           X.Control.Monad.Trans.Either (EitherT)
 
-decodeByteString :: Separator
+decodeByteString :: FileFormat
+                 -> Separator
                  -> LineBound
                  -> ViewFile
                  -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
-decodeByteString sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
+decodeByteString ff sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
       -- This deliberately doesn't try to handle different line-ending formats
       -- differently - RFC 4180-style files with CRLF line endings will have
       -- a junk \r at the end of each line, but this doesn't matter for
@@ -81,22 +82,24 @@ decodeByteString sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
   =$= DC.map toRow
   where
     decodeByteString' = awaitForever $ \l ->
-      yield . second unRawRecord $ AB.parseOnly (rawRecordP sep) l
+      yield . second unRawRecord $ AB.parseOnly ((parserFor ff) sep) l
 {-# INLINE decodeByteString #-}
 
-decodeRecord :: Separator
+decodeRecord :: FileFormat
+             -> Separator
              -> LineBound
              -> ViewFile
              -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row
 decodeRecord = {-# SCC decodeRecord #-} decodeByteString
 {-# INLINE decodeRecord #-}
 
-readView :: Separator
+readView :: FileFormat
+         -> Separator
          -> LineBound
          -> NonEmpty ViewFile
          -> Source (EitherT WardenError (ResourceT IO)) Row
-readView sep lb vfs =
-  readView' (decodeRecord sep lb) vfs
+readView ff sep lb vfs =
+  readView' (decodeRecord ff sep lb) vfs
 
 readView' :: (ViewFile -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row)
           -> NonEmpty ViewFile
@@ -104,12 +107,13 @@ readView' :: (ViewFile -> Conduit ByteString (EitherT WardenError (ResourceT IO)
 readView' c vfs =
   sequence_ $ (readViewFile' c) <$> vfs
 
-readViewFile :: Separator
+readViewFile :: FileFormat
+             -> Separator
              -> LineBound
              -> ViewFile
              -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewFile sep lb =
-  readViewFile' (decodeRecord sep lb)
+readViewFile ff sep lb =
+  readViewFile' (decodeRecord ff sep lb)
 
 readViewFile' :: (ViewFile -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row)
               -> ViewFile
@@ -119,13 +123,14 @@ readViewFile' c vf =
   slurp fp 0 Nothing 
     =$= c vf
 
-readViewChunk :: Separator
+readViewChunk :: FileFormat
+              -> Separator
               -> LineBound
               -> ViewFile
               -> Chunk
               -> Source (EitherT WardenError (ResourceT IO)) Row
-readViewChunk sep lb =
-  readViewChunk' (decodeRecord sep lb)
+readViewChunk ff sep lb =
+  readViewChunk' (decodeRecord ff sep lb)
 
 readViewChunk' :: (ViewFile -> Conduit ByteString (EitherT WardenError (ResourceT IO)) Row)
                -> ViewFile

@@ -43,6 +43,7 @@ rawFieldP !sep = {-# SCC rawFieldP #-}
 escapedFieldP :: Parser ByteString
 escapedFieldP = {-# SCC escapedFieldP #-} do
   void $ word8 doubleQuote
+  -- Balance double quotes, but pass everything else through unprocessed.
   s <- AB.scan False endOfField
   case BS.unsnoc s of
     Nothing ->

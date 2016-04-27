@@ -104,6 +104,7 @@ checkParamsP = CheckParams <$> separatorP
                            <*> exitTypeP
                            <*> includeDotFilesP
                            <*> samplingTypeP
+                           <*> fileFormatP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
@@ -222,3 +223,16 @@ samplingTypeP = maybe NoSampling (ReservoirSampling . ReservoirSize) <$> (option
   <> short 'r'
   <> metavar "RESERVOIR-SIZE"
   <> help "Reservoir size for sampling, enables quantile computation. Defaults to disabled.")
+
+fileFormatP :: Parser FileFormat
+fileFormatP = (option (eitherReader fileFormat) $
+     long "file-format"
+  <> metavar "FILE-FORMAT"
+  <> value DelimitedText
+  <> help ("File format to parse, one of [" <> fmts <> "], see documentation for descriptions. Defaults to \"delimited-text\"."))
+  where
+    fileFormat s = case parseFileFormat (T.pack s) of
+      Nothing -> Left $ "Invalid file format (valid file formats are [" <> fmts <> "]): " <> s
+      Just f -> Right f
+
+    fmts = T.unpack . T.intercalate ", " $ fmap renderFileFormat [minBound..maxBound]

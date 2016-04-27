@@ -68,25 +68,27 @@ parseCheck :: NumCPUs
 parseCheck caps ps sch vfs =
   let dates = S.fromList . NE.toList $ vfDate <$> vfs
       fft = checkFreeformThreshold ps
+      ff = checkFileFormat ps
       s = checkSeparator ps
       verb = checkVerbosity ps
       lb = checkLineBound ps
       st = checkSamplingType ps in do
   g <- liftIO createSystemRandom
-  ss <- mapM (parseViewFile caps verb g s lb fft st) (NE.toList vfs)
+  ss <- mapM (parseViewFile caps verb g ff s lb fft st) (NE.toList vfs)
   finalState <- liftIO $ resolveSVParseState fft g st ss
   liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
               -> Verbosity
               -> Gen (PrimState IO)
+              -> FileFormat
               -> Separator
               -> LineBound
               -> TextFreeformThreshold
               -> SamplingType
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile caps verb g s lb fft st vf = do
+parseViewFile caps verb g ff s lb fft st vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
@@ -95,7 +97,7 @@ parseViewFile caps verb g s lb fft st vf = do
     , renderIntegral (NE.length cs)
     , " chunks."
     ]
-  ss <- mapConcurrently (\c -> readViewChunk s lb vf c $$ sinkParse) $ NE.toList cs
+  ss <- mapConcurrently (\c -> readViewChunk ff s lb vf c $$ sinkParse) $ NE.toList cs
   liftIO $ resolveSVParseState fft g st ss
   where
     -- FIXME: could probably get away with fewer Gens created
