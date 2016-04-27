@@ -18,6 +18,7 @@ import           System.IO (IO)
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
+import           Test.Warden
 import           Test.Warden.Arbitrary ()
 
 import           Warden.Data.TextCounts
@@ -60,6 +61,10 @@ prop_combineTextCounts fft a b =
     gte (UniqueTextCount _) LooksFreeform = False
     gte (UniqueTextCount csc') (UniqueTextCount csa') =
       S.size csc' >= S.size csa'
+
+prop_combineUniqueTextCounts_commutative :: TextFreeformThreshold -> UniquePair UniqueTextCount -> Property
+prop_combineUniqueTextCounts_commutative tft =
+  commutativity (combineUniqueTextCounts tft)
 
 return []
 tests :: IO Bool

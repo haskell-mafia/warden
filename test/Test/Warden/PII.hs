@@ -6,6 +6,7 @@ module Test.Warden.PII where
 import qualified Data.Text.Encoding as T
 
 import           Disorder.Core.Property (neg)
+import           Disorder.Core.UniquePair (UniquePair(..))
 import           Disorder.Corpus (southpark, muppets)
 
 import           P
@@ -13,6 +14,7 @@ import           P
 import           System.IO (IO)
 
 import           Test.QuickCheck
+import           Test.Warden
 import           Test.Warden.Arbitrary
 
 import           Warden.Data
@@ -43,6 +45,9 @@ prop_updatePIIObservations_pos_toomany :: FieldIndex -> MaxPIIObservations -> Pr
 prop_updatePIIObservations_pos_toomany fi mpo = forAll (vectorOf 1000 genPII) $ \fs ->
   let r = foldl (updatePIIObservations mpo fi) TooManyPIIObservations (fst <$> fs) in
   r === TooManyPIIObservations
+
+prop_combinePIIObservations_commutative :: MaxPIIObservations -> UniquePair PIIObservations -> Property
+prop_combinePIIObservations_commutative mpo = commutativity (combinePIIObservations mpo)
 
 return []
 tests :: IO Bool

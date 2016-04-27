@@ -12,7 +12,8 @@ module Warden.Data.PII (
   , renderPotentialPII
   ) where
 
-import           Data.List.NonEmpty (NonEmpty)
+import           Data.AEq (AEq, (===), (~==))
+import           Data.List.NonEmpty (NonEmpty, sort)
 import qualified Data.Text as T
 
 import           GHC.Generics (Generic)
@@ -27,7 +28,7 @@ data PIIType =
   | PhoneNumber
   | Address
   | DateOfBirth
-  deriving (Eq, Show, Generic, Enum, Bounded)
+  deriving (Eq, Show, Ord, Generic, Enum, Bounded)
 
 instance NFData PIIType
 
@@ -39,7 +40,7 @@ renderPIIType DateOfBirth = "date of birth"
 
 data PotentialPII =
     PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Ord, Generic)
 
 instance NFData PotentialPII
 
@@ -65,3 +66,14 @@ data PIIObservations =
   deriving (Eq, Show, Generic)
 
 instance NFData PIIObservations
+
+instance AEq PIIObservations where
+  (===) = (==)
+
+  NoPIIObservations ~== NoPIIObservations = True
+  NoPIIObservations ~== _ = False
+  _ ~== NoPIIObservations = False
+  TooManyPIIObservations ~== TooManyPIIObservations = True
+  TooManyPIIObservations ~== _ = False
+  _ ~== TooManyPIIObservations = False
+  (PIIObservations xs) ~== (PIIObservations ys) = sort xs == sort ys
