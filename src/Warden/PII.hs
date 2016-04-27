@@ -21,10 +21,10 @@ import           Warden.Parser.PII
 
 updateFieldPIIObservations :: MaxPIIObservations
                            -> FieldIndex
+                           -> PIIObservations
                            -> ByteString
                            -> PIIObservations
-                           -> PIIObservations
-updateFieldPIIObservations mpo fi bs acc = {-# SCC updateFieldPIIObservations #-}
+updateFieldPIIObservations mpo fi acc bs = {-# SCC updateFieldPIIObservations #-}
   maybe acc update' $ checkPII bs
   where
     update' pii =

@@ -31,6 +31,7 @@ module Warden.Data.Row (
   , initialSVParseState
   , numericState
   , numFields
+  , piiState
   , renderFieldCount
   , renderObservationCount
   , renderParsedField
@@ -61,6 +62,7 @@ import           Prelude (fromEnum)
 
 import           Warden.Data.Field
 import           Warden.Data.Numeric
+import           Warden.Data.PII
 import           Warden.Data.Sampling.Reservoir
 import           Warden.Data.TextCounts
 
@@ -185,6 +187,7 @@ data SVParseState =
   , _textCounts :: !TextCounts
   , _numericState :: !FieldNumericState
   , _reservoirState :: !FieldReservoirAcc
+  , _piiState :: !PIIObservations
   } deriving (Generic)
 
 instance NFData SVParseState
@@ -215,3 +218,4 @@ initialSVParseState =
     NoTextCounts
     NoFieldNumericState
     NoFieldReservoirAcc
+    NoPIIObservations

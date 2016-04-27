@@ -61,6 +61,7 @@ import           Warden.Error
 import           Warden.Numeric
 import           Warden.Parser.Field
 import           Warden.Parser.Row
+import           Warden.PII
 import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -189,10 +190,11 @@ updateTextCounts _ _ tc = {-# SCC updateTextCounts #-} tc
 updateSVParseState :: TextFreeformThreshold
                    -> Gen (PrimState IO)
                    -> SamplingType
+                   -> PIICheckType
                    -> SVParseState
                    -> Row
                    -> EitherT WardenError (ResourceT IO) SVParseState
-updateSVParseState fft g sType !st row = {-# SCC updateSVParseState #-}
+updateSVParseState fft g sType pct !st row = {-# SCC updateSVParseState #-}
   let good = countGood row
       bad  = countBad row
       rc = good + bad + (st ^. totalRows)
@@ -203,6 +205,7 @@ updateSVParseState fft g sType !st row = {-# SCC updateSVParseState #-}
            . (numFields %~ (updateNumFields row))
            . (fieldLooks %~ (updateFields row))
            . (textCounts %~ (updateTextCounts fft row))
+           . (piiState %~ (updatePIIState pct row))
            $!! st in do
   -- Do all the numeric stuff at once so we don't have to determine if the
   -- values are numeric multiple times.
@@ -215,6 +218,18 @@ updateSVParseState fft g sType !st row = {-# SCC updateSVParseState #-}
     countBad (SVFields _)    = RowCount 0
     countBad (RowFailure _)  = RowCount 1
 {-# INLINE updateSVParseState #-}
+
+updatePIIState :: PIICheckType -> Row -> PIIObservations -> PIIObservations
+updatePIIState NoPIIChecks  _ ps = {-# SCC updatePIIState #-}
+  ps
+updatePIIState (PIIChecks mpo) (SVFields v) ps = {-# SCC updatePIIState #-}
+  V.foldl update' ps $ V.indexed v
+  where
+    update' acc (ix, bs) =
+      updateFieldPIIObservations mpo (FieldIndex ix) acc bs
+updatePIIState _ _ ps = {-# SCC updatePIIState #-}
+  ps
+{-# INLINE updatePIIState #-}
 
 updateNumFields :: Row -> Set FieldCount -> Set FieldCount
 updateNumFields (SVFields !v) !ns = {-# SCC updateNumFields #-}

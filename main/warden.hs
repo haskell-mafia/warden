@@ -105,7 +105,7 @@ checkParamsP = CheckParams <$> separatorP
                            <*> includeDotFilesP
                            <*> samplingTypeP
                            <*> fileFormatP
-                           <*> pure NoPIIChecks
+                           <*> piiTypeP
 
 sanityParamsP :: Parser SanityParams
 sanityParamsP = SanityParams <$> verbosityP
@@ -237,3 +237,9 @@ fileFormatP = (option (eitherReader fileFormat) $
       Just f -> Right f
 
     fmts = T.unpack . T.intercalate ", " $ fmap renderFileFormat [minBound..maxBound]
+
+piiTypeP :: Parser PIICheckType
+piiTypeP = maybe (PIIChecks $ MaxPIIObservations 1000) (PIIChecks . MaxPIIObservations) <$> (optional . option auto $
+     long "max-pii-observations"
+  <> metavar "PII-OBSERVATIONS"
+  <> help "Maximum number of instances of potential PII to store in memory before discarding specific details of each instance. Defaults to 1000.")

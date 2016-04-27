@@ -31,17 +31,17 @@ prop_checkPII_neg n = forAll (elements southpark) $ \bs ->
 
 prop_updateFieldPIIObservations_neg :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
 prop_updateFieldPIIObservations_neg fi mpo o = forAll ((fmap T.encodeUtf8) <$> (vectorOf 1000 (elements muppets))) $ \fs ->
-  let r = foldr (updateFieldPIIObservations mpo fi) o fs in
+  let r = foldl (updateFieldPIIObservations mpo fi) o fs in
   r === o
 
 prop_updateFieldPIIObservations_pos :: FieldIndex -> MaxPIIObservations -> PIIObservations -> Property
 prop_updateFieldPIIObservations_pos fi mpo o = forAll (vectorOf 1000 genPII) $ \fs ->
-  let r = foldr (updateFieldPIIObservations mpo fi) o (fst <$> fs) in
+  let r = foldl (updateFieldPIIObservations mpo fi) o (fst <$> fs) in
   o /= TooManyPIIObservations ==> neg $ r === o
 
 prop_updateFieldPIIObservations_pos_toomany :: FieldIndex -> MaxPIIObservations -> Property
 prop_updateFieldPIIObservations_pos_toomany fi mpo = forAll (vectorOf 1000 genPII) $ \fs ->
-  let r = foldr (updateFieldPIIObservations mpo fi) TooManyPIIObservations (fst <$> fs) in
+  let r = foldl (updateFieldPIIObservations mpo fi) TooManyPIIObservations (fst <$> fs) in
   r === TooManyPIIObservations
 
 return []

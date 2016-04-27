@@ -100,7 +100,7 @@ benchFieldParse = fmap parseField
 benchUpdateSVParseState :: [Row] -> IO SVParseState
 benchUpdateSVParseState rs = do
   g <- createSystemRandom
-  unsafeWarden $ foldM (updateSVParseState (TextFreeformThreshold 100) g (ReservoirSampling $ ReservoirSize 100)) initialSVParseState rs
+  unsafeWarden $ foldM (updateSVParseState (TextFreeformThreshold 100) g (ReservoirSampling $ ReservoirSize 100) (PIIChecks $ MaxPIIObservations 100)) initialSVParseState rs
 
 benchHashText :: [ByteString] -> [Int]
 benchHashText = fmap hashText
@@ -118,7 +118,7 @@ benchCombineNumericState :: [NumericState] -> NumericState
 benchCombineNumericState nss = foldl' combineNumericState initialNumericState nss
 
 benchUpdateFieldPIIObservations :: [ByteString] -> PIIObservations
-benchUpdateFieldPIIObservations bss = foldl' (flip (updateFieldPIIObservations (MaxPIIObservations 100000) (FieldIndex 1))) NoPIIObservations bss
+benchUpdateFieldPIIObservations bss = foldl' (updateFieldPIIObservations (MaxPIIObservations 100000) (FieldIndex 1)) NoPIIObservations bss
 
 benchCheckPII :: [ByteString] -> [Maybe PIIType]
 benchCheckPII = fmap checkPII

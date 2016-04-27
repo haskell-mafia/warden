@@ -359,6 +359,7 @@ instance Arbitrary SVParseState where
                            <*> arbitrary
                            <*> arbitrary
                            <*> pure NoFieldReservoirAcc
+                           <*> arbitrary
 
 instance Arbitrary WardenVersion where
   arbitrary = WardenVersion <$> elements southpark

@@ -36,10 +36,14 @@ import           Warden.Row
 
 import           X.Control.Monad.Trans.Either
 
-prop_updateSVParseState :: TextFreeformThreshold -> SamplingType -> [ValidRow] -> Property
-prop_updateSVParseState fft st rs = testIO . withSystemRandom $ \g -> unsafeWarden $ do
+prop_updateSVParseState :: TextFreeformThreshold
+                        -> SamplingType
+                        -> PIICheckType
+                        -> [ValidRow]
+                        -> Property
+prop_updateSVParseState fft st pct rs = testIO . withSystemRandom $ \g -> unsafeWarden $ do
   let rs' = unValidRow <$> rs
-  s <- foldM (updateSVParseState fft g st) initialSVParseState rs'
+  s <- foldM (updateSVParseState fft g st pct) initialSVParseState rs'
   pure $ (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
 
 prop_resolveSVParseState :: TextFreeformThreshold -> SamplingType -> [Blind SVParseState] -> Property
