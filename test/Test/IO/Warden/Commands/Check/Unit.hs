@@ -41,7 +41,7 @@ commandUnitCheckParams = CheckParams {
   , checkIncludeDotFiles = NoIncludeDotFiles
   , checkSamplingType = NoSampling
   , checkFileFormat = RFC4180
-  , checkPIICheckType = NoPIIChecks
+  , checkPIICheckType = PIIChecks (MaxPIIObservations 1000)
   }
 
 checkUnitTest :: View -> CheckParams -> (Either WardenError (NonEmpty CheckResult) -> Bool) -> Property
@@ -104,6 +104,26 @@ prop_check_FieldCountObservationMismatch =
   where
     expected (Left _) = False
     expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((SchemaCheckFailure (FieldCountObservationMismatch (FieldCount 2) (FieldCount 1))) :| []))) rs
+
+prop_check_PotentialPIIFailure_email :: Property
+prop_check_PotentialPIIFailure_email =
+  checkUnitTest
+    (View "test/data/commands/check/pii-email")
+    commandUnitCheckParams
+    expected
+  where
+    expected (Left _) = False
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((PIICheckFailure (PotentialPIIFailure (PotentialPII EmailAddress (FieldIndex 1) :| []))) :| []))) rs
+
+prop_check_PotentialPIIFailure_phone :: Property
+prop_check_PotentialPIIFailure_phone =
+  checkUnitTest
+    (View "test/data/commands/check/pii-phone")
+    commandUnitCheckParams
+    expected
+  where
+    expected (Left _) = False
+    expected (Right rs) = elem (RowCheckResult ViewRowCounts (CheckFailed ((PIICheckFailure (PotentialPIIFailure (PotentialPII PhoneNumber (FieldIndex 0) :| []))) :| []))) rs
 
 return []
 tests :: IO Bool
