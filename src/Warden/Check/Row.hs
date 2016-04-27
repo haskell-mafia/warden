@@ -76,7 +76,7 @@ parseCheck caps ps sch vfs =
       pct = checkPIICheckType ps in do
   g <- liftIO createSystemRandom
   ss <- mapM (parseViewFile caps verb g ff s lb fft st pct) (NE.toList vfs)
-  finalState <- liftIO $ resolveSVParseState fft g st ss
+  finalState <- liftIO $ resolveSVParseState fft g st pct ss
   liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
@@ -100,7 +100,7 @@ parseViewFile caps verb g ff s lb fft st pct vf = do
     , " chunks."
     ]
   ss <- mapConcurrently (\c -> readViewChunk ff s lb vf c $$ sinkParse) $ NE.toList cs
-  liftIO $ resolveSVParseState fft g st ss
+  liftIO $ resolveSVParseState fft g st pct ss
   where
     -- FIXME: could probably get away with fewer Gens created
     sinkParse = do

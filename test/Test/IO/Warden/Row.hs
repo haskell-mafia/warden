@@ -46,9 +46,13 @@ prop_updateSVParseState fft st pct rs = testIO . withSystemRandom $ \g -> unsafe
   s <- foldM (updateSVParseState fft g st pct) initialSVParseState rs'
   pure $ (s ^. badRows, s ^. totalRows) === (RowCount 0, RowCount . fromIntegral $ length rs)
 
-prop_resolveSVParseState :: TextFreeformThreshold -> SamplingType -> [Blind SVParseState] -> Property
-prop_resolveSVParseState fft st ss = testIO . withSystemRandom $ \g -> do
-  s' <- resolveSVParseState fft g st $ getBlind <$> ss
+prop_resolveSVParseState :: TextFreeformThreshold
+                         -> SamplingType
+                         -> PIICheckType
+                         -> [Blind SVParseState]
+                         -> Property
+prop_resolveSVParseState fft st pct ss = testIO . withSystemRandom $ \g -> do
+  s' <- resolveSVParseState fft g st pct $ getBlind <$> ss
   let bad' = s' ^. badRows
   let total' = s' ^. totalRows
   let fns' = S.size $ s' ^. numFields

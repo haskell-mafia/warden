@@ -5,6 +5,7 @@
 
 module Warden.PII (
     checkPII
+  , combinePIIObservations
   , updateFieldPIIObservations
   ) where
 
@@ -12,8 +13,9 @@ import qualified Data.Attoparsec.ByteString as AB
 import           Data.ByteString (ByteString)
 import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
+import           Data.Semigroup ((<>))
 
-import           P
+import           P hiding ((<>))
 
 import           Warden.Data.Field
 import           Warden.Data.PII
@@ -39,6 +41,24 @@ updateFieldPIIObservations mpo fi acc bs = {-# SCC updateFieldPIIObservations #-
         TooManyPIIObservations ->
             TooManyPIIObservations
 {-# INLINE updateFieldPIIObservations #-}
+
+combinePIIObservations :: MaxPIIObservations -> PIIObservations -> PIIObservations -> PIIObservations
+combinePIIObservations _ NoPIIObservations NoPIIObservations = {-# SCC combinePIIObservations #-}
+  NoPIIObservations
+combinePIIObservations _ x NoPIIObservations = {-# SCC combinePIIObservations #-}
+  x
+combinePIIObservations _ NoPIIObservations y = {-# SCC combinePIIObservations #-}
+  y
+combinePIIObservations _ TooManyPIIObservations _ = {-# SCC combinePIIObservations #-}
+  TooManyPIIObservations
+combinePIIObservations _ _ TooManyPIIObservations = {-# SCC combinePIIObservations #-}
+  TooManyPIIObservations
+combinePIIObservations (MaxPIIObservations mpo) (PIIObservations po1) (PIIObservations po2) = {-# SCC combinePIIObservations #-}
+  let po' = po1 <> po2 in
+  if (NE.length po') > mpo
+    then TooManyPIIObservations
+    else PIIObservations po'
+{-# INLINE combinePIIObservations #-}
 
 checkPII :: ByteString -> Maybe PIIType
 checkPII bs = {-# SCC checkPII #-}

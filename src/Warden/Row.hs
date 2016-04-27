@@ -316,16 +316,18 @@ updateFieldReservoirAcc' g rs rc mn !acc = {-# SCC updateFieldReservoirAcc' #-}
 combineSVParseState :: TextFreeformThreshold
                     -> Gen (PrimState IO)
                     -> SamplingType
+                    -> PIICheckType
                     -> SVParseState
                     -> SVParseState
                     -> IO SVParseState
-combineSVParseState fft g st s !acc = {-# SCC combineSVParseState #-}
+combineSVParseState fft g st pct s !acc = {-# SCC combineSVParseState #-}
   let acc' =  (badRows %~ ((s ^. badRows) +))
             . (totalRows %~ ((s ^. totalRows) +))
             . (numFields %~ ((s ^. numFields) `S.union`))
             . (fieldLooks %~ ((s ^. fieldLooks) `combineFieldLooks`))
             . (textCounts %~ ((s ^. textCounts) `combineTextCounts'`))
             . (numericState %~ ((s ^. numericState) `combineFieldNumericState`))
+            . (piiState %~ ((s ^. piiState) `combinePIIObservations'`))
             $!! acc in case st of
   NoSampling ->
     pure acc'
@@ -334,15 +336,21 @@ combineSVParseState fft g st s !acc = {-# SCC combineSVParseState #-}
     pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
+
+    combinePIIObservations' x y =
+      case pct of
+        NoPIIChecks -> NoPIIObservations
+        PIIChecks mpo -> combinePIIObservations mpo x y
 {-# INLINE combineSVParseState #-}
 
 resolveSVParseState :: TextFreeformThreshold
                     -> Gen (PrimState IO)
                     -> SamplingType
+                    -> PIICheckType
                     -> [SVParseState]
                     -> IO SVParseState
-resolveSVParseState fft g st = {-# SCC resolveSVParseState #-}
-  foldM (combineSVParseState fft g st) initialSVParseState
+resolveSVParseState fft g st pct = {-# SCC resolveSVParseState #-}
+  foldM (combineSVParseState fft g st pct) initialSVParseState
 {-# INLINE resolveSVParseState #-}
 
 combineFieldReservoirAcc :: Gen (PrimState IO)
