@@ -56,10 +56,12 @@ This record format is identical to that described in RFC 4180, with
 the following exceptions:
 
 \begin{itemize}
-  \item The separator is not required to be a comma.
-  \item The newline character \texttt{0x0a} is used as the record
+  \item The field separator is not required to be a comma.
+  \item The line feed character \texttt{0x0a} is used as the record
     separator.
   \item The last field in the record is terminated by a record separator.
+  \item The line feed character \texttt{0x0a} may not appear in
+    records regardless of quoting.
 \end{itemize}
 
 In addition, the \texttt{warden} parser does not perform unescaping on
