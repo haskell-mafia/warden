@@ -100,6 +100,7 @@ library
                        Warden.Parser.Row.RFC4180
                        Warden.PII
                        Warden.Row
+                       Warden.Row.Internal
                        Warden.Sampling.Reservoir
                        Warden.Schema
                        Warden.Serial.Json
@@ -115,6 +116,11 @@ library
                        Warden.Serial.Json.TextCounts
                        Warden.Serial.Json.View
                        Warden.View
+
+  c-sources:           cbits/row.c
+  include-dirs:        cbits
+  includes:            row.h
+  install-includes:    row.h
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
@@ -172,7 +178,7 @@ test-suite test
 
   main-is:             test.hs
 
-  ghc-options:         -Wall -threaded -O2
+  ghc-options:         -Wall -threaded -O2  -fsimpl-tick-factor=200
 
   hs-source-dirs:
                        test

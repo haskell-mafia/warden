@@ -33,6 +33,7 @@ import           Warden.Data
 import           Warden.Numeric
 import           Warden.PII
 import           Warden.Row
+import           Warden.Row.Internal
 import           Warden.View
 
 wardenBench :: [Benchmark] -> IO ()
