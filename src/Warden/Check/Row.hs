@@ -72,10 +72,11 @@ parseCheck caps ps sch vfs =
       s = checkSeparator ps
       verb = checkVerbosity ps
       lb = checkLineBound ps
-      st = checkSamplingType ps in do
+      st = checkSamplingType ps
+      pct = checkPIICheckType ps in do
   g <- liftIO createSystemRandom
-  ss <- mapM (parseViewFile caps verb g ff s lb fft st) (NE.toList vfs)
-  finalState <- liftIO $ resolveSVParseState fft g st ss
+  ss <- mapM (parseViewFile caps verb g ff s lb fft st pct) (NE.toList vfs)
+  finalState <- liftIO $ resolveSVParseState fft g st pct ss
   liftIO $ finalizeSVParseState ps sch dates vfs finalState
 
 parseViewFile :: NumCPUs
@@ -86,9 +87,10 @@ parseViewFile :: NumCPUs
               -> LineBound
               -> TextFreeformThreshold
               -> SamplingType
+              -> PIICheckType
               -> ViewFile
               -> EitherT WardenError (ResourceT IO) SVParseState
-parseViewFile caps verb g ff s lb fft st vf = do
+parseViewFile caps verb g ff s lb fft st pct vf = do
   cs <- liftIO . chunk (chunksForCPUs caps) $ viewFilePath vf
   liftIO . debugPrintLn verb $ T.concat [
       "Parsing view file "
@@ -98,20 +100,21 @@ parseViewFile caps verb g ff s lb fft st vf = do
     , " chunks."
     ]
   ss <- mapConcurrently (\c -> readViewChunk ff s lb vf c $$ sinkParse) $ NE.toList cs
-  liftIO $ resolveSVParseState fft g st ss
+  liftIO $ resolveSVParseState fft g st pct ss
   where
     -- FIXME: could probably get away with fewer Gens created
     sinkParse = do
       g' <- liftIO createSystemRandom
-      sinkFoldM (parseViewFile' fft g' st)
+      sinkFoldM (parseViewFile' fft g' st pct)
 
 parseViewFile' :: TextFreeformThreshold
                -> Gen (PrimState IO)
                -> SamplingType
+               -> PIICheckType
                -> FoldM (EitherT WardenError (ResourceT IO)) Row SVParseState
-parseViewFile' fft g st = FoldM update' (pure initialSVParseState) pure
+parseViewFile' fft g st pct = FoldM update' (pure initialSVParseState) pure
   where
-    update' x y = updateSVParseState fft g st x y
+    update' x y = updateSVParseState fft g st pct x y
 
 finalizeSVParseState :: CheckParams
                      -> Maybe Schema
@@ -126,10 +129,19 @@ finalizeSVParseState ps sch ds vfs sv =
              , checkFieldCounts (sv ^. numFields)
              , checkTotalRows (sv ^. totalRows)
              , checkBadRows (sv ^. badRows)
+             , checkPIIState (sv ^. piiState)
              ]
       vfs' = S.fromList $ NE.toList vfs in do
   rcs <- summarizeSVParseState sv
   pure (st, ViewMetadata rcs ps ds vfs')
+
+checkPIIState :: PIIObservations -> CheckStatus
+checkPIIState NoPIIObservations =
+  CheckPassed
+checkPIIState (PIIObservations os) =
+  CheckFailed . pure . PIICheckFailure $ PotentialPIIFailure os
+checkPIIState TooManyPIIObservations =
+  CheckFailed . pure $ PIICheckFailure TooManyPotentialPIIFailure
 
 checkTotalRows :: RowCount -> CheckStatus
 checkTotalRows (RowCount n)

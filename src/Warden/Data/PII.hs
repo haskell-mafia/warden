@@ -8,9 +8,13 @@ module Warden.Data.PII (
   , PIIType(..)
   , PotentialPII(..)
   , PIIObservations(..)
+  , renderPIIType
+  , renderPotentialPII
   ) where
 
-import           Data.List.NonEmpty (NonEmpty)
+import           Data.AEq (AEq, (===), (~==))
+import           Data.List.NonEmpty (NonEmpty, sort)
+import qualified Data.Text as T
 
 import           GHC.Generics (Generic)
 
@@ -24,15 +28,29 @@ data PIIType =
   | PhoneNumber
   | Address
   | DateOfBirth
-  deriving (Eq, Show, Generic, Enum, Bounded)
+  deriving (Eq, Show, Ord, Generic, Enum, Bounded)
 
 instance NFData PIIType
 
+renderPIIType :: PIIType -> Text
+renderPIIType EmailAddress = "email address"
+renderPIIType PhoneNumber = "phone number"
+renderPIIType Address = "address"
+renderPIIType DateOfBirth = "date of birth"
+
 data PotentialPII =
     PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Ord, Generic)
 
 instance NFData PotentialPII
+
+renderPotentialPII :: PotentialPII -> Text
+renderPotentialPII (PotentialPII typ ix) = T.concat [
+    renderPIIType typ
+  , "(field "
+  , renderFieldIndex ix
+  , ")"
+  ]
 
 newtype MaxPIIObservations =
   MaxPIIObservations {
@@ -48,3 +66,14 @@ data PIIObservations =
   deriving (Eq, Show, Generic)
 
 instance NFData PIIObservations
+
+instance AEq PIIObservations where
+  (===) = (==)
+
+  NoPIIObservations ~== NoPIIObservations = True
+  NoPIIObservations ~== _ = False
+  _ ~== NoPIIObservations = False
+  TooManyPIIObservations ~== TooManyPIIObservations = True
+  TooManyPIIObservations ~== _ = False
+  _ ~== TooManyPIIObservations = False
+  (PIIObservations xs) ~== (PIIObservations ys) = sort xs == sort ys

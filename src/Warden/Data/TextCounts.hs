@@ -23,6 +23,7 @@ module Warden.Data.TextCounts (
   , updateUniqueTextCount
   ) where
 
+import           Data.AEq (AEq, (===), (~==))
 import           Data.ByteString (ByteString)
 import           Data.Digest.CityHash (cityHash64)
 import           Data.Set (Set)
@@ -40,6 +41,11 @@ data UniqueTextCount =
   deriving (Eq, Show, Generic)
 
 instance NFData UniqueTextCount
+
+instance AEq UniqueTextCount where
+  (===) = (==)
+
+  (~==) = (==)
 
 emptyUniqueTextCount :: UniqueTextCount
 emptyUniqueTextCount = UniqueTextCount S.empty
