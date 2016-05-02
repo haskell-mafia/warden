@@ -17,6 +17,7 @@ import           P
 
 import           Warden.Data
 import           Warden.Serial.Json.Common
+import           Warden.Serial.Json.PII
 import           Warden.Serial.Json.Row
 import           Warden.Serial.Json.Schema
 import           Warden.Serial.Json.TextCounts
@@ -78,8 +79,36 @@ toReservoirSize :: Value -> Parser ReservoirSize
 toReservoirSize (Number n) = fmap ReservoirSize $ parseJSON (Number n)
 toReservoirSize x = typeMismatch "Warden.Data.Sampling.Reservoir.ReservoirSize" x
 
+fromFileFormat :: FileFormat -> Value
+fromFileFormat = String . renderFileFormat
+
+toFileFormat :: Value -> Parser FileFormat
+toFileFormat (String s) =
+  maybe (fail ("Invalid file format: " <> T.unpack s)) pure $ parseFileFormat s
+toFileFormat x = typeMismatch "Warden.Data.Schema.FileFormat" x
+
+fromPIICheckType :: PIICheckType -> Value
+fromPIICheckType NoPIIChecks = object [
+    "type" .= String "no-pii-checks"
+  ]
+fromPIICheckType (PIIChecks mpo) = object [
+    "type" .= String "pii-checks"
+  , "max-pii-observations" .= fromMaxPIIObservations mpo
+  ]
+
+toPIICheckType :: Value -> Parser PIICheckType
+toPIICheckType (Object o) = do
+  o .: "type" >>= \case
+    String "no-pii-checks" -> pure NoPIIChecks
+    String "pii-checks" -> do
+      rs <- toMaxPIIObservations =<< (o .: "max-pii-observations")
+      pure $ PIIChecks rs
+    String s -> fail . T.unpack $ "Invalid PII checks type: " <> s
+    x -> typeMismatch "Warden.Data.Param.PIICheckType.type" x
+toPIICheckType x = typeMismatch "Warden.Data.Param.PIICheckType" x
+
 fromCheckParams :: CheckParams -> Value
-fromCheckParams (CheckParams sep sf lb verb fce fft xt idf st) = object [
+fromCheckParams (CheckParams sep sf lb verb fce fft xt idf st ff pct) = object [
     "separator" .= fromSeparator sep
   , "line-bound" .= fromLineBound lb
   , "verbosity" .= fromVerbosity verb
@@ -89,6 +118,8 @@ fromCheckParams (CheckParams sep sf lb verb fce fft xt idf st) = object [
   , "exit-type" .= fromExitType xt
   , "include-dot-files" .= fromIncludeDotFiles idf
   , "sampling-type" .= fromSamplingType st
+  , "file-format" .= fromFileFormat ff
+  , "pii-check-type" .= fromPIICheckType pct
   ]
 
 toCheckParams :: Value -> Parser CheckParams
@@ -102,7 +133,11 @@ toCheckParams (Object o) = do
   xt <- toExitType =<< (o .: "exit-type")
   idf <- toIncludeDotFiles =<< (o .: "include-dot-files")
   st <- maybe (pure NoSampling) toSamplingType =<< (o .:? "sampling-type")
-  pure $ CheckParams sep sf lb verb fce fft xt idf st
+  -- Everything before formats were added was parsed according to the
+  -- RFC4180 format.
+  ff <- maybe (pure RFC4180) toFileFormat =<< (o .:? "file-format")
+  pct <- maybe (pure NoPIIChecks) toPIICheckType =<< (o .:? "pii-check-type")
+  pure $ CheckParams sep sf lb verb fce fft xt idf st ff pct
 toCheckParams x = typeMismatch "Warden.Data.Param.CheckParams" x
 
 fromWardenVersion :: WardenVersion -> Value

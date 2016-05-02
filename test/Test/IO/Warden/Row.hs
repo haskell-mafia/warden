@@ -52,26 +52,26 @@ prop_resolveSVParseState fft st ss = testIO . withSystemRandom $ \g -> do
                                  && total' >= (s'' ^. totalRows)
                                  && fns' >= (S.size $ s'' ^. numFields)) $ getBlind <$> ss
 
-prop_valid_svrows :: Separator -> FieldCount -> Property
-prop_valid_svrows s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
+prop_valid_svrows :: FileFormat -> Separator -> FieldCount -> Property
+prop_valid_svrows ff s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
-    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) vf $$ CL.fold (flip (:)) []
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile ff s (LineBound 65536) vf $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
         let expected = reverse $ (stripFieldQuotes . SVFields . V.fromList . getValidSVRow) <$> svrs
         pure $ expected === (stripFieldQuotes <$> rs)
 
-prop_valid_svrows_chunked :: ChunkCount -> Separator -> FieldCount -> Property
-prop_valid_svrows_chunked cc s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
+prop_valid_svrows_chunked :: FileFormat -> ChunkCount -> Separator -> FieldCount -> Property
+prop_valid_svrows_chunked ff cc s i = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n $ validSVRowQuotes s i) $ \svrs ->
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ encodeWith (wardenEncodeOpts s) svrs
     cs <- chunk cc fp
     res <- runEitherT . mapEitherT runResourceT $ fmap (join . NE.toList) $ 
-      mapM (\c -> readViewChunk s (LineBound 65536) vf c $$ CL.fold (flip (:)) []) cs
+      mapM (\c -> readViewChunk ff s (LineBound 65536) vf c $$ CL.fold (flip (:)) []) cs
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs -> do
@@ -83,7 +83,7 @@ prop_invalid_svrows s = forAll (choose (1, 100)) $ \n -> forAll (vectorOf n (inv
   testIO $ withTestViewFile $ \vf -> do
     let fp = viewFilePath vf
     BL.writeFile fp $ (BL.intercalate "\r\n") svrs
-    res <- runEitherT . mapEitherT runResourceT $ readViewFile s (LineBound 65536) vf $$ CL.fold (flip (:)) []
+    res <- runEitherT . mapEitherT runResourceT $ readViewFile RFC4180 s (LineBound 65536) vf $$ CL.fold (flip (:)) []
     case res of
       Left err -> fail . T.unpack $ renderWardenError err
       Right rs ->

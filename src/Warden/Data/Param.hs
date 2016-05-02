@@ -9,6 +9,7 @@ module Warden.Data.Param (
   , IncludeDotFiles(..)
   , InferUsingFailedChecks(..)
   , NumCPUs(..)
+  , PIICheckType(..)
   , RunId(..)
   , SamplingType(..)
   , SanityParams(..)
@@ -29,6 +30,7 @@ import           Debruijn.Hex (Hex, renderHex, parseHex)
 import           GHC.Generics (Generic)
 
 import           Warden.Data.Chunk
+import           Warden.Data.PII
 import           Warden.Data.Row
 import           Warden.Data.Sampling.Reservoir
 import           Warden.Data.Schema
@@ -110,6 +112,13 @@ data SamplingType =
 
 instance NFData SamplingType
 
+data PIICheckType =
+    NoPIIChecks
+  | PIIChecks !MaxPIIObservations
+  deriving (Eq, Show, Generic)
+
+instance NFData PIICheckType
+
 data CheckParams =
   CheckParams {
       checkSeparator :: !Separator
@@ -121,6 +130,8 @@ data CheckParams =
     , checkExitType :: !ExitType
     , checkIncludeDotFiles :: !IncludeDotFiles
     , checkSamplingType :: !SamplingType
+    , checkFileFormat :: !FileFormat
+    , checkPIICheckType :: !PIICheckType
     } deriving (Eq, Show, Generic)
 
 instance NFData CheckParams

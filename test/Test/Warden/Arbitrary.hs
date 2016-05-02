@@ -447,6 +447,8 @@ instance Arbitrary CheckParams where
                           <*> arbitrary
                           <*> arbitrary
                           <*> arbitrary
+                          <*> arbitrary
+                          <*> arbitrary
 
 instance Arbitrary NumCPUs where
   arbitrary = (NumCPUs . unNPlus) <$> arbitrary
@@ -641,3 +643,12 @@ instance Arbitrary PotentialPII where
 
 instance Arbitrary PIIType where
   arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary FileFormat where
+  arbitrary = elements [minBound..maxBound]
+
+instance Arbitrary PIICheckType where
+  arbitrary = oneof [
+      pure NoPIIChecks
+    , PIIChecks <$> arbitrary
+    ]

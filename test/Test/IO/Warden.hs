@@ -146,6 +146,7 @@ writeViewFile gt c fc (LineSize ll) fp = do
 wardenEncodeOpts :: Separator -> EncodeOptions
 wardenEncodeOpts sep = defaultEncodeOptions {
     encDelimiter = unSeparator sep
+  , encUseCrLf = False
   }
 
 traverseTestDirectory :: DirName -> EitherT WardenError (ResourceT IO) [FilePath]
