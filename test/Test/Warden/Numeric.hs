@@ -4,6 +4,7 @@
 
 module Test.Warden.Numeric where
 
+import           Data.FixedPoint
 import           Data.List (take)
 import qualified Data.Vector.Unboxed as VU
 
@@ -77,7 +78,7 @@ prop_updateMeanDev (NPlus n) = forAll (vectorOf n (arbitrary :: Gen Double)) $ \
   let mda = foldl updateMeanDev MeanDevInitial xs
       nsMeanDev = finalizeMeanDev mda
       mu = textbookMean xs
-      var = textbookVariance mu xs
+      var = realToFrac $ textbookVariance (realToFrac mu :: FixedPoint10241024) (fmap realToFrac xs :: [FixedPoint10241024])
       sd = StdDev $ sqrt var
       uMeanDev = (Mean mu, sd) in
   (nsMeanDev, Just (n+1)) ~~~ (uMeanDev, meanDevKAcc mda)
