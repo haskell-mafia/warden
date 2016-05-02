@@ -107,11 +107,11 @@ combineStdDevAcc _ (_, MStdDevAcc (StdDevAcc s1), _) (_, NoStdDevAcc, _) = {-# S
   MStdDevAcc $ StdDevAcc s1
 combineStdDevAcc _ (_, NoStdDevAcc, _) (_, MStdDevAcc (StdDevAcc s2), _) = {-# SCC combineStdDevAcc #-}
   MStdDevAcc $ StdDevAcc s2
-combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) = {-# SCC combineStdDevAcc #-}
-  let var1 = varianceFromStdDevAcc c1 sda1
-      var2 = varianceFromStdDevAcc c2 sda2 in
-  MStdDevAcc . stdDevAccFromVariance (c1 + c2 - (KAcc 1)) $
-    combineVariance muHat (mu1, var1, c1) (mu2, var2, c2)
+combineStdDevAcc (MeanAcc muHat) (MeanAcc mu1, MStdDevAcc (StdDevAcc sda1), KAcc c1) (MeanAcc mu2, MStdDevAcc (StdDevAcc sda2), KAcc c2) = {-# SCC combineStdDevAcc #-}
+  MStdDevAcc . StdDevAcc $ sda1 + (c1' * (mu1 * mu1)) + sda2 + (c2' * (mu2 * mu2)) - ((c1' + c2') * (muHat * muHat))
+  where
+    c1' = fromIntegral c1
+    c2' = fromIntegral c2  
 {-# INLINE combineStdDevAcc #-}
 
 -- | Combine variances of two subsets of a sample (that is, exact variance of
@@ -119,19 +119,19 @@ combineStdDevAcc muHat (mu1, MStdDevAcc sda1, c1) (mu2, MStdDevAcc sda2, c2) = {
 --
 -- The derivation of this formula is in the Numerics section of the
 -- documentation.
-combineVariance :: MeanAcc -- ^ Combined mean.
-                -> (MeanAcc, Variance, KAcc) -- ^ First subset.
-                -> (MeanAcc, Variance, KAcc) -- ^ Second subset.
-                -> Variance
-combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) = {-# SCC combineVariance #-}
-  let t1 = (c1' * var1) + (c1' * mu1 * mu1)
-      t2 = (c2' * var2) + (c2' * mu2 * mu2) in
-  Variance $ ((t1 + t2) * (1.0 / (c1' + c2'))) - (muHat * muHat)
-  where
-    c1' = fromIntegral $ c1 - 1
+-- combineVariance :: MeanAcc -- ^ Combined mean.
+--                 -> (MeanAcc, Variance, KAcc) -- ^ First subset.
+--                 -> (MeanAcc, Variance, KAcc) -- ^ Second subset.
+--                 -> Variance
+-- combineVariance (MeanAcc muHat) (MeanAcc mu1, Variance var1, KAcc c1) (MeanAcc mu2, Variance var2, KAcc c2) = {-# SCC combineVariance #-}
+--   let t1 = (c1' * var1) + (c1' * mu1 * mu1)
+--       t2 = (c2' * var2) + (c2' * mu2 * mu2) in
+--   Variance $ ((t1 + t2) * (1.0 / (c1' + c2'))) - (muHat * muHat)
+--   where
+--     c1' = fromIntegral $ c1 - 1
 
-    c2' = fromIntegral $ c2 - 1
-{-# INLINE combineVariance #-}
+--     c2' = fromIntegral $ c2 - 1
+-- {-# INLINE combineVariance #-}
 
 -- | Combine mean of two subsets, given subset means and size.
 combineMeanAcc :: (MeanAcc, KAcc) -> (MeanAcc, KAcc) -> MeanAcc
