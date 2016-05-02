@@ -34,6 +34,8 @@ import           Warden.Data.Field
 data FileFormat =
     DelimitedText
   -- | Not actually RFC4180, but pretty close.
+  -- See the `Data formats` section of the documentation for details of the
+  -- differences.
   | RFC4180
   deriving (Eq, Show, Generic, Enum, Bounded)
 
