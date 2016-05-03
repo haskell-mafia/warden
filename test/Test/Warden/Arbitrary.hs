@@ -12,6 +12,7 @@ import           Data.Char
 import           Data.Csv
 import qualified Data.Set as S
 import           Data.List (nub)
+import qualified Data.List as L
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
@@ -628,6 +629,24 @@ genPII = oneof [
     (fmap (flip (,) PhoneNumber)) genPhoneNumber
   , (fmap (flip (,) EmailAddress)) genEmail
   ]
+
+nonPhoneNumber :: Gen BS.ByteString
+nonPhoneNumber = oneof [tooShort, tooLong, leadingZeroes]
+  where
+    tooShort = do
+      n <- choose (0, 9)
+      digits <- vectorOf n $ elements [0x30..0x39]
+      pure $ BS.pack digits
+
+    tooLong = do
+      n <- choose (11, 20)
+      digits <- vectorOf n $ elements [0x30..0x39]
+      pure $ BS.pack digits
+
+    leadingZeroes = do
+      n <- choose (2, 10)
+      digits <- vectorOf (10 - n) $ elements [0x30..0x39]
+      pure . BS.pack $ (L.take n $ L.repeat 0x30) <> digits
 
 instance Arbitrary MaxPIIObservations where
   arbitrary = fmap MaxPIIObservations $ choose (1000, 1000000)
