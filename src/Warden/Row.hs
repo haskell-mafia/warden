@@ -15,6 +15,7 @@ module Warden.Row (
   , readViewChunk'
   , readViewFile
   , resolveSVParseState
+  , toRow
   , updateFieldLooks
   , updateFieldNumericState
   , updateFieldNumericState'
