@@ -38,8 +38,9 @@ emailP = {-# SCC emailP #-} do
 -- | Matches Australian phone numbers or fully-qualified international phone
 -- numbers.
 phoneNumberP :: Parser ()
-phoneNumberP = {-# SCC phoneNumberP #-}
+phoneNumberP = {-# SCC phoneNumberP #-} do
   void $ choice [australianNumberP, internationalNumberP]
+  void $ endOfInput
 {-# INLINE phoneNumberP #-}
 
 australianNumberP :: Parser ()
