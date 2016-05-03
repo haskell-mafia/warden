@@ -47,7 +47,7 @@ instance NFData PotentialPII
 renderPotentialPII :: PotentialPII -> Text
 renderPotentialPII (PotentialPII typ ix) = T.concat [
     renderPIIType typ
-  , "(field "
+  , " (field "
   , renderFieldIndex ix
   , ")"
   ]

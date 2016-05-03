@@ -34,11 +34,12 @@ prop_phoneNumberP_pos = forAll genPhoneNumber $ \n ->
   isRight r === True
 
 prop_phoneNumberP_neg :: Int -> Property
-prop_phoneNumberP_neg n =
+prop_phoneNumberP_neg n = forAll nonPhoneNumber $ \m ->
   let n' = T.encodeUtf8 $ renderIntegral n
-      r = parseOnly phoneNumberP n' in
-  isLeft r === True
+      r1 = parseOnly phoneNumberP n'
+      r2 = parseOnly phoneNumberP m in
+  (isLeft r1, isLeft r2) === (True, True)
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })

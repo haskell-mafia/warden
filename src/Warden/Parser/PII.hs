@@ -38,16 +38,28 @@ emailP = {-# SCC emailP #-} do
 -- | Matches Australian phone numbers or fully-qualified international phone
 -- numbers.
 phoneNumberP :: Parser ()
-phoneNumberP = {-# SCC phoneNumberP #-}
+phoneNumberP = {-# SCC phoneNumberP #-} do
   void $ choice [australianNumberP, internationalNumberP]
+  void $ endOfInput
 {-# INLINE phoneNumberP #-}
 
 australianNumberP :: Parser ()
-australianNumberP = {-# SCC australianPhoneNumberP #-} do
+australianNumberP = {-# SCC australianNumberP #-} do
   void $ word8 zero
-  void $ count 9 phoneCharP
+  -- Only match Australian phone numbers with valid area codes.
+  void $ secondNum
+  void $ count 8 phoneCharP
   where
     zero = fromIntegral $ ord '0'
+
+    secondNum = satisfy isAreaCode >> skipPhoneFiller
+
+    isAreaCode 0x32 = True -- 2, NSW/ACT
+    isAreaCode 0x33 = True -- 3, VIC/TAS
+    isAreaCode 0x34 = True -- 4, mobiles
+    isAreaCode 0x37 = True -- 7, QLD
+    isAreaCode 0x38 = True -- 8, SA/WA/NT
+    isAreaCode _ = False
 {-# INLINE australianNumberP #-}
 
 internationalNumberP :: Parser ()
