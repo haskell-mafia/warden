@@ -45,16 +45,20 @@ phoneNumberP = {-# SCC phoneNumberP #-}
 australianNumberP :: Parser ()
 australianNumberP = {-# SCC australianPhoneNumberP #-} do
   void $ word8 zero
-  -- If a number starts with two zeroes, it's not a valid Australian personal
-  -- phone number.
+  -- Only match Australian phone numbers with valid area codes.
   void $ secondNum
   void $ count 8 phoneCharP
   where
     zero = fromIntegral $ ord '0'
 
-    secondNum = satisfy isNonZeroDigit >> skipPhoneFiller
+    secondNum = satisfy isAreaCode >> skipPhoneFiller
 
-    isNonZeroDigit c = c >= 0x31 && c <= 0x39 -- 1-9
+    isAreaCode 0x32 = True -- 2, NSW/ACT
+    isAreaCode 0x33 = True -- 3, VIC/TAS
+    isAreaCode 0x34 = True -- 4, mobiles
+    isAreaCode 0x37 = True -- 7, QLD
+    isAreaCode 0x38 = True -- 8, SA/WA/NT
+    isAreaCode _ = False
 {-# INLINE australianNumberP #-}
 
 internationalNumberP :: Parser ()
