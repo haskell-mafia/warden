@@ -4,7 +4,7 @@
 
 #include "row.h"
 
-void warden_ascii_to_lower(size_t n, int8_t *in, int8_t *out) {
+void warden_ascii_to_lower(size_t n, int8_t *out, int8_t *in) {
 	int i;
 	memcpy(out, in, n);
 	for (i = 0; i < n; i++) {
