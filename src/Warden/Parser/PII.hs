@@ -43,7 +43,7 @@ phoneNumberP = {-# SCC phoneNumberP #-}
 {-# INLINE phoneNumberP #-}
 
 australianNumberP :: Parser ()
-australianNumberP = {-# SCC australianPhoneNumberP #-} do
+australianNumberP = {-# SCC australianNumberP #-} do
   void $ word8 zero
   -- Only match Australian phone numbers with valid area codes.
   void $ secondNum
