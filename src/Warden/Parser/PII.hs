@@ -45,9 +45,16 @@ phoneNumberP = {-# SCC phoneNumberP #-}
 australianNumberP :: Parser ()
 australianNumberP = {-# SCC australianPhoneNumberP #-} do
   void $ word8 zero
-  void $ count 9 phoneCharP
+  -- If a number starts with two zeroes, it's not a valid Australian personal
+  -- phone number.
+  void $ secondNum
+  void $ count 8 phoneCharP
   where
     zero = fromIntegral $ ord '0'
+
+    secondNum = satisfy isNonZeroDigit >> skipPhoneFiller
+
+    isNonZeroDigit c = c >= 0x31 && c <= 0x39 -- 1-9
 {-# INLINE australianNumberP #-}
 
 internationalNumberP :: Parser ()

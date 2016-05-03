@@ -602,8 +602,8 @@ genPhoneNumber =
 
 australianPhoneNumber :: Gen BS.ByteString
 australianPhoneNumber = do
-  fd <- fmap T.pack $ vectorOf 2 (choose ('0', '9'))
-  fmap (encodeUtf8 . (("0" <> fd) <>) . T.concat) $ vectorOf 7 phoneDigit
+  fd <- fmap T.pack $ vectorOf 1 (choose ('1', '9'))
+  fmap (encodeUtf8 . (("0" <> fd) <>) . T.concat) $ vectorOf 8 phoneDigit
 
 internationalPhoneNumber :: Gen BS.ByteString
 internationalPhoneNumber = do
