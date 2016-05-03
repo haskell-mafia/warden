@@ -15,6 +15,7 @@ module Warden.Row (
   , readViewChunk'
   , readViewFile
   , resolveSVParseState
+  , toRow
   , updateFieldLooks
   , updateFieldNumericState
   , updateFieldNumericState'
@@ -31,8 +32,8 @@ import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
-import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
+import           Data.ByteString (ByteString)
 import           Data.Char (ord)
 import           Data.Conduit (Source, Conduit, (=$=), awaitForever, yield)
 import qualified Data.Conduit.List as DC
@@ -140,7 +141,13 @@ toRow :: Either String (Vector ByteString) -> Row
 toRow (Right !rs) = {-# SCC toRow #-}
   -- Decode everything here for validation purposes, we won't have a chance
   -- to do it cleanly later.
-  case T.decodeUtf8' (BS.concat $ V.toList rs) of
+  --
+  -- We concatenate the fields before decoding for speed reasons, but we
+  -- intercalate the null byte between them - as this byte is a valid ASCII
+  -- character, it's not part of any valid multibyte unicode code sequence.
+  -- This avoids the error case encountered when two individually-invalid
+  -- sequences are concatenated to form a valid sequence.
+  case T.decodeUtf8' (BS.intercalate "\0" $ V.toList rs) of
     Right _ ->
       SVFields rs
     Left !e ->

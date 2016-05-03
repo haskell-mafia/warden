@@ -3,6 +3,9 @@
 
 module Test.Warden.Row where
 
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Vector as V
+
 import           P
 
 import           System.IO (IO)
@@ -32,6 +35,16 @@ prop_parseField tf =
     TestReal _ -> fl === LooksReal
     TestText _ -> fl === LooksText
     TestBoolean _ -> fl === LooksBoolean
+
+-- Verify that two invalid UTF-8 fields are still invalid when in a row together.
+prop_toRow :: Property
+prop_toRow = forAll ((,) <$> invalidSVField <*> invalidSVField) $ \(bs1, bs2) ->
+  let row = Right . V.fromList $ fmap BSL.toStrict [bs1, bs2]
+      r = toRow row in
+  isRowFailure r === True
+  where
+    isRowFailure (SVFields _) = False
+    isRowFailure (RowFailure _) = True
 
 return []
 tests :: IO Bool

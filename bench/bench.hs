@@ -90,6 +90,10 @@ prepareByteString :: IO ByteString
 prepareByteString =
   fmap BS.pack . generate' (Deterministic 1111) (GenSize 100) $ vectorOf 100 (choose (0, 255))
 
+prepareByteStrings :: IO (V.Vector ByteString)
+prepareByteStrings =
+  fmap V.fromList $ replicateM 100 prepareByteString
+
 benchABDecode :: FileFormat -> NonEmpty ViewFile -> IO ()
 benchABDecode ff vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -129,14 +133,18 @@ benchUpdateFieldPIIObservations bss = foldl' (updatePIIObservations (MaxPIIObser
 benchCheckPII :: [ByteString] -> [Maybe PIIType]
 benchCheckPII = fmap checkPII
 
+benchToRow :: V.Vector ByteString -> Row
+benchToRow = toRow . Right
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
     wardenBench [
-          env (prepareView root) $ \ ~(vfs) ->
+          env ((,) <$> prepareView root <*> prepareByteStrings) $ \ ~(vfs, bss) ->
             bgroup "decoding" $ [
                 bench "decode/rfc4180/1000" $ nfIO (benchABDecode RFC4180 vfs)
               , bench "decode/delimited-text/1000" $ nfIO (benchABDecode DelimitedText vfs)
+              , bench "decode/toRow/100" $ nf benchToRow bss
             ]
         , env prepareRow $ \ ~(rs) ->
             bgroup "field-parsing" $ [
