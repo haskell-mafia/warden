@@ -24,12 +24,7 @@ rawRecordP sep = {-# SCC rawRecordP #-}
 {-# INLINE rawRecordP #-}
 
 rawFieldP :: Separator -> Parser ByteString
-rawFieldP !sep = {-# SCC rawFieldP #-}
-  takeWhile fieldByte
-  where
-    fieldByte c =
-         c /= sep'
-      && c /= lineFeed
-
-    sep' = unSeparator sep
+rawFieldP !(Separator sep) = {-# SCC rawFieldP #-}
+  -- Don't need to break on newlines as they're already stripped out.
+  takeWhile (/= sep)
 {-# INLINE rawFieldP #-}
