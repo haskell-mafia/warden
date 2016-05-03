@@ -140,6 +140,21 @@ Once the check has been running stably for a while with the schema in
 place, remove the \textbf{--exit-success} option so that failures will
 cause a notification to be sent.
 
+\section{PII checks}
+
+PII checks are currently very rudimentary, and all consist of simple
+parsers.
+
+\begin{itemize}
+  \item Phone numbers - checks for numbers which are either
+    Australian phone numbers with a valid state-level area code or
+    look like international phone numbers (starting with \texttt{+}).
+  \item Email addresses - makes no attempt to determine whether a
+    string represents a valid email address per RFC 5321\cite{rfc5321}
+    for performance reasons, but simply looks for a string with
+    period-separated components containing an \texttt{@} symbol.
+\end{itemize}
+
 \section{Schema inference}\label{schema-inference}
 
 Schema inference in \texttt{warden} is currently extremely simple, and will be
