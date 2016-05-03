@@ -18,6 +18,7 @@ import qualified Test.Warden.Parser.Row.DelimitedText
 import qualified Test.Warden.Parser.Row.RFC4180
 import qualified Test.Warden.PII
 import qualified Test.Warden.Row
+import qualified Test.Warden.Row.Internal
 import qualified Test.Warden.Serial.Json.Marker
 import qualified Test.Warden.Serial.Json.Numeric
 import qualified Test.Warden.Serial.Json.Schema
@@ -42,6 +43,7 @@ main = disorderMain [
   , Test.Warden.Parser.Row.RFC4180.tests
   , Test.Warden.PII.tests
   , Test.Warden.Row.tests
+  , Test.Warden.Row.Internal.tests
   , Test.Warden.Serial.Json.Marker.tests
   , Test.Warden.Serial.Json.Numeric.tests
   , Test.Warden.Serial.Json.Schema.tests

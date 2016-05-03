@@ -5,8 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Row (
-    asciiToLower
-  , combineSVParseState
+    combineSVParseState
   , decodeByteString
   , fieldP
   , parseField
@@ -32,7 +31,6 @@ import           Control.Monad.Primitive (PrimMonad(..))
 import           Control.Monad.Trans.Resource (ResourceT)
 
 import qualified Data.Attoparsec.ByteString as AB
-import           Data.Bits ((.|.))
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import           Data.Char (ord)
@@ -62,6 +60,7 @@ import           Warden.Numeric
 import           Warden.Parser.Field
 import           Warden.Parser.Row
 import           Warden.PII
+import           Warden.Row.Internal
 import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -149,17 +148,6 @@ toRow (Right !rs) = {-# SCC toRow #-}
 toRow (Left !e) = {-# SCC toRow #-}
   RowFailure $ T.pack e
 {-# INLINE toRow #-}
-
--- | We only care about ASCII characters here (true, false et cetera)
--- and converting unicode to lowercase is really expensive, so just
--- bitwise-or with the case bit (2^5).
---
--- This will bork some characters (higher-range punctuation), but they're not
--- digits or bools so we don't care about them.
-asciiToLower :: ByteString -> ByteString
-asciiToLower = {-# SCC asciiToLower #-}
-  BS.map (flip (.|.) 0x20)
-{-# INLINE asciiToLower #-}
 
 parseField :: ByteString -> FieldLooks
 parseField "" = {-# SCC parseField #-}
