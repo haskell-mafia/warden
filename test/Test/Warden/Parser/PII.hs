@@ -42,4 +42,4 @@ prop_phoneNumberP_neg n = forAll nonPhoneNumber $ \m ->
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })
