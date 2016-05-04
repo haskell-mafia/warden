@@ -160,6 +160,8 @@ main = do
               , bench "checkPII/pii/10000" $ nf benchCheckPII piis
               , bench "checkPII/nonpii/10000" $ nf benchCheckPII nonPiis
               , bench "asciiToLower/100" $ nf asciiToLower bs
+              , bench "asciiToLower_map/100" $ nf asciiToLower_map bs
+              , bench "asciiToLower_map64/100" $ nf asciiToLower_map64 bs
             ]
         , env ((,,) <$> prepareNumbers <*> prepareMeanDevAccs <*> prepareNumericStates) $ \ ~(ns, mdas, nss) ->
            bgroup "numerics" $ [
