@@ -4,8 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Parser.Common (
-    carriageReturn
-  , sepByByte1P
+    sepByByte1P
   , space
   , lineFeed
   , doubleQuote
@@ -13,7 +12,6 @@ module Warden.Parser.Common (
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (peekWord8, anyWord8)
-import           Data.Char (ord)
 import           Data.Word (Word8)
 
 import           P
@@ -35,21 +33,13 @@ sepByByte1P p !sep = {-# SCC sepByByte1P #-}
 {-# INLINE sepByByte1P #-}
 
 lineFeed :: Word8
-lineFeed = {-# SCC lineFeed #-}
-  fromIntegral $ ord '\n'
+lineFeed = 0x0a
 {-# INLINE lineFeed #-}
 
 space :: Word8
-space = {-# SCC space #-}
-  fromIntegral $ ord ' '
+space = 0x20
 {-# INLINE space #-}
 
-carriageReturn :: Word8
-carriageReturn = {-# SCC carriageReturn #-}
-  fromIntegral $ ord '\r'
-{-# INLINE carriageReturn #-}
-
 doubleQuote :: Word8
-doubleQuote = {-# SCC doubleQuote #-}
-  fromIntegral $ ord '"'
+doubleQuote = 0x22
 {-# INLINE doubleQuote #-}

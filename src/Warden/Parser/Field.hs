@@ -12,7 +12,6 @@ import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (word8, peekWord8)
 import           Data.Attoparsec.ByteString (string, endOfInput, choice)
 import           Data.Attoparsec.ByteString.Char8 (decimal, signed, double)
-import           Data.Char (ord)
 
 import           P
 
@@ -50,13 +49,13 @@ boolP = {-# SCC boolP #-}
   trueP <|> falseP
   where
     trueP = do
-      void . word8 . fromIntegral $ ord 't'
+      void $ word8 0x74 -- t
       peekWord8 >>= \case
         Nothing -> pure ()
         Just _ -> void $ string "rue"
 
     falseP = do
-      void . word8 . fromIntegral $ ord 'f'
+      void $ word8 0x66 -- f
       peekWord8 >>= \case
         Nothing -> pure ()
         Just _ -> void $ string "alse"
