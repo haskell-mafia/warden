@@ -57,6 +57,9 @@ library
   ghc-options:
                        -Wall
 
+  cc-options:
+                       -O2
+
   hs-source-dirs:
                        src gen
 
