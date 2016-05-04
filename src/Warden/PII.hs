@@ -54,10 +54,10 @@ combinePIIObservations _ TooManyPIIObservations _ = {-# SCC combinePIIObservatio
 combinePIIObservations _ _ TooManyPIIObservations = {-# SCC combinePIIObservations #-}
   TooManyPIIObservations
 combinePIIObservations (MaxPIIObservations mpo) (PIIObservations po1) (PIIObservations po2) = {-# SCC combinePIIObservations #-}
-  let po' = po1 <> po2 in
-  if (NE.length po') > mpo
+  let npo' = (NE.length po1) + (NE.length po2) in
+  if npo' > mpo
     then TooManyPIIObservations
-    else PIIObservations po'
+    else PIIObservations $ po1 <> po2
 {-# INLINE combinePIIObservations #-}
 
 checkPII :: ByteString -> Maybe PIIType

@@ -140,6 +140,21 @@ Once the check has been running stably for a while with the schema in
 place, remove the \textbf{--exit-success} option so that failures will
 cause a notification to be sent.
 
+\section{PII checks}
+
+PII checks are currently very rudimentary, and all consist of simple
+parsers.
+
+\begin{itemize}
+  \item Phone numbers - checks for numbers which are either
+    Australian phone numbers with a valid state-level area code or
+    look like international phone numbers (starting with \texttt{+}).
+  \item Email addresses - makes no attempt to determine whether a
+    string represents a valid email address per RFC 5321\cite{rfc5321}
+    for performance reasons, but simply looks for a string with
+    period-separated components containing an \texttt{@} symbol.
+\end{itemize}
+
 \section{Schema inference}\label{schema-inference}
 
 Schema inference in \texttt{warden} is currently extremely simple, and will be
@@ -177,7 +192,7 @@ with a \texttt{FieldType} \texttt{t} if one would expect to see values
 which look like \texttt{v} in an error-free field of type \texttt{t}.
 For example, the field type \texttt{RealField} is compatible with
 \texttt{LooksIntegral} observations as the integers are contained within
-the reals (sorry Liam), but not the inverse.
+the reals, but not the inverse.
 
 \begin{verbatim}
     Real+---------Text-------+ Boolean
@@ -338,9 +353,11 @@ Solving:
 
 \subsection{Quantiles}\label{quantiles}
 
-Quantiles are computed in one pass using a basic reservoir
-sampling\cite{vitter1985}\cite[pp.~144-145]{Knuth1997} method. A reservoir \(R\) is maintained of
-the desired final sample size \(n\), and filled as follows:
+Quantiles are computed in one pass by creating a uniform sample of the
+data using a basic reservoir
+sampling\cite{vitter1985}\cite[pp.~144-145]{Knuth1997} method. A
+reservoir \(R\) is maintained of the desired final sample size \(n\),
+and filled as follows:
 
 \begin{itemize}
 \item
@@ -351,6 +368,11 @@ For all records beyond \(n\), a value is drawn uniformly from the
 interval \([1, t]\), where \(t\) is the number of records seen so
 far. If \(t \leq n\), the record \(R_t\) is replaced with the current value.
 \end{itemize}
+
+Once the sample is complete, the median is calculated using the basic
+sample-median algorithm: the data are sorted and the middle element is
+taken if the sample size is odd, or the middle two elements are
+averaged if the sample size is even.
 
 \subsubsection{Combining accumulators}
 

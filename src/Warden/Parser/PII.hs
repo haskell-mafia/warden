@@ -10,12 +10,9 @@ module Warden.Parser.PII (
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (takeWhile1, word8, endOfInput)
-import           Data.Attoparsec.ByteString (skipMany, satisfy, choice, count)
-import           Data.Char (ord)
+import           Data.Attoparsec.ByteString (choice, count, skipWhile, skip)
 
 import           P hiding (count)
-
-import           Warden.Parser.Common
 
 -- | Without any reference to RFC 5321, this parser matches things which look
 -- vaguely like they might be email addresses.
@@ -26,13 +23,16 @@ emailP = {-# SCC emailP #-} do
   void $ takeWhile1 hostPart
   void $ word8 period
   void $ takeWhile1 (not . (== at))
-  void $ endOfInput
+  endOfInput
   where
-    at = fromIntegral $ ord '@'
+    at = 0x40
 
-    period = fromIntegral $ ord '.'
+    period = 0x2e
 
-    hostPart = not . flip elem [space, period, at]
+    hostPart 0x40 = False -- at
+    hostPart 0x2e = False -- period
+    hostPart 0x20 = False -- space
+    hostPart _ = True
 {-# INLINE emailP #-}
 
 -- | Matches Australian phone numbers or fully-qualified international phone
@@ -40,19 +40,17 @@ emailP = {-# SCC emailP #-} do
 phoneNumberP :: Parser ()
 phoneNumberP = {-# SCC phoneNumberP #-} do
   void $ choice [australianNumberP, internationalNumberP]
-  void $ endOfInput
+  endOfInput
 {-# INLINE phoneNumberP #-}
 
 australianNumberP :: Parser ()
 australianNumberP = {-# SCC australianNumberP #-} do
-  void $ word8 zero
+  void $ word8 0x30 -- 0
   -- Only match Australian phone numbers with valid area codes.
-  void $ secondNum
-  void $ count 8 phoneCharP
+  secondNum
+  replicateM_ 8 phoneCharP
   where
-    zero = fromIntegral $ ord '0'
-
-    secondNum = satisfy isAreaCode >> skipPhoneFiller
+    secondNum = skip isAreaCode >> skipPhoneFiller
 
     isAreaCode 0x32 = True -- 2, NSW/ACT
     isAreaCode 0x33 = True -- 3, VIC/TAS
@@ -64,22 +62,20 @@ australianNumberP = {-# SCC australianNumberP #-} do
 
 internationalNumberP :: Parser ()
 internationalNumberP = {-# SCC internationalNumberP #-} do
-  void $ word8 plus
+  void $ word8 0x2b -- +
   void $ count 11 phoneCharP
-  where
-    plus = fromIntegral $ ord '+'
 {-# INLINE internationalNumberP #-}
 
 phoneCharP :: Parser ()
 phoneCharP = {-# SCC phoneCharP #-}
-  satisfy isPhoneChar >> skipPhoneFiller
+  skip isPhoneChar >> skipPhoneFiller
   where
     isPhoneChar c = c >= 0x30 && c <= 0x39 -- 0-9
 {-# INLINE phoneCharP #-}
 
 skipPhoneFiller :: Parser ()
 skipPhoneFiller = {-# SCC skipPhoneFiller #-}
-  skipMany (satisfy valid)
+  skipWhile valid
   where
     valid 0x20 = True -- space
     valid 0x2d = True -- hyphen

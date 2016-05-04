@@ -62,13 +62,11 @@ escapedFieldP = {-# SCC escapedFieldP #-} do
 {-# INLINE escapedFieldP #-}
 
 unescapedFieldP :: Separator -> Parser ByteString
-unescapedFieldP !sep = {-# SCC unescapedFieldP #-}
+unescapedFieldP !(Separator sep) = {-# SCC unescapedFieldP #-}
   takeWhile fieldByte
   where
+    -- Don't need to break on newlines as they're already stripped out.
     fieldByte c =
-         c /= sep'
-      && c /= lineFeed
+         c /= sep
       && c /= doubleQuote
-
-    sep' = unSeparator sep
 {-# INLINE unescapedFieldP #-}

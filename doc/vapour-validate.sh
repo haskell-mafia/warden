@@ -26,6 +26,8 @@ EOF
 
 [ "$#" == 0 ] ||  usage
 
+FAILURE_MARKER=$(pwd)/warden-has-failures
+
 for FEED_NAME in ${FEEDS}; do
 (
     set -eux
@@ -44,15 +46,22 @@ for FEED_NAME in ${FEEDS}; do
           --view-root ${INPUT} \
           --tag-category "validate=unprocessed" \
           --date ${DATE} \
-          --last-n-days ${DAYS} | tee ${WORKDIR}/warden-files | \
+          --last-n-days ${DAYS} | tee ${WORKDIR}/warden-files | {\
     while read F; do
         HAVE_FILES=1
         s3 download ${INPUT}/${FEED_NAME}/${F} ${FEEDDIR}/${F}
     done
 
-    # Don't fail if there's no data for us to validate.
-    if [ $HAVE_FILES -eq 1]; then
-        warden check -d -e -s \| ${FEED_NAME}
+    # Don't fail if there's nothing for us to validate.
+    if [ $HAVE_FILES -eq 1 ]; then
+        set +e
+        warden check -v -r 10000 -d -s \| ${FEED_NAME}
+        warden_exit=$?
+        set -e
+
+        if [ ! $warden_exit -eq 0 ]; then
+            touch $FAILURE_MARKER
+        fi
 
         aws s3 cp --sse --recursive _warden ${WARDEN_STORE}
 
@@ -71,5 +80,11 @@ for FEED_NAME in ${FEEDS}; do
                       -d ${F}
             done
     fi
+    }
 )
 done
+
+if [ -f $FAILURE_MARKER ]; then
+    exit 1
+fi
+
