@@ -75,9 +75,12 @@ parseCheck caps ps sch vfs =
       st = checkSamplingType ps
       pct = checkPIICheckType ps in do
   g <- liftIO createSystemRandom
-  ss <- mapM (parseViewFile caps verb g ff s lb fft st pct) (NE.toList vfs)
-  finalState <- liftIO $ resolveSVParseState fft g st pct ss
+  finalState <- foldM (parseCombine verb g ff s lb fft st pct) initialSVParseState $ NE.toList vfs
   liftIO $ finalizeSVParseState ps sch dates vfs finalState
+  where
+    parseCombine verb g ff s lb fft st pct acc vf = do
+      state <- parseViewFile caps verb g ff s lb fft st pct vf
+      liftIO $ combineSVParseState fft g st pct acc state
 
 parseViewFile :: NumCPUs
               -> Verbosity

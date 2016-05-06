@@ -4,6 +4,8 @@
 
 #include "row.h"
 
+/* Convert ASCII alphabetical characters to lowercase (and bork the rest).
+ * Optimized for 64-bit architectures, operating on a machine word at a time. */
 void warden_ascii_to_lower(size_t n, int8_t *out, int8_t *in) {
 	int i = 0;
 	memcpy(out, in, n);
