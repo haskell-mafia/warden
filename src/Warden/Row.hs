@@ -7,7 +7,6 @@
 module Warden.Row (
     combineSVParseState
   , decodeByteString
-  , fieldP
   , parseField
   , readView
   , readView'

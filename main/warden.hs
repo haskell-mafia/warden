@@ -145,10 +145,11 @@ separatorP = option (eitherReader separator) $
   <> short 's'
   <> metavar "SEPARATOR"
   <> value (Separator . fromIntegral $ ord '|')
-  <> help "Field separator for view (e.g., pipe or comma). Defaults to '|'."
+  <> help "Field separator for view (e.g., pipe or comma). Tab is '\\t'. Defaults to '|'."
   where
     separator x = maybeToRight ("Invalid separator " <> x) $ valid' x
-    valid' [x] = if ord x >= 32 && ord x < 128
+    valid' ('\\':'t':[]) = Just $ Separator 0x09 -- convenient notation for tab
+    valid' [x] = if (ord x >= 32 && ord x < 128) || (ord x == 9) -- printable or tab
       then Just . Separator . fromIntegral $ ord x
       else Nothing
     valid' _   = Nothing
