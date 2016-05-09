@@ -67,8 +67,8 @@ prepareNumbers :: IO [Double]
 prepareNumbers =
   generate' (Deterministic 2468) (GenSize 100) $ vectorOf 10000 arbitrary
 
-prepareFolds :: IO ([Row], [ByteString], [ByteString], [ByteString], ByteString)
-prepareFolds = (,,,,) <$> prepareSVParse <*> prepareHashText <*> preparePII <*> prepareNonPII <*> prepareByteString
+prepareFolds :: IO ([Row], [ByteString], [ByteString], [ByteString], ByteString, ByteString)
+prepareFolds = (,,,,,) <$> prepareSVParse <*> prepareHashText <*> preparePII <*> prepareNonPII <*> prepareByteString100 <*> prepareByteString10
 
 prepareMeanDevAccs :: IO [MeanDevAcc]
 prepareMeanDevAccs =
@@ -86,13 +86,17 @@ prepareNonPII :: IO [ByteString]
 prepareNonPII =
   fmap (fmap T.encodeUtf8) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 100 (elements muppets)
 
-prepareByteString :: IO ByteString
-prepareByteString =
+prepareByteString100 :: IO ByteString
+prepareByteString100 =
   fmap BS.pack . generate' (Deterministic 1111) (GenSize 100) $ vectorOf 100 (choose (0, 255))
+
+prepareByteString10 :: IO ByteString
+prepareByteString10 =
+  fmap BS.pack . generate' (Deterministic 1111) (GenSize 100) $ vectorOf 10 (choose (0, 255))
 
 prepareByteStrings :: IO (V.Vector ByteString)
 prepareByteStrings =
-  fmap V.fromList $ replicateM 100 prepareByteString
+  fmap V.fromList $ replicateM 100 prepareByteString100
 
 benchABDecode :: FileFormat -> NonEmpty ViewFile -> IO ()
 benchABDecode ff vfs =
@@ -150,7 +154,7 @@ main = do
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
             ]
-        , env prepareFolds $ \ ~(rs, ts, piis, nonPiis, bs) ->
+        , env prepareFolds $ \ ~(rs, ts, piis, nonPiis, bs100, bs10) ->
             bgroup "folds" $ [
                 bench "updateSVParseState/1000" $ nfIO (benchUpdateSVParseState rs)
               , bench "hashText/1000" $ nf benchHashText ts
@@ -159,7 +163,8 @@ main = do
               , bench "updatePIIObservations/nonpii/10000" $ nf benchUpdateFieldPIIObservations nonPiis
               , bench "checkPII/pii/100" $ nf benchCheckPII piis
               , bench "checkPII/nonpii/100" $ nf benchCheckPII nonPiis
-              , bench "asciiToLower/100" $ nf asciiToLower bs
+              , bench "asciiToLower/100" $ nf asciiToLower bs100
+              , bench "asciiToLower/10" $ nf asciiToLower bs10
             ]
         , env ((,,) <$> prepareNumbers <*> prepareMeanDevAccs <*> prepareNumericStates) $ \ ~(ns, mdas, nss) ->
            bgroup "numerics" $ [
