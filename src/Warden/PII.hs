@@ -20,6 +20,7 @@ import           P hiding ((<>))
 import           Warden.Data.Field
 import           Warden.Data.PII
 import           Warden.Parser.PII
+import           Warden.Row.Internal
 
 updatePIIObservations :: MaxPIIObservations
                            -> FieldIndex
@@ -62,7 +63,7 @@ combinePIIObservations (MaxPIIObservations mpo) (PIIObservations po1) (PIIObserv
 
 checkPII :: ByteString -> Maybe PIIType
 checkPII bs = {-# SCC checkPII #-}
-  let piis = [phoneNumber, emailAddress] in
+  let piis = [phoneNumber, emailAddress, address] in
   case nonEmpty (catMaybes piis) of
     Nothing -> Nothing
     Just (p:|_) -> pure p
@@ -74,4 +75,8 @@ checkPII bs = {-# SCC checkPII #-}
     emailAddress = case AB.parseOnly emailP bs of
       Left _ -> Nothing
       Right () -> pure EmailAddress
+
+    address = case AB.parseOnly addressP (asciiToLower bs) of
+      Left _ -> Nothing
+      Right () -> pure Address
 {-# INLINE checkPII #-}

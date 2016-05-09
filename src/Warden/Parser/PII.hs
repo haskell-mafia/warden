@@ -4,13 +4,15 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Parser.PII (
-    emailP
+    addressP
+  , emailP
   , phoneNumberP
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (takeWhile1, word8, endOfInput)
 import           Data.Attoparsec.ByteString (choice, count, skipWhile, skip)
+import           Data.Attoparsec.ByteString.Char8 (skipSpace, string)
 
 import           P hiding (count)
 
@@ -82,3 +84,39 @@ skipPhoneFiller = {-# SCC skipPhoneFiller #-}
     valid 0x2e = True -- period
     valid _ = False
 {-# INLINE skipPhoneFiller #-}
+
+-- | Rudimentary address parser for Western-style street-level address
+-- prefixes. Does not match some address forms, e.g., "Unit 5,
+-- Whatever Road" or "La Maison Bourgeois, 123 Fake St".
+--
+-- This parser expects input to be pre-lowercased. It is safe to use
+-- 'Warden.Row.Internal.asciiToLower'.
+addressP :: Parser ()
+addressP = {-# SCC addressP #-} do
+  skipWhile numericBit
+  skipWhile (== 0x32) -- space, safe for asciiToLower
+  -- FIXME: unicode letters
+  skipWhile alpha
+  skipSpace
+  -- FIXME: faster
+  void $ choice streets
+  where
+    numericBit 0x2f = True -- /, e.g., 5/60 Fake Ave.
+    numericBit c = c >= 0x30 && c <= 0x39
+
+    -- Everything's lowercase by the time it gets here.
+    alpha c = c >= 0x61 && c <= 0x7a
+
+    streets = fmap string [
+        "street"
+      , "st"
+      , "rd"
+      , "road"
+      , "lane"
+      , "ln"
+      , "cres"
+      , "crescent"
+      , "avenue"
+      , "ave"
+      ]
+{-# INLINE addressP #-}
