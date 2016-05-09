@@ -80,11 +80,11 @@ prepareNumericStates =
 
 preparePII :: IO [ByteString]
 preparePII =
-  fmap (fmap fst) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 10000 genPII
+  fmap (fmap fst) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 100 genPII
 
 prepareNonPII :: IO [ByteString]
 prepareNonPII =
-  fmap (fmap T.encodeUtf8) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 10000 (elements muppets)
+  fmap (fmap T.encodeUtf8) $ generate' (Deterministic 9753) (GenSize 100) $ vectorOf 100 (elements muppets)
 
 prepareByteString :: IO ByteString
 prepareByteString =
@@ -157,8 +157,8 @@ main = do
               , bench "updateTextCounts/1000" $ nf benchUpdateTextCounts rs
               , bench "updatePIIObservations/pii/10000" $ nf benchUpdateFieldPIIObservations piis
               , bench "updatePIIObservations/nonpii/10000" $ nf benchUpdateFieldPIIObservations nonPiis
-              , bench "checkPII/pii/10000" $ nf benchCheckPII piis
-              , bench "checkPII/nonpii/10000" $ nf benchCheckPII nonPiis
+              , bench "checkPII/pii/100" $ nf benchCheckPII piis
+              , bench "checkPII/nonpii/100" $ nf benchCheckPII nonPiis
               , bench "asciiToLower/100" $ nf asciiToLower bs
             ]
         , env ((,,) <$> prepareNumbers <*> prepareMeanDevAccs <*> prepareNumericStates) $ \ ~(ns, mdas, nss) ->
