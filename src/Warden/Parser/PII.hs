@@ -7,12 +7,14 @@ module Warden.Parser.PII (
     addressP
   , emailP
   , phoneNumberP
+  , streetTypes
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (takeWhile1, word8, endOfInput)
 import           Data.Attoparsec.ByteString (choice, count, skipWhile, skip)
 import           Data.Attoparsec.ByteString.Char8 (string)
+import           Data.ByteString (ByteString)
 
 import           P hiding (count)
 
@@ -113,16 +115,20 @@ addressP = {-# SCC addressP #-} do
     -- Everything's lowercase by the time it gets here.
     alpha c = c >= 0x61 && c <= 0x7a -- a-z
 
-    streets = fmap string [
-        "street"
-      , "st"
-      , "rd"
-      , "road"
-      , "lane"
-      , "ln"
-      , "cres"
-      , "crescent"
-      , "avenue"
-      , "ave"
-      ]
+    streets = fmap string streetTypes
 {-# INLINE addressP #-}
+
+streetTypes :: [ByteString]
+streetTypes = [
+    "street"
+  , "st"
+  , "rd"
+  , "road"
+  , "lane"
+  , "ln"
+  , "cres"
+  , "crescent"
+  , "avenue"
+  , "ave"
+  ]
+{-# INLINE streetTypes #-}
