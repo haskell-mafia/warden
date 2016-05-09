@@ -10,17 +10,17 @@ module Warden.Parser.Row.DelimitedText (
 
 import           Data.Attoparsec.ByteString (Parser, takeWhile)
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
 
 import qualified Data.Vector as V
 
 import           P
 
 import           Warden.Data.Row
-import           Warden.Parser.Common
 
-rawRecordP :: Separator -> Parser RawRecord
-rawRecordP sep = {-# SCC rawRecordP #-}
-  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
+rawRecordP :: Separator -> ByteString -> RawRecord
+rawRecordP (Separator sep) bs = {-# SCC rawRecordP #-}
+  (RawRecord . V.fromList) $! BS.split sep bs
 {-# INLINE rawRecordP #-}
 
 rawFieldP :: Separator -> Parser ByteString

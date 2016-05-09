@@ -77,7 +77,7 @@ decodeByteString ff sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
   =$= DC.map toRow
   where
     decodeByteString' = awaitForever $ \l ->
-      yield . second unRawRecord $ AB.parseOnly ((parserFor ff) sep) l
+      yield . second unRawRecord $ parseRawRecord ff sep l
 {-# INLINE decodeByteString #-}
 
 decodeRecord :: FileFormat
