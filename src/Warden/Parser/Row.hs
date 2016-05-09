@@ -21,3 +21,4 @@ parseRawRecord RFC4180 s b =
   parseOnly (RFC4180.rawRecordP s) b
 parseRawRecord DelimitedText s b =
   Right $ DelimitedText.rawRecordP s b
+{-# INLINE parseRawRecord #-}
