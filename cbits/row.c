@@ -14,6 +14,12 @@ void warden_ascii_to_lower(size_t n, int8_t *out, int8_t *in) {
 			int64_t *p = (int64_t *) &out[i];
 			*p |= 0x2020202020202020;
 		}
+		/* Here n is a multiple of 8 and we don't need to do anything
+		   more. */
+		if (i == n) {
+			return;
+		}
+		/* i is the first multiple of 8 greater than n. */
 		i -= 8;
 	}
 	for ( ; i < n; i++) {
