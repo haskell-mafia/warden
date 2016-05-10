@@ -58,12 +58,12 @@ updateReservoirAcc' gen seen (Reservoir v) c x = {-# SCC updateReservoirAcc' #-}
       seen' = unRowCount seen in
   if c' < target
     then do
-      MVU.write v c' x
+      MVU.unsafeWrite v c' x
       pure $! ReservoirAcc (Reservoir v) (SampleCount $! c' + 1)
     else do
       u <- uniformR (0 :: Int, fromIntegral seen') gen
       when (u < target) $
-        MVU.write v u x
+        MVU.unsafeWrite v u x
       pure $! ReservoirAcc (Reservoir v) c
 {-# INLINE updateReservoirAcc' #-}
 
@@ -87,7 +87,7 @@ combineReservoirAcc g (ReservoirSize sz) (ReservoirAcc r1 sc1) (ReservoirAcc r2 
       desired = min sz (sc1' + sc2') in do
   pool <- (unReservoir r1) `concatMutable` (unReservoir r2)
   uniformShuffleM pool g
-  let r = MVU.slice 0 desired pool
+  let r = MVU.unsafeSlice 0 desired pool
   pure $! ReservoirAcc (Reservoir r) (SampleCount desired)
 
 -- | Concatenate two mutable vectors with minimal copying by growing the
@@ -96,8 +96,8 @@ concatMutable :: MVU.IOVector Double -> MVU.IOVector Double -> IO (MVU.IOVector 
 concatMutable xs ys =
   let nx = MVU.length xs
       ny = MVU.length ys in do
-  zs <- MVU.grow xs ny
-  mapM_ (\ix -> MVU.write zs (ix + nx) =<< MVU.read ys ix) [0..(ny-1)]
+  zs <- MVU.unsafeGrow xs ny
+  mapM_ (\ix -> MVU.unsafeWrite zs (ix + nx) =<< MVU.unsafeRead ys ix) [0..(ny-1)]
   pure zs
 
 finalizeReservoirAcc :: ReservoirAcc -> IO Sample
