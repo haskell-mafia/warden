@@ -128,17 +128,16 @@ addressP = {-# SCC addressP #-} do
     streets = fmap string streetTypes
 {-# INLINE addressP #-}
 
+-- | Unique prefixes of street types only - doesn't matter which one
+-- we match, we only care about success or failure.
 streetTypes :: [ByteString]
 streetTypes = [
-    "street"
-  , "st"
+    "st"
   , "rd"
   , "road"
   , "lane"
   , "ln"
   , "cres"
-  , "crescent"
-  , "avenue"
   , "ave"
   ]
 {-# INLINE streetTypes #-}
