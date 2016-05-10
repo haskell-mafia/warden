@@ -24,7 +24,7 @@ import           Warden.Parser.Common
 -- vaguely like they might be email addresses.
 emailP :: Parser ()
 emailP = {-# SCC emailP #-} do
-  void $ takeWhile1 (not . (== at))
+  void $ takeWhile1 localPart
   void $ word8 at
   void $ takeWhile1 hostPart
   void $ word8 period
@@ -39,6 +39,16 @@ emailP = {-# SCC emailP #-} do
     hostPart 0x2e = False -- period
     hostPart 0x20 = False -- space
     hostPart _ = True
+
+    localPart 0x40 = False -- @
+    -- Parens are technically supported ("comments"), but they're rare
+    -- enough that we skip them.
+    localPart 0x28 = False -- (
+    localPart 0x29 = False -- )
+    -- We don't support quoting, but allow some other special
+    -- characters which might be associated with email addresses in
+    -- bad records, e.g., angle brackets and double quotes.
+    localPart _ = True
 {-# INLINE emailP #-}
 
 -- | Matches Australian phone numbers or fully-qualified international phone
