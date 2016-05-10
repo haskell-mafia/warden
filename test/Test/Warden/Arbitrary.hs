@@ -16,8 +16,8 @@ import qualified Data.List as L
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
-import qualified Data.Vector          as V
+import           Data.Text.Encoding (decodeUtf8, decodeUtf8', encodeUtf8)
+import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 import           Data.Word
 
@@ -41,6 +41,7 @@ import           Test.QuickCheck.Instances ()
 import           Text.Printf (printf)
 
 import           Warden.Data
+import           Warden.Parser.PII
 
 newtype ValidRow =
   ValidRow {
@@ -624,10 +625,45 @@ phoneDigit =
       d <- choose ('0', '9')
       pure . T.pack $ pure d
 
+genAddress :: Gen BS.ByteString
+genAddress = do
+  num <- numericPart
+  name <- namePart
+  street <- streetPart
+  suffix <- oneof [pure "", fmap ((" " <>) . encodeUtf8) (elements muppets)]
+  pure $ (BSC.intercalate " " [num, name, street]) <> suffix
+  where
+    numericPart = oneof [wholeNum, splitNum]
+
+    wholeNum = intBS
+
+    splitNum = do
+      a <- intBS
+      b <- intBS
+      pure $ BSC.concat [a, "/", b]
+
+    namePart = fmap encodeUtf8 $ elements muppets
+
+    streetPart = elements . concatMap munge $ fmap decodeUtf8 streetTypes
+
+    munge st = fmap encodeUtf8 $ concatMap mungePunctuation [
+        st
+      , T.toUpper st
+      , T.toTitle st
+      ]
+
+    mungePunctuation st = [
+        st
+      , st <> "."
+      ]
+
+    intBS = fmap (encodeUtf8 . renderIntegral . unNPlus) arbitrary
+
 genPII :: Gen (BS.ByteString, PIIType)
 genPII = oneof [
     (fmap (flip (,) PhoneNumber)) genPhoneNumber
   , (fmap (flip (,) EmailAddress)) genEmail
+  , (fmap (flip (,) Address)) genAddress
   ]
 
 nonPhoneNumber :: Gen BS.ByteString

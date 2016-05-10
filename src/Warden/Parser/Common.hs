@@ -4,10 +4,11 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Parser.Common (
-    sepByByte1P
-  , space
+    doubleQuote
   , lineFeed
-  , doubleQuote
+  , numeric
+  , sepByByte1P
+  , space
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
@@ -43,3 +44,7 @@ space = 0x20
 doubleQuote :: Word8
 doubleQuote = 0x22
 {-# INLINE doubleQuote #-}
+
+numeric :: Word8 -> Bool
+numeric c = c >= 0x30 && c <= 0x39
+{-# INLINE numeric #-}

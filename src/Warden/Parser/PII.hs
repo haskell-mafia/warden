@@ -4,15 +4,21 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Parser.PII (
-    emailP
+    addressP
+  , emailP
   , phoneNumberP
+  , streetTypes
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (takeWhile1, word8, endOfInput)
 import           Data.Attoparsec.ByteString (choice, count, skipWhile, skip)
+import           Data.Attoparsec.ByteString.Char8 (string)
+import           Data.ByteString (ByteString)
 
 import           P hiding (count)
+
+import           Warden.Parser.Common
 
 -- | Without any reference to RFC 5321, this parser matches things which look
 -- vaguely like they might be email addresses.
@@ -68,9 +74,7 @@ internationalNumberP = {-# SCC internationalNumberP #-} do
 
 phoneCharP :: Parser ()
 phoneCharP = {-# SCC phoneCharP #-}
-  skip isPhoneChar >> skipPhoneFiller
-  where
-    isPhoneChar c = c >= 0x30 && c <= 0x39 -- 0-9
+  skip numeric >> skipPhoneFiller
 {-# INLINE phoneCharP #-}
 
 skipPhoneFiller :: Parser ()
@@ -82,3 +86,49 @@ skipPhoneFiller = {-# SCC skipPhoneFiller #-}
     valid 0x2e = True -- period
     valid _ = False
 {-# INLINE skipPhoneFiller #-}
+
+-- | Rudimentary address parser for Western-style street-level address
+-- prefixes, e.g., 123 Some St or 2/47 Other Road. Does not match some
+-- address forms, e.g., "Unit 5, Whatever Road" or "La Maison
+-- Bourgeois, 123 Fake St".
+--
+-- Looks for a number, followed by an alpha string, followed by one of
+-- the known street types (road, lane et cetera).
+--
+-- This parser expects input to be pre-lowercased. It is safe to use
+-- 'Warden.Row.Internal.asciiToLower'.
+addressP :: Parser ()
+addressP = {-# SCC addressP #-} do
+  skipWhile numericBit
+  skipSpace
+  -- FIXME: unicode letters
+  skipWhile alpha
+  skipSpace
+  -- FIXME: faster
+  void $ choice streets
+  where
+    numericBit 0x2f = True -- /, e.g., 5/60 Fake Ave.
+    numericBit c = numeric c
+
+    skipSpace = skipWhile (== 0x20) -- space, safe for asciiToLower
+
+    -- Everything's lowercase by the time it gets here.
+    alpha c = c >= 0x61 && c <= 0x7a -- a-z
+
+    streets = fmap string streetTypes
+{-# INLINE addressP #-}
+
+streetTypes :: [ByteString]
+streetTypes = [
+    "street"
+  , "st"
+  , "rd"
+  , "road"
+  , "lane"
+  , "ln"
+  , "cres"
+  , "crescent"
+  , "avenue"
+  , "ave"
+  ]
+{-# INLINE streetTypes #-}
