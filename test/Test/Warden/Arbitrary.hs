@@ -644,7 +644,16 @@ genAddress = do
 
     namePart = fmap encodeUtf8 $ elements muppets
 
-    streetPart = elements . concatMap munge $ fmap decodeUtf8 streetTypes
+    streetPart = elements . concatMap munge $ fmap decodeUtf8 streetTypes'
+
+    streetTypes' = streetTypes <> extraStreetTypes
+
+    -- Not included in the list in src, make sure they still parse okay.
+    extraStreetTypes = [
+        "street"
+      , "crescent"
+      , "avenue"
+      ]
 
     munge st = fmap encodeUtf8 $ concatMap mungePunctuation [
         st

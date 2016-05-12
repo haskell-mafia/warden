@@ -9,7 +9,6 @@ module Warden.PII (
   , updatePIIObservations
   ) where
 
-import qualified Data.Attoparsec.ByteString as AB
 import           Data.ByteString (ByteString)
 import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -23,10 +22,10 @@ import           Warden.Parser.PII
 import           Warden.Row.Internal
 
 updatePIIObservations :: MaxPIIObservations
-                           -> FieldIndex
-                           -> PIIObservations
-                           -> ByteString
-                           -> PIIObservations
+                      -> FieldIndex
+                      -> PIIObservations
+                      -> ByteString
+                      -> PIIObservations
 updatePIIObservations mpo fi acc bs = {-# SCC updatePIIObservations #-}
   maybe acc update' $ checkPII bs
   where
@@ -68,15 +67,15 @@ checkPII bs = {-# SCC checkPII #-}
     Nothing -> Nothing
     Just (p:|_) -> pure p
   where
-    phoneNumber = case AB.parseOnly phoneNumberP bs of
-      Left _ -> Nothing
-      Right () -> pure PhoneNumber
+    phoneNumber = if checkPhoneNumber bs
+      then pure PhoneNumber
+      else Nothing
 
-    emailAddress = case AB.parseOnly emailP bs of
-      Left _ -> Nothing
-      Right () -> pure EmailAddress
+    emailAddress = if checkEmail bs
+      then pure EmailAddress
+      else Nothing
 
-    address = case AB.parseOnly addressP (asciiToLower bs) of
-      Left _ -> Nothing
-      Right () -> pure Address
+    address = if checkAddress $ asciiToLower bs
+      then pure Address
+      else Nothing
 {-# INLINE checkPII #-}

@@ -58,7 +58,7 @@ library
                        -Wall
 
   cc-options:
-                       -O2
+                       -O3
 
   hs-source-dirs:
                        src gen
@@ -121,9 +121,10 @@ library
                        Warden.View
 
   c-sources:           cbits/row.c
+                       cbits/pii.c
   include-dirs:        cbits
   includes:            row.h
-  install-includes:    row.h
+                       pii.h
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
