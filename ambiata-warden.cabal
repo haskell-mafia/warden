@@ -58,7 +58,7 @@ library
                        -Wall
 
   cc-options:
-                       -O2
+                       -O2 -funroll-loops
 
   hs-source-dirs:
                        src gen
