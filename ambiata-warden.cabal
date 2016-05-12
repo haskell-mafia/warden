@@ -125,8 +125,6 @@ library
   include-dirs:        cbits
   includes:            row.h
                        pii.h
-  install-includes:    row.h
-                       pii.h
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
