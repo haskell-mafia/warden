@@ -78,8 +78,8 @@ wardenP :: Parser Command
 wardenP = subparser $
      command' "check" "Run checks over a view." checkP
   <> command' "check-file" "Run checks over a single file." fileCheckP
-  <> command' "sanity" "Run pre-extract sanity checks over a view." sanityP
   <> command' "infer" "Attempt to infer a schema from a set of metadata files." inferP
+  <> command' "sanity" "Run pre-extract sanity checks over a view." sanityP
   <> command' "validate-schema" "Validate a schema file." validateSchemaP
 
 checkP :: Parser Command
