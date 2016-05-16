@@ -11,6 +11,8 @@ module Warden.Data.FieldAnomaly (
   , renderAnomalousField
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.List.NonEmpty (NonEmpty, nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
@@ -31,7 +33,7 @@ data FieldAnomaly =
     FieldAnomaly !FieldLooks !ObservationCount
   deriving (Eq, Show, Generic)
 
-instance NFData FieldAnomaly
+instance NFData FieldAnomaly where rnf = genericRnf
 
 renderFieldAnomaly :: FieldAnomaly -> Text
 renderFieldAnomaly (FieldAnomaly obs cnt) = T.concat [
@@ -47,7 +49,7 @@ data AnomalousField =
   | AnomalousForm !FieldIndex !FieldUniques !UniqueTextCount
   deriving (Eq, Show, Generic)
 
-instance NFData AnomalousField
+instance NFData AnomalousField where rnf = genericRnf
 
 renderAnomalousField :: AnomalousField -> Text
 renderAnomalousField (AnomalousType idx typ anoms) = T.concat [

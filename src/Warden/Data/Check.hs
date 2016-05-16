@@ -22,6 +22,8 @@ module Warden.Data.Check (
   , resolveCheckStatus
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
@@ -42,7 +44,7 @@ data CheckDescription =
   | ViewRowCounts
   deriving (Eq, Show, Bounded, Enum, Generic)
 
-instance NFData CheckDescription
+instance NFData CheckDescription where rnf = genericRnf
 
 renderCheckDescription :: CheckDescription -> Text
 renderCheckDescription FileSanityChecks = "file-sanity-checks"
@@ -58,7 +60,7 @@ data CheckResult =
   | RowCheckResult !CheckDescription !CheckStatus
   deriving (Eq, Show, Generic)
 
-instance NFData CheckResult
+instance NFData CheckResult where rnf = genericRnf
 
 isCheckFailure :: CheckResult -> Bool
 isCheckFailure (FileCheckResult _ _ s) = checkStatusFailed s
@@ -90,7 +92,7 @@ data CheckStatus =
   | CheckFailed !(NonEmpty Failure)
   deriving (Eq, Show, Generic)
 
-instance NFData CheckStatus
+instance NFData CheckStatus where rnf = genericRnf
 
 checkStatusFailed :: CheckStatus -> Bool
 checkStatusFailed CheckPassed = False
@@ -125,14 +127,14 @@ data Failure =
   | PIICheckFailure !PIIFailure
   deriving (Eq, Show, Generic)
 
-instance NFData Failure
+instance NFData Failure where rnf = genericRnf
 
 data Insanity =
     EmptyFile
   | IrregularFile
   deriving (Eq, Show, Generic)
 
-instance NFData Insanity
+instance NFData Insanity where rnf = genericRnf
 
 data RowFailure =
     FieldCountMismatch !(Set FieldCount)
@@ -140,7 +142,7 @@ data RowFailure =
   | HasBadRows !RowCount
   deriving (Eq, Show, Generic)
 
-instance NFData RowFailure
+instance NFData RowFailure where rnf = genericRnf
 
 data SchemaFailure =
     IncorrectFieldCount FieldCount !(Set FieldCount)
@@ -148,14 +150,14 @@ data SchemaFailure =
   | FieldAnomalyFailure AnomalousField
   deriving (Eq, Show, Generic)
 
-instance NFData SchemaFailure
+instance NFData SchemaFailure where rnf = genericRnf
 
 data PIIFailure =
     PotentialPIIFailure !(NonEmpty PotentialPII)
   | TooManyPotentialPIIFailure
   deriving (Eq, Show, Generic)
 
-instance NFData PIIFailure
+instance NFData PIIFailure where rnf = genericRnf
 
 renderFailure :: Failure -> Text
 renderFailure (SanityCheckFailure f) =

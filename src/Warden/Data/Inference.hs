@@ -18,6 +18,8 @@ module Warden.Data.Inference (
   , renderFieldMatchRatio
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -48,7 +50,7 @@ newtype FieldHistogram =
     unFieldHistogram :: VU.Vector CompatibleEntries
   } deriving (Eq, Show, Generic)
 
-instance NFData FieldHistogram
+instance NFData FieldHistogram where rnf = genericRnf
 
 renderFieldHistogram :: FieldHistogram -> Text
 renderFieldHistogram (FieldHistogram cs) =
@@ -67,13 +69,13 @@ $(derivingUnbox "NormalizedEntries"
   [| \(NormalizedEntries x) -> x  |]
   [| \x -> (NormalizedEntries x)  |])
 
-instance NFData NormalizedEntries
+instance NFData NormalizedEntries where rnf = genericRnf
 
 data TextCountSummary =
   TextCountSummary (V.Vector FieldForm)
   deriving (Eq, Show, Generic)
 
-instance NFData TextCountSummary
+instance NFData TextCountSummary where rnf = genericRnf
 
 -- | View marker once it's got past validation.
 newtype ValidViewMarkers =
@@ -81,4 +83,4 @@ newtype ValidViewMarkers =
     unValidViewMarkers :: NonEmpty ViewMarker
   } deriving (Eq, Show, Generic)
 
-instance NFData ValidViewMarkers
+instance NFData ValidViewMarkers where rnf = genericRnf

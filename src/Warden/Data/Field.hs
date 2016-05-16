@@ -22,6 +22,8 @@ module Warden.Data.Field (
   , renderFieldType
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.Ix (Ix)
 import qualified Data.Text as T
 import           Data.Vector.Unboxed.Deriving (derivingUnbox)
@@ -41,7 +43,7 @@ data FieldType =
   | RealField
   deriving (Eq, Show, Enum, Bounded, Ord, Ix, Generic)
 
-instance NFData FieldType
+instance NFData FieldType where rnf = genericRnf
 
 -- | Truth table for 'FieldType' set inclusion.
 --
@@ -95,7 +97,7 @@ data FieldLooks =
   | LooksBoolean
   deriving (Eq, Show, Ord, Enum, Bounded, Ix, Generic)
 
-instance NFData FieldLooks
+instance NFData FieldLooks where rnf = genericRnf
 
 $(derivingUnbox "FieldLooks"
   [t| FieldLooks -> Int |]
@@ -135,7 +137,7 @@ newtype CompatibleEntries =
     unCompatibleEntries :: Int64
   } deriving (Eq, Show, Ord, Num, Generic)
 
-instance NFData CompatibleEntries
+instance NFData CompatibleEntries where rnf = genericRnf
 
 renderCompatibleEntries :: CompatibleEntries -> Text
 renderCompatibleEntries (CompatibleEntries n) = T.pack $ show n
@@ -151,7 +153,7 @@ newtype FieldIndex =
     unFieldIndex :: Int
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData FieldIndex
+instance NFData FieldIndex where rnf = genericRnf
 
 $(derivingUnbox "FieldIndex"
   [t| FieldIndex -> Int |]

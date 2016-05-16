@@ -20,6 +20,8 @@ module Warden.Data.Schema (
   , renderSchemaFile
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import qualified Data.Text as T
 import           Data.Vector (Vector)
 
@@ -39,7 +41,7 @@ data FileFormat =
   | RFC4180
   deriving (Eq, Show, Generic, Enum, Bounded)
 
-instance NFData FileFormat
+instance NFData FileFormat where rnf = genericRnf
 
 renderFileFormat :: FileFormat -> Text
 renderFileFormat DelimitedText = "delimited-text"
@@ -55,7 +57,7 @@ newtype SchemaFile =
       unSchemaFile :: FilePath
   } deriving (Eq, Show, Generic)
 
-instance NFData SchemaFile
+instance NFData SchemaFile where rnf = genericRnf
 
 renderSchemaFile :: SchemaFile -> Text
 renderSchemaFile = T.pack . unSchemaFile
@@ -65,7 +67,7 @@ newtype FieldUniques =
     unFieldUniques :: Int
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData FieldUniques
+instance NFData FieldUniques where rnf = genericRnf
 
 renderFieldUniques :: FieldUniques -> Text
 renderFieldUniques = renderIntegral . unFieldUniques
@@ -75,13 +77,13 @@ data FieldForm =
   | CategoricalForm !FieldUniques
   deriving (Eq, Show, Generic)
 
-instance NFData FieldForm
+instance NFData FieldForm where rnf = genericRnf
 
 data SchemaVersion =
     SchemaV1
   deriving (Eq, Show, Enum, Bounded, Generic)
 
-instance NFData SchemaVersion
+instance NFData SchemaVersion where rnf = genericRnf
 
 currentSchemaVersion :: SchemaVersion
 currentSchemaVersion = maxBound
@@ -89,7 +91,7 @@ currentSchemaVersion = maxBound
 data Schema = Schema !SchemaVersion !(Vector SchemaField)
   deriving (Eq, Show, Generic)
 
-instance NFData Schema
+instance NFData Schema where rnf = genericRnf
 
 -- | This will contain more data in the future, e.g., summary statistics for
 -- numeric types.
@@ -98,4 +100,4 @@ data SchemaField = SchemaField {
     , schemaFieldForm :: !FieldForm
   } deriving (Eq, Show, Generic)
 
-instance NFData SchemaField
+instance NFData SchemaField where rnf = genericRnf

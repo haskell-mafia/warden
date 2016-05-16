@@ -26,6 +26,8 @@ module Warden.Data.View(
   , viewFilePath
 ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.Attoparsec.Text (Parser, IResult(..))
 import           Data.Attoparsec.Text (parse, anyChar, char)
 import           Data.List (stripPrefix)
@@ -48,7 +50,7 @@ newtype View =
     unView :: FilePath
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData View
+instance NFData View where rnf = genericRnf
 
 renderView :: View -> Text
 renderView = T.pack . unView
@@ -58,7 +60,7 @@ newtype FilePart =
     unFilePart :: Text
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData FilePart
+instance NFData FilePart where rnf = genericRnf
 
 data ViewFile =
   ViewFile {
@@ -67,7 +69,7 @@ data ViewFile =
     , vfFilePart :: !FilePart
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData ViewFile
+instance NFData ViewFile where rnf = genericRnf
 
 viewFilePath :: ViewFile -> FilePath
 viewFilePath (ViewFile (View v) d (FilePart f)) =
