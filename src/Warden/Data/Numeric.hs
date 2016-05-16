@@ -34,6 +34,7 @@ module Warden.Data.Numeric (
   , varianceFromStdDevAcc
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
 import           Control.Lens (makeLenses)
 
 import           Data.AEq (AEq, (===), (~==))
@@ -48,7 +49,7 @@ data Minimum =
   | NoMinimum
   deriving (Eq, Show, Generic)
 
-instance NFData Minimum
+instance NFData Minimum where rnf = genericRnf
 
 instance AEq Minimum where
   (===) = (==)
@@ -71,7 +72,7 @@ data Maximum =
   | NoMaximum
   deriving (Eq, Show, Generic)
 
-instance NFData Maximum
+instance NFData Maximum where rnf = genericRnf
 
 instance AEq Maximum where
   (===) = (==)
@@ -96,7 +97,7 @@ newtype KAcc =
     getKAcc :: Int
   } deriving (Eq, Show, Generic, Num)
 
-instance NFData KAcc
+instance NFData KAcc where rnf = genericRnf
 
 -- | Preliminary mean, still accumulating.
 newtype MeanAcc =
@@ -104,7 +105,7 @@ newtype MeanAcc =
     unMeanAcc :: Double
   } deriving (Eq, Show, Generic)
 
-instance NFData MeanAcc
+instance NFData MeanAcc where rnf = genericRnf
 
 instance AEq MeanAcc where
   (===) = (==)
@@ -117,7 +118,7 @@ data Mean =
   | Mean {-# UNPACK #-} !Double
   deriving (Eq, Show, Generic)
 
-instance NFData Mean
+instance NFData Mean where rnf = genericRnf
 
 instance AEq Mean where
   NoMean === NoMean = True
@@ -135,7 +136,7 @@ data Median =
   | NoMedian
   deriving (Eq, Show, Generic)
 
-instance NFData Median
+instance NFData Median where rnf = genericRnf
 
 -- | Accumulator for standard deviation calculation. Closer to variance than 
 -- standard deviation to avoid repeated square roots.
@@ -148,7 +149,7 @@ newtype StdDevAcc =
     unStdDevAcc :: Double
   } deriving (Eq, Show, Generic)
 
-instance NFData StdDevAcc
+instance NFData StdDevAcc where rnf = genericRnf
 
 instance AEq StdDevAcc where
   (===) = (==)
@@ -161,7 +162,7 @@ data MStdDevAcc =
   | MStdDevAcc {-# UNPACK #-} !StdDevAcc
   deriving (Eq, Show, Generic)
 
-instance NFData MStdDevAcc
+instance NFData MStdDevAcc where rnf = genericRnf
 
 instance AEq MStdDevAcc where
   (===) = (==)
@@ -176,14 +177,14 @@ newtype Variance =
     unVariance :: Double
   } deriving (Eq, Show, Generic)
 
-instance NFData Variance
+instance NFData Variance where rnf = genericRnf
 
 data StdDev =
     NoStdDev
   | StdDev {-# UNPACK #-} !Double
   deriving (Eq, Show, Generic)
 
-instance NFData StdDev
+instance NFData StdDev where rnf = genericRnf
 
 instance AEq StdDev where
   NoStdDev === NoStdDev = True
@@ -208,28 +209,28 @@ data NumericSummary =
   | NumericSummary !Minimum !Maximum !Mean !StdDev !Median
   deriving (Eq, Show, Generic)
 
-instance NFData NumericSummary
+instance NFData NumericSummary where rnf = genericRnf
 
 data FieldNumericState =
     FieldNumericState !(V.Vector NumericState)
   | NoFieldNumericState
   deriving (Eq, Show, Generic)
 
-instance NFData FieldNumericState
+instance NFData FieldNumericState where rnf = genericRnf
 
 data NumericFieldSummary =
     NumericFieldSummary !(V.Vector NumericSummary)
   | NoNumericFieldSummary
   deriving (Eq, Show, Generic)
 
-instance NFData NumericFieldSummary
+instance NFData NumericFieldSummary where rnf = genericRnf
 
 data MeanDevAcc =
     MeanDevInitial
   | MeanDevAcc {-# UNPACK #-} !MeanAcc !MStdDevAcc {-# UNPACK #-} !KAcc
   deriving (Eq, Show, Generic)
 
-instance NFData MeanDevAcc
+instance NFData MeanDevAcc where rnf = genericRnf
 
 instance AEq MeanDevAcc where
   (===) = (==)
@@ -250,7 +251,7 @@ data NumericState =
     , _stateMeanDev :: !MeanDevAcc
     } deriving (Eq, Show, Generic)
 
-instance NFData NumericState
+instance NFData NumericState where rnf = genericRnf
 
 makeLenses ''NumericState
 

@@ -23,6 +23,8 @@ module Warden.Data.Param (
   , renderVerbosity
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           P
 
 import           Debruijn.Hex (Hex, renderHex, parseHex)
@@ -43,7 +45,7 @@ newtype RunId =
     unRunId :: Hex
   } deriving (Eq, Show, Generic)
 
-instance NFData RunId
+instance NFData RunId where rnf = genericRnf
 
 renderRunId :: RunId -> Text
 renderRunId = renderHex . unRunId
@@ -56,14 +58,14 @@ newtype WardenVersion =
     unWardenVersion :: Text
   } deriving (Eq, Show, Ord, Generic)
 
-instance NFData WardenVersion
+instance NFData WardenVersion where rnf = genericRnf
 
 newtype NumCPUs =
   NumCPUs {
     unNumCPUs :: Int
   } deriving (Eq, Show, Generic)
 
-instance NFData NumCPUs
+instance NFData NumCPUs where rnf = genericRnf
 
 chunksForCPUs :: NumCPUs -> ChunkCount
 chunksForCPUs = ChunkCount . unNumCPUs
@@ -73,7 +75,7 @@ data Verbosity =
   | Quiet
   deriving (Eq, Show, Generic)
 
-instance NFData Verbosity
+instance NFData Verbosity where rnf = genericRnf
 
 renderVerbosity :: Verbosity -> Text
 renderVerbosity Verbose = "verbose"
@@ -89,35 +91,35 @@ data Force =
   | NoForce
   deriving (Eq, Show, Generic)
 
-instance NFData Force
+instance NFData Force where rnf = genericRnf
 
 data ExitType =
     ExitWithCheckStatus
   | ExitWithSuccess
   deriving (Eq, Show, Generic)
 
-instance NFData ExitType
+instance NFData ExitType where rnf = genericRnf
 
 data IncludeDotFiles =
     NoIncludeDotFiles
   | IncludeDotFiles
   deriving (Eq, Show, Generic)
 
-instance NFData IncludeDotFiles
+instance NFData IncludeDotFiles where rnf = genericRnf
 
 data SamplingType =
     NoSampling
   | ReservoirSampling !ReservoirSize
   deriving (Eq, Show, Generic)
 
-instance NFData SamplingType
+instance NFData SamplingType where rnf = genericRnf
 
 data PIICheckType =
     NoPIIChecks
   | PIIChecks !MaxPIIObservations
   deriving (Eq, Show, Generic)
 
-instance NFData PIICheckType
+instance NFData PIICheckType where rnf = genericRnf
 
 data CheckParams =
   CheckParams {
@@ -134,7 +136,7 @@ data CheckParams =
     , checkPIICheckType :: !PIICheckType
     } deriving (Eq, Show, Generic)
 
-instance NFData CheckParams
+instance NFData CheckParams where rnf = genericRnf
 
 data SanityParams =
   SanityParams {
@@ -144,7 +146,7 @@ data SanityParams =
     , sanityIncludeDotFiles :: !IncludeDotFiles
   } deriving (Eq, Show, Generic)
 
-instance NFData SanityParams
+instance NFData SanityParams where rnf = genericRnf
 
 data WardenParams =
   WardenParams {
@@ -158,4 +160,4 @@ data InferUsingFailedChecks =
   | NoInferUsingFailedChecks
   deriving (Eq, Show)
 
-instance NFData WardenParams
+instance NFData WardenParams where rnf = genericRnf

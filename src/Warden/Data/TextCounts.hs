@@ -23,6 +23,8 @@ module Warden.Data.TextCounts (
   , updateUniqueTextCount
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.AEq (AEq, (===), (~==))
 import           Data.ByteString (ByteString)
 import           Data.Digest.CityHash (cityHash64)
@@ -40,7 +42,7 @@ data UniqueTextCount =
   | LooksFreeform
   deriving (Eq, Show, Generic)
 
-instance NFData UniqueTextCount
+instance NFData UniqueTextCount where rnf = genericRnf
 
 instance AEq UniqueTextCount where
   (===) = (==)
@@ -63,7 +65,7 @@ newtype TextFreeformThreshold =
     unTextFreeformThreshold :: Int
   } deriving (Eq, Show, Generic)
 
-instance NFData TextFreeformThreshold
+instance NFData TextFreeformThreshold where rnf = genericRnf
 
 renderTextFreeformThreshold :: TextFreeformThreshold -> Text
 renderTextFreeformThreshold = renderIntegral . unTextFreeformThreshold
@@ -73,7 +75,7 @@ data TextCounts =
   | NoTextCounts
   deriving (Eq, Show, Generic)
 
-instance NFData TextCounts
+instance NFData TextCounts where rnf = genericRnf
 
 -- | Don't use this on 32-bit platforms.
 hashText :: ByteString -> Int

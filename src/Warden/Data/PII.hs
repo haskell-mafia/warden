@@ -12,6 +12,8 @@ module Warden.Data.PII (
   , renderPotentialPII
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.AEq (AEq, (===), (~==))
 import           Data.List.NonEmpty (NonEmpty, sort)
 import qualified Data.Text as T
@@ -30,7 +32,7 @@ data PIIType =
   | DateOfBirth
   deriving (Eq, Show, Ord, Generic, Enum, Bounded)
 
-instance NFData PIIType
+instance NFData PIIType where rnf = genericRnf
 
 renderPIIType :: PIIType -> Text
 renderPIIType EmailAddress = "email address"
@@ -42,7 +44,7 @@ data PotentialPII =
     PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
   deriving (Eq, Show, Ord, Generic)
 
-instance NFData PotentialPII
+instance NFData PotentialPII where rnf = genericRnf
 
 renderPotentialPII :: PotentialPII -> Text
 renderPotentialPII (PotentialPII typ ix) = T.concat [
@@ -57,7 +59,7 @@ newtype MaxPIIObservations =
     unMaxPIIObservations :: Int
   } deriving (Eq, Show, Generic)
 
-instance NFData MaxPIIObservations
+instance NFData MaxPIIObservations where rnf = genericRnf
 
 data PIIObservations =
     NoPIIObservations
@@ -65,7 +67,7 @@ data PIIObservations =
   | TooManyPIIObservations
   deriving (Eq, Show, Generic)
 
-instance NFData PIIObservations
+instance NFData PIIObservations where rnf = genericRnf
 
 instance AEq PIIObservations where
   (===) = (==)

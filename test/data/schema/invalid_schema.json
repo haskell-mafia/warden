@@ -1,0 +1,18 @@
+{
+    "version": "v1",
+    "fields": [
+        {
+            "field-form": {
+                "form-type": "categorical"
+            },
+            "field-type": "integral-field"
+        },
+        {
+            "field-form": {
+                "uniques": 6,
+                "form-type": "categorical"
+            },
+            "field-type": "text-field"
+        }
+    ]
+}

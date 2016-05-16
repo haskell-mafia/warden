@@ -42,6 +42,7 @@ module Warden.Data.Row (
   , totalRows
 ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
 import           Control.Lens (makeLenses)
 
 import           Data.ByteString (ByteString)
@@ -71,21 +72,21 @@ newtype RawRecord =
     unRawRecord :: V.Vector ByteString
   } deriving (Eq, Show, Generic)
 
-instance NFData RawRecord
+instance NFData RawRecord where rnf = genericRnf
 
 newtype LineBound =
   LineBound {
     unLineBound :: Int
   } deriving (Eq, Show, Generic)
 
-instance NFData LineBound
+instance NFData LineBound where rnf = genericRnf
 
 newtype FieldCount =
   FieldCount {
     unFieldCount :: Int
   } deriving (Eq, Show, Ord, Num, Generic)
 
-instance NFData FieldCount
+instance NFData FieldCount where rnf = genericRnf
 
 renderFieldCount :: FieldCount -> Text
 renderFieldCount = renderIntegral . unFieldCount
@@ -100,7 +101,7 @@ $(derivingUnbox "ObservationCount"
   [| \(ObservationCount x) -> x |]
   [| \x -> (ObservationCount x) |])
 
-instance NFData ObservationCount
+instance NFData ObservationCount where rnf = genericRnf
 
 renderObservationCount :: ObservationCount -> Text
 renderObservationCount (ObservationCount n) = renderIntegral n
@@ -110,7 +111,7 @@ newtype Separator =
     unSeparator :: Word8
   } deriving (Eq, Show, Generic)
 
-instance NFData Separator
+instance NFData Separator where rnf = genericRnf
 
 charToSeparator :: Char -> Separator
 charToSeparator = Separator . fromIntegral . ord
@@ -125,14 +126,14 @@ data Row =
   | RowFailure !Text
   deriving (Eq, Show, Generic)
 
-instance NFData Row
+instance NFData Row where rnf = genericRnf
 
 newtype RowCount =
   RowCount {
     unRowCount :: Int64
   } deriving (Eq, Show, Ord, Num, Generic)
 
-instance NFData RowCount
+instance NFData RowCount where rnf = genericRnf
 
 renderRowCount :: RowCount -> Text
 renderRowCount = T.pack . show . unRowCount
@@ -168,7 +169,7 @@ data FieldLookCount =
   | NoFieldLookCount
   deriving (Eq, Show, Generic)
 
-instance NFData FieldLookCount
+instance NFData FieldLookCount where rnf = genericRnf
 
 -- FIXME: generalize
 data FieldReservoirAcc =
@@ -176,7 +177,7 @@ data FieldReservoirAcc =
   | FieldReservoirAcc !(V.Vector ReservoirAcc)
   deriving (Generic)
 
-instance NFData FieldReservoirAcc
+instance NFData FieldReservoirAcc where rnf = genericRnf
 
 data SVParseState =
   SVParseState {
@@ -190,7 +191,7 @@ data SVParseState =
   , _piiState :: !PIIObservations
   } deriving (Generic)
 
-instance NFData SVParseState
+instance NFData SVParseState where rnf = genericRnf
 
 makeLenses ''SVParseState
 
@@ -202,7 +203,7 @@ data ParsedField =
   | ParsedBoolean
   deriving (Eq, Show, Generic, Enum, Bounded)
 
-instance NFData ParsedField
+instance NFData ParsedField where rnf = genericRnf
 
 renderParsedField :: ParsedField
                   -> Text

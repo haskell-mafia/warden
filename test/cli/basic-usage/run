@@ -37,3 +37,5 @@ $WARDEN infer -i -o foo.json -v -m 0.999 /not/a/real/marker/file1 /not/a/real/ma
 $WARDEN sanity /not/a/real/view
 
 $WARDEN sanity -e -v /not/a/real/view
+
+$WARDEN validate-schema /not/a/real/schema.json

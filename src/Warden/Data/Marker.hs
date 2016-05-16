@@ -21,6 +21,8 @@ module Warden.Data.Marker (
   , viewMarkerPath
   ) where
 
+import           Control.DeepSeq.Generics (genericRnf)
+
 import           Data.Attoparsec.Text (IResult(..), Parser, parse)
 import           Data.Attoparsec.Text (string, satisfy, manyTill')
 import           Data.Char (ord)
@@ -51,21 +53,21 @@ data CheckResultType =
   | RowResult
   deriving (Eq, Show, Ord, Bounded, Enum, Generic)
 
-instance NFData CheckResultType
+instance NFData CheckResultType where rnf = genericRnf
 
 newtype MarkerFailure =
   MarkerFailure {
     unMarkerFailure :: NonEmpty Text
   } deriving (Eq, Show, Generic)
 
-instance NFData MarkerFailure
+instance NFData MarkerFailure where rnf = genericRnf
 
 data MarkerStatus =
     MarkerPass
   | MarkerFail !MarkerFailure
   deriving (Eq, Show, Generic)
 
-instance NFData MarkerStatus
+instance NFData MarkerStatus where rnf = genericRnf
 
 data CheckResultSummary =
   CheckResultSummary {
@@ -74,14 +76,14 @@ data CheckResultSummary =
     , summaryResultType :: !CheckResultType
   } deriving (Eq, Show, Generic)
 
-instance NFData CheckResultSummary
+instance NFData CheckResultSummary where rnf = genericRnf
 
 data DateRange =
     NoDates
   | DateRange Date Date
   deriving (Eq, Show, Generic)
 
-instance NFData DateRange
+instance NFData DateRange where rnf = genericRnf
 
 dateRangePartition :: DateRange -> Text
 dateRangePartition (DateRange start end) = T.concat [
@@ -116,7 +118,7 @@ data FileMarker =
   , fmCheckResults :: ![CheckResultSummary]
   } deriving (Eq, Show, Generic)
 
-instance NFData FileMarker
+instance NFData FileMarker where rnf = genericRnf
 
 mkFileMarker :: WardenParams
              -> ViewFile
@@ -195,7 +197,7 @@ data ViewMarker =
   , vmMetadata :: !ViewMetadata
   } deriving (Eq, Show, Generic)
 
-instance NFData ViewMarker
+instance NFData ViewMarker where rnf = genericRnf
 
 mkViewMarker :: WardenParams
              -> View
@@ -218,7 +220,7 @@ data RowCountSummary =
   , rcsNumericSummaries :: !NumericFieldSummary
   } deriving (Eq, Show, Generic)
 
-instance NFData RowCountSummary
+instance NFData RowCountSummary where rnf = genericRnf
 
 data ViewMetadata =
   ViewMetadata {
@@ -228,4 +230,4 @@ data ViewMetadata =
     , vmViewFiles :: !(Set ViewFile)
   } deriving (Eq, Show, Generic)
 
-instance NFData ViewMetadata
+instance NFData ViewMetadata where rnf = genericRnf

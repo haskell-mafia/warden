@@ -1,0 +1,20 @@
+#!/bin/sh -eu
+
+. $(dirname $0)/../core/setup.sh
+
+banner Sanity-checking schema validation
+#---------------------
+
+set +e
+# This should exit with failure.
+${WARDEN} validate-schema test/data/schema/invalid_schema.json
+bad=$?
+set -e
+if [ $bad -eq 0 ]
+then
+    echo '`warden validate-schema` exited with success on invalid schema.'
+    exit 1
+fi
+
+# This should exit with success.
+${WARDEN} validate-schema test/data/schema/valid_schema.json
