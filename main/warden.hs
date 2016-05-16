@@ -34,6 +34,7 @@ data Command =
   | SingleFileCheck !ViewFile !CheckParams
   | Infer !Verbosity !FieldMatchRatio !InferUsingFailedChecks !SchemaFile ![FilePath]
   | Sanity !View !SanityParams
+  | ValidateSchema !SchemaFile
   deriving (Eq, Show)
 
 main :: IO ()
@@ -62,6 +63,8 @@ run _wps (Infer v fmr fc sf fs) = do
 run wps (Sanity v sps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
   finishCheck (sanityVerbosity sps) (sanityExitType sps) r
+run _wps (ValidateSchema sf) = do
+  void . orDie renderWardenError . mapEitherT runResourceT $ validateSchema sf
 
 finishCheck :: Verbosity -> ExitType -> NonEmpty CheckResult -> IO ()
 finishCheck verb xt rs = do
@@ -77,6 +80,7 @@ wardenP = subparser $
   <> command' "check-file" "Run checks over a single file." fileCheckP
   <> command' "sanity" "Run pre-extract sanity checks over a view." sanityP
   <> command' "infer" "Attempt to infer a schema from a set of metadata files." inferP
+  <> command' "validate-schema" "Validate a schema file." validateSchemaP
 
 checkP :: Parser Command
 checkP = Check <$> viewP <*> checkParamsP
@@ -93,6 +97,9 @@ inferP = Infer <$> verbosityP
                <*> inferUsingFailedChecksP
                <*> outputSchemaP
                <*> some markerFileP
+
+validateSchemaP :: Parser Command
+validateSchemaP = ValidateSchema <$> schemaPathP
 
 checkParamsP :: Parser CheckParams
 checkParamsP = CheckParams <$> separatorP
@@ -244,3 +251,8 @@ piiTypeP = maybe (PIIChecks $ MaxPIIObservations 1000) (PIIChecks . MaxPIIObserv
      long "max-pii-observations"
   <> metavar "PII-OBSERVATIONS"
   <> help "Maximum number of instances of potential PII to store in memory before discarding specific details of each instance. Defaults to 1000.")
+
+schemaPathP :: Parser SchemaFile
+schemaPathP = fmap SchemaFile . strArgument $
+     metavar "SCHEMA-FILE"
+  <> help "Path to schema file to validate."

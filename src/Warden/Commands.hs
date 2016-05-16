@@ -6,6 +6,7 @@ module Warden.Commands(
   , fileCheck
   , infer
   , sanity
+  , validateSchema
 ) where
 
 import           Control.Monad.IO.Class (liftIO)
@@ -95,3 +96,9 @@ infer v fmr fc fps = case nonEmpty fps of
           V.indexed $ V.map renderFieldHistogram hs
 
     withErr = firstEitherT WardenInferenceError . hoistEither
+
+validateSchema :: SchemaFile
+               -> EitherT WardenError (ResourceT IO) ()
+validateSchema sf =
+  void $ readSchema sf
+
