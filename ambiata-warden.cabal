@@ -121,12 +121,14 @@ library
                        Warden.Serial.Json.View
                        Warden.View
 
-  c-sources:           cbits/row.c
+  c-sources:           cbits/field.c
                        cbits/pii.c
+                       cbits/row.c
   include-dirs:        cbits
   includes:            warden.h
-                       row.h
+                       field.h
                        pii.h
+                       row.h
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N

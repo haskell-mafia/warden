@@ -22,9 +22,7 @@ import           P
 import           System.IO (IO)
 import           System.IO.Unsafe (unsafePerformIO)
 
-cBool :: Word8 -> Bool
-cBool 0 = False
-cBool _ = True
+import           Warden.Parser.Common
 
 -- | Without any reference to RFC 5321, this parser matches things which look
 -- vaguely like they might be email addresses.

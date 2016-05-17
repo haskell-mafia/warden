@@ -4,7 +4,8 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Parser.Common (
-    doubleQuote
+    cBool
+  , doubleQuote
   , lineFeed
   , numeric
   , sepByByte1P
@@ -18,6 +19,10 @@ import           Data.Word (Word8)
 import           P
 
 import           Warden.Data.Row
+
+cBool :: Word8 -> Bool
+cBool 0 = False
+cBool _ = True
 
 sepByByte1P :: Parser a -> Separator -> Parser [a]
 sepByByte1P p !sep = {-# SCC sepByByte1P #-}
