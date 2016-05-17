@@ -44,4 +44,4 @@ prop_numericFieldP_neg = forAll (elements muppets) $ \t ->
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })
