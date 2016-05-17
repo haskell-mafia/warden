@@ -60,7 +60,6 @@ import           Warden.Numeric
 import           Warden.Parser.Field
 import           Warden.Parser.Row
 import           Warden.PII
-import           Warden.Row.Internal
 import           Warden.Sampling.Reservoir
 
 import           X.Data.Conduit.Binary (slurp, sepByByteBounded)
@@ -159,11 +158,17 @@ parseField :: ByteString -> FieldLooks
 parseField "" = {-# SCC parseField #-}
   LooksEmpty
 parseField t = {-# SCC parseField #-}
-  case AB.parseOnly fieldP (asciiToLower t) of
-    Left _ -> LooksText
-    Right ParsedIntegral -> LooksIntegral
-    Right ParsedReal -> LooksReal
-    Right ParsedBoolean -> LooksBoolean
+  if checkFieldBool t
+    then LooksBoolean
+    else case AB.parseOnly numberP t of
+      Left _ -> LooksText
+      Right ParsedIntegral -> LooksIntegral
+      Right ParsedReal -> LooksReal
+  where
+    numberP = AB.choice [
+        void integralFieldP >> pure ParsedIntegral
+      , void realFieldP >> pure ParsedReal
+      ]
 {-# INLINE parseField #-}
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount

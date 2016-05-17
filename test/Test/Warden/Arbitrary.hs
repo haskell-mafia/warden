@@ -487,6 +487,18 @@ renderedBool =
              ] in
   elements . nub $ reps <> (T.toUpper <$> reps)
 
+renderedNonBool :: Gen Text
+renderedNonBool = arbitrary `suchThat` notBool
+  where
+    notBool t = not . flip elem bools $ T.toLower t
+
+    bools = [
+        "t"
+      , "f"
+      , "true"
+      , "false"
+      ]
+
 instance Arbitrary CompatibleEntries where
   arbitrary = (CompatibleEntries . getSmall . getNonNegative) <$> arbitrary
 

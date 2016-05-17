@@ -14,9 +14,20 @@ import           P
 import           System.IO (IO)
 
 import           Test.QuickCheck
+import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Parser.Field
+
+prop_checkFieldBool_pos :: Property
+prop_checkFieldBool_pos = forAll (T.encodeUtf8 <$> renderedBool) $ \bs ->
+  let r = checkFieldBool bs in
+  r === True
+
+prop_checkFieldBool_neg :: Property
+prop_checkFieldBool_neg = forAll (T.encodeUtf8 <$> renderedNonBool) $ \bs ->
+  let r = checkFieldBool bs in
+  r === False
 
 prop_numericFieldP_pos :: Int -> Double -> Property
 prop_numericFieldP_pos n m =
@@ -33,4 +44,4 @@ prop_numericFieldP_neg = forAll (elements muppets) $ \t ->
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })

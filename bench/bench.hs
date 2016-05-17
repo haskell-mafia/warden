@@ -31,6 +31,7 @@ import           Test.Warden.Arbitrary
 
 import           Warden.Data
 import           Warden.Numeric
+import           Warden.Parser.Field
 import           Warden.PII
 import           Warden.Row
 import           Warden.Row.Internal
@@ -98,6 +99,12 @@ prepareByteStrings :: IO (V.Vector ByteString)
 prepareByteStrings =
   fmap V.fromList $ replicateM 100 prepareByteString100
 
+prepareBools :: IO [ByteString]
+prepareBools = fmap (fmap T.encodeUtf8) . generate' (Deterministic 555) (GenSize 100) $ vectorOf 100 renderedBool
+
+prepareNonBools :: IO [ByteString]
+prepareNonBools = fmap (fmap T.encodeUtf8) . generate' (Deterministic 666) (GenSize 100) $ vectorOf 100 renderedNonBool
+
 benchABDecode :: FileFormat -> NonEmpty ViewFile -> IO ()
 benchABDecode ff vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -140,6 +147,9 @@ benchCheckPII = fmap checkPII
 benchToRow :: V.Vector ByteString -> Row
 benchToRow = toRow . Right
 
+benchCheckFieldBool :: [ByteString] -> [Bool]
+benchCheckFieldBool = fmap checkFieldBool
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -150,9 +160,11 @@ main = do
               , bench "decode/delimited-text/1000" $ nfIO (benchABDecode DelimitedText vfs)
               , bench "decode/toRow/100" $ nf benchToRow bss
             ]
-        , env prepareRow $ \ ~(rs) ->
+        , env ((,,) <$> prepareRow <*> prepareBools <*> prepareNonBools) $ \ ~(rs, bools, nonbools) ->
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
+              , bench "checkFieldBool/boolean/100" $ nf benchCheckFieldBool bools
+              , bench "checkFieldBool/non-boolean/100" $ nf benchCheckFieldBool nonbools
             ]
         , env prepareFolds $ \ ~(rs, ts, piis, nonPiis, bs100, bs10) ->
             bgroup "folds" $ [
