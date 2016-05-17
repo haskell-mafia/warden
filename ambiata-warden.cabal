@@ -124,7 +124,8 @@ library
   c-sources:           cbits/row.c
                        cbits/pii.c
   include-dirs:        cbits
-  includes:            row.h
+  includes:            warden.h
+                       row.h
                        pii.h
 
 executable             warden
