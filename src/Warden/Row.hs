@@ -77,6 +77,7 @@ decodeByteString ff sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
   where
     decodeByteString' = awaitForever $ \l ->
       yield . second unRawRecord $ AB.parseOnly ((parserFor ff) sep) l
+    {-# INLINE decodeByteString' #-}
 {-# INLINE decodeByteString #-}
 
 decodeRecord :: FileFormat
@@ -169,6 +170,7 @@ parseField t = {-# SCC parseField #-}
         void integralFieldP >> pure ParsedIntegral
       , void realFieldP >> pure ParsedReal
       ]
+    {-# INLINE numberP #-}
 {-# INLINE parseField #-}
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
@@ -335,11 +337,13 @@ combineSVParseState fft g st pct s !acc = {-# SCC combineSVParseState #-}
     pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
+    {-# INLINE combineTextCounts' #-}
 
     combinePIIObservations' x y =
       case pct of
         NoPIIChecks -> NoPIIObservations
         PIIChecks mpo -> combinePIIObservations mpo x y
+    {-# INLINE combinePIIObservations' #-}
 {-# INLINE combineSVParseState #-}
 
 resolveSVParseState :: TextFreeformThreshold

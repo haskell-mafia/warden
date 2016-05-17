@@ -66,6 +66,7 @@ updateMeanDev !macc x = {-# SCC updateMeanDev #-} case macc of
                     MStdDevAcc (StdDevAcc sda) ->
                       MStdDevAcc . StdDevAcc $!! sda + (delta * (v - (unMeanAcc m')))
       in MeanDevAcc m' s' i'
+    {-# INLINE update' #-}
 {-# INLINE updateMeanDev #-}
 
 updateNumericState :: NumericState -> Double -> NumericState
