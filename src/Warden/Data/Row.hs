@@ -195,12 +195,11 @@ instance NFData SVParseState where rnf = genericRnf
 
 makeLenses ''SVParseState
 
--- | We don't include a ParsedText here; Text is indicated by failure of
--- the parser.
+-- | Only the types we rely on an attoparsec parser to detect (cf. bool, which
+-- is done in C, and text, which is implied by failure of the other parsers).
 data ParsedField =
     ParsedIntegral
   | ParsedReal
-  | ParsedBoolean
   deriving (Eq, Show, Generic, Enum, Bounded)
 
 instance NFData ParsedField where rnf = genericRnf
