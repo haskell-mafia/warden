@@ -125,10 +125,11 @@ library
                        cbits/pii.c
                        cbits/row.c
   include-dirs:        cbits
-  includes:            warden.h
-                       field.h
+  includes:            field.h
                        pii.h
+                       predicates.h
                        row.h
+                       warden.h
 
 executable             warden
     ghc-options:       -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
