@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "pii.h"
+#include "predicates.h"
 
 /*
   Email address checks.
@@ -59,13 +60,6 @@ bool warden_check_email(char *buf, size_t n) {
 /*
    Phone number checks.
 */
-
-static inline bool is_digit(char c) {
-	if (c >= '0' && c <= '9') {
-		return TRUE;
-	}
-	return FALSE;
-}
 
 /* Stuff we expect to find separating digit groups in phone numbers. */
 static inline bool is_phone_filler(char c) {

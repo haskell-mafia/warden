@@ -40,6 +40,7 @@ updatePIIObservations mpo fi acc bs = {-# SCC updatePIIObservations #-}
             else PIIObservations $!! os'
         TooManyPIIObservations ->
             TooManyPIIObservations
+    {-# INLINE update' #-}
 {-# INLINE updatePIIObservations #-}
 
 combinePIIObservations :: MaxPIIObservations -> PIIObservations -> PIIObservations -> PIIObservations
@@ -70,12 +71,15 @@ checkPII bs = {-# SCC checkPII #-}
     phoneNumber = if checkPhoneNumber bs
       then pure PhoneNumber
       else Nothing
+    {-# INLINE phoneNumber #-}
 
     emailAddress = if checkEmail bs
       then pure EmailAddress
       else Nothing
+    {-# INLINE emailAddress #-}
 
     address = if checkAddress $ asciiToLower bs
       then pure Address
       else Nothing
+    {-# INLINE address #-}
 {-# INLINE checkPII #-}

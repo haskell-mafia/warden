@@ -6,6 +6,7 @@
 
 module Warden.Parser.Field (
     checkFieldBool
+  , checkFieldNumeric
   , integralFieldP
   , realFieldP
   , numericFieldP
@@ -26,6 +27,7 @@ import           System.IO (IO)
 import           System.IO.Unsafe (unsafePerformIO)
 
 import           Warden.Data.Numeric
+import           Warden.Data.Field
 import           Warden.Parser.Common
 
 checkFieldBool :: ByteString -> Bool
@@ -36,6 +38,24 @@ checkFieldBool bs = {-# SCC checkFieldBool #-}
 {-# INLINE checkFieldBool #-}
 
 foreign import ccall unsafe warden_field_bool
+  :: Ptr Word8
+  -> CSize
+  -> IO Word8
+
+-- | Tests for the presence of an integral/real field without storing the
+-- value. Faster than 'integralFieldP' and 'realFieldP'.
+checkFieldNumeric :: ByteString -> Maybe' FieldLooks
+checkFieldNumeric bs = {-# SCC checkFieldNumeric #-}
+  unsafePerformIO $ do
+    BSU.unsafeUseAsCStringLen bs $ \(bsPtr, bsLen) ->
+      cNumericField <$> warden_field_numeric (castPtr bsPtr) (fromIntegral bsLen)
+  where
+    cNumericField 1 = Just' LooksIntegral
+    cNumericField 2 = Just' LooksReal
+    cNumericField _ = Nothing'
+{-# INLINE checkFieldNumeric #-}
+
+foreign import ccall unsafe warden_field_numeric
   :: Ptr Word8
   -> CSize
   -> IO Word8

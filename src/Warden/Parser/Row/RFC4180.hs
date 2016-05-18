@@ -59,6 +59,7 @@ escapedFieldP = {-# SCC escapedFieldP #-} do
         else if st
           then Nothing
           else Just False
+    {-# INLINE endOfField #-}
 {-# INLINE escapedFieldP #-}
 
 unescapedFieldP :: Separator -> Parser ByteString
@@ -69,4 +70,5 @@ unescapedFieldP !(Separator sep) = {-# SCC unescapedFieldP #-}
     fieldByte c =
          c /= sep
       && c /= doubleQuote
+    {-# INLINE fieldByte #-}
 {-# INLINE unescapedFieldP #-}

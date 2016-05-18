@@ -77,6 +77,7 @@ decodeByteString ff sep (LineBound lb) _vf = {-# SCC decodeByteString #-}
   where
     decodeByteString' = awaitForever $ \l ->
       yield . second unRawRecord $ AB.parseOnly ((parserFor ff) sep) l
+    {-# INLINE decodeByteString' #-}
 {-# INLINE decodeByteString #-}
 
 decodeRecord :: FileFormat
@@ -154,21 +155,17 @@ toRow (Left !e) = {-# SCC toRow #-}
   RowFailure $ T.pack e
 {-# INLINE toRow #-}
 
+-- | Try parsing as all the specific field types. If none work, we default
+-- to 'LooksText'.
 parseField :: ByteString -> FieldLooks
 parseField "" = {-# SCC parseField #-}
   LooksEmpty
 parseField t = {-# SCC parseField #-}
   if checkFieldBool t
     then LooksBoolean
-    else case AB.parseOnly numberP t of
-      Left _ -> LooksText
-      Right ParsedIntegral -> LooksIntegral
-      Right ParsedReal -> LooksReal
-  where
-    numberP = AB.choice [
-        void integralFieldP >> pure ParsedIntegral
-      , void realFieldP >> pure ParsedReal
-      ]
+    else case checkFieldNumeric t of
+      Nothing' -> LooksText
+      Just' x -> x
 {-# INLINE parseField #-}
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
@@ -335,11 +332,13 @@ combineSVParseState fft g st pct s !acc = {-# SCC combineSVParseState #-}
     pure $ acc' & reservoirState .~ fra'
   where
     combineTextCounts' = combineTextCounts fft
+    {-# INLINE combineTextCounts' #-}
 
     combinePIIObservations' x y =
       case pct of
         NoPIIChecks -> NoPIIObservations
         PIIChecks mpo -> combinePIIObservations mpo x y
+    {-# INLINE combinePIIObservations' #-}
 {-# INLINE combineSVParseState #-}
 
 resolveSVParseState :: TextFreeformThreshold

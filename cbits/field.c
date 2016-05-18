@@ -1,6 +1,7 @@
 #include <string.h>
 
-#include "warden.h"
+#include "field.h"
+#include "predicates.h"
 
 bool warden_field_bool(char *buf, size_t n) {
 	/* little-endian "false" */
@@ -39,4 +40,77 @@ bool warden_field_bool(char *buf, size_t n) {
 		return TRUE;
 	}
 	return FALSE;
+}
+
+/* Returns integral_field for a (possibly signed) decimal integer.
+
+   Returns real_field for a (possibly signed) decimal number, possibly
+   in scientific notation.
+
+   Otherwise returns non_numeric_field. */
+numeric_field warden_field_numeric(char *buf, size_t n) {
+	size_t i = 0;
+	int preradix_digits = 0; /* digits before the radix point */
+	int exponent_digits = 0; /* digits in the exponent (scientific notation) */
+
+	if (n < 1) {
+		return non_numeric_field;
+	}
+	if (buf[i] == '+' || buf[i] == '-') {
+		i++;
+	}
+	while (is_digit(buf[i]) && i < n) {
+		i++;
+		preradix_digits++;
+	}
+
+	/* "+" or "-" on its own */
+	if (preradix_digits == 0) {
+		return non_numeric_field;
+	}
+
+	/* got the whole int, we're done */
+	if (i == n) {
+		return integral_field;
+	}
+
+	/* optional postradix part */
+	if (buf[i] == '.') {
+		i++;
+		while (i < n && is_digit(buf[i])) {
+			i++;
+		}
+		/* one of "n." or "n.m", counts as real either way */
+		if (i == n) {
+			return real_field;
+		}
+	}
+
+	/* scientific notation, or just cruft on the end? */
+	if (buf[i] != 'e') {
+		/* cruft */
+		return non_numeric_field;
+	}
+
+	/* scientific notation */
+
+	i++;
+
+	if (i < n && (buf[i] == '+' || buf[i] == '-')) {
+		i++;
+	}
+
+	while (i < n && is_digit(buf[i])) {
+		i++;
+		exponent_digits++;
+	}
+
+	/* need at least one exponent digit, "1.2e-" doesn't make sense on its
+	   own */
+	if (i == n && exponent_digits) {
+		return real_field;
+	}
+
+	/* just cruft on the end after all */
+	return non_numeric_field;
 }
