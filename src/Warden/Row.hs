@@ -155,22 +155,17 @@ toRow (Left !e) = {-# SCC toRow #-}
   RowFailure $ T.pack e
 {-# INLINE toRow #-}
 
+-- | Try parsing as all the specific field types. If none work, we default
+-- to 'LooksText'.
 parseField :: ByteString -> FieldLooks
 parseField "" = {-# SCC parseField #-}
   LooksEmpty
 parseField t = {-# SCC parseField #-}
   if checkFieldBool t
     then LooksBoolean
-    else case AB.parseOnly numberP t of
-      Left _ -> LooksText
-      Right ParsedIntegral -> LooksIntegral
-      Right ParsedReal -> LooksReal
-  where
-    numberP = AB.choice [
-        void integralFieldP >> pure ParsedIntegral
-      , void realFieldP >> pure ParsedReal
-      ]
-    {-# INLINE numberP #-}
+    else case checkFieldNumeric t of
+      Nothing' -> LooksText
+      Just' x -> x
 {-# INLINE parseField #-}
 
 updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
