@@ -168,9 +168,9 @@ parseField t = {-# SCC parseField #-}
       Just' x -> x
 {-# INLINE parseField #-}
 
-updateFieldLooks :: ByteString -> VU.Vector ObservationCount -> VU.Vector ObservationCount
-updateFieldLooks !t !a = {-# SCC updateFieldLooks #-}
-  VU.accum (+) a [(fromEnum (parseField t), 1)]
+updateFieldLooks :: FieldLooks -> VU.Vector ObservationCount -> VU.Vector ObservationCount
+updateFieldLooks !fl !a = {-# SCC updateFieldLooks #-}
+  VU.accum (+) a [(fromEnum fl, 1)]
 {-# INLINE updateFieldLooks #-}
 
 updateTextCounts :: TextFreeformThreshold -> Row -> TextCounts -> TextCounts
@@ -183,6 +183,10 @@ updateTextCounts _ _ tc = {-# SCC updateTextCounts #-} tc
 {-# INLINE updateTextCounts #-}
 
 -- | Accumulator for field/row counts on tokenized raw data.
+--
+-- This is the main workhorse of the core fold which produces the view
+-- metadata - all the state that's serialized at the end of a check or
+-- used to calculate the check status is updated here.
 updateSVParseState :: TextFreeformThreshold
                    -> Gen (PrimState IO)
                    -> SamplingType
@@ -196,16 +200,19 @@ updateSVParseState fft g sType pct !st row = {-# SCC updateSVParseState #-}
       rc = good + bad + (st ^. totalRows)
       fns = st ^. numericState
       fra = st ^. reservoirState
+      -- Hold on to the FieldLooks vector here so we can use it to
+      -- distinguish fields which need numeric updates.
+      (fls, flc) = updateFields row $ st ^. fieldLooks
       st' =  (totalRows %~ ((good + bad) +))
            . (badRows %~ (bad +))
            . (numFields %~ (updateNumFields row))
-           . (fieldLooks %~ (updateFields row))
+           . (fieldLooks .~ flc)
            . (textCounts %~ (updateTextCounts fft row))
            . (piiState %~ (updatePIIState pct row))
            $!! st in do
   -- Do all the numeric stuff at once so we don't have to determine if the
   -- values are numeric multiple times.
-  (fns', fra') <- liftIO $ updateFieldNumerics g rc sType row fns fra
+  (fns', fra') <- liftIO $ updateFieldNumerics g rc sType row fls fns fra
   pure $!! st' & numericState .~ fns' & reservoirState .~ fra'
   where
     countGood (SVFields _)   = RowCount 1
@@ -234,34 +241,51 @@ updateNumFields (SVFields !v) !ns = {-# SCC updateNumFields #-}
 updateNumFields _ !ns = {-# SCC updateNumFields #-} ns
 {-# INLINE updateNumFields #-}
 
-updateFields :: Row -> FieldLookCount -> FieldLookCount
+updateFields :: Row -> FieldLookCount -> (Maybe' (V.Vector FieldLooks), FieldLookCount)
 updateFields (SVFields !v) NoFieldLookCount = {-# SCC updateFields #-}
-  FieldLookCount $ V.zipWith updateFieldLooks v $
-    V.replicate (V.length v) emptyLookCountVector
+  let ls = V.map parseField v
+      flc = FieldLookCount $ V.zipWith updateFieldLooks ls $
+        V.replicate (V.length v) emptyLookCountVector in
+  (,) (Just' ls) $!! flc
 updateFields (SVFields !v) (FieldLookCount !a) = {-# SCC updateFields #-}
-  FieldLookCount $!! V.zipWith updateFieldLooks v a
-updateFields _ !a = {-# SCC updateFields #-} a
+  let ls = V.map parseField v
+      flc = FieldLookCount $ V.zipWith updateFieldLooks ls a in
+  (,) (Just' ls) $!! flc
+updateFields _ !a = {-# SCC updateFields #-} (Nothing', a)
 {-# INLINE updateFields #-}
 
--- FIXME: parsing fields twice
 updateFieldNumerics :: Gen (PrimState IO)
                     -> RowCount
                     -> SamplingType
                     -> Row
+                    -> Maybe' (V.Vector FieldLooks)
                     -> FieldNumericState
                     -> FieldReservoirAcc
                     -> IO (FieldNumericState, FieldReservoirAcc)
-updateFieldNumerics g rc st (SVFields v) fns fra = {-# SCC updateFieldNumerics #-}
-  let ns = V.map (toMNumericField . AB.parseOnly numericFieldP) v
+updateFieldNumerics g rc st (SVFields v) fls fns fra = {-# SCC updateFieldNumerics #-}
+  -- If we have FieldLooks results for these fields, use them as a hint to
+  -- avoid parsing fields we know are not numeric.
+  let ns = maybe' (V.map parseProbablyNumeric v) (V.zipWith isNumeric v) fls
       fns' = updateFieldNumericState ns fns in do
   fra' <- case st of
     NoSampling -> pure fra
     ReservoirSampling rs -> updateFieldReservoirAcc g rs rc ns fra
   pure (fns', fra')
   where
+    isNumeric f fl =
+      if looksNumeric fl
+        then parseProbablyNumeric f
+        else NoNumericField
+    {-# INLINE isNumeric #-}
+
+    parseProbablyNumeric f =
+      toMNumericField $ AB.parseOnly numericFieldP f
+    {-# INLINE parseProbablyNumeric #-}
+
     toMNumericField (Left _) = NoNumericField
     toMNumericField (Right x) = MNumericField x
-updateFieldNumerics _ _ _ _ fns fra = {-# SCC updateFieldNumerics #-}
+    {-# INLINE toMNumericField #-}
+updateFieldNumerics _ _ _ _ _ fns fra = {-# SCC updateFieldNumerics #-}
   pure (fns, fra)
 {-# INLINE updateFieldNumerics #-}
 
