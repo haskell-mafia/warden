@@ -56,6 +56,15 @@ prop_checkFieldNumeric_neg n m = forAll (elements muppets) $ \b ->
       r = all (== Nothing') $ checkFieldNumeric <$> bss in
   r === True
 
+-- Unit tests for edge cases QC might take a while to stumble upon.
+prop_checkFieldNumeric_neg_weird :: Property
+prop_checkFieldNumeric_neg_weird =
+  let bs1 = "1.2e"
+      bs2 = "1e+"
+      bss = [bs1, bs2]
+      r = all (== Nothing') $ checkFieldNumeric <$> bss in
+  once $ r === True
+
 prop_numericFieldP_pos :: Int -> Double -> Property
 prop_numericFieldP_pos n m =
   let tn = T.encodeUtf8 $ renderIntegral n
