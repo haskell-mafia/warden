@@ -14,6 +14,7 @@ module Warden.Data.Field (
   , FieldLooks(..)
   , FieldType(..)
   , fieldTypeIncludes
+  , looksNumeric
   , parseFieldLooks
   , parseFieldType
   , renderCompatibleEntries
@@ -118,6 +119,14 @@ parseFieldLooks "looks-real" = pure LooksReal
 parseFieldLooks "looks-text" = pure LooksText
 parseFieldLooks "looks-boolean" = pure LooksBoolean
 parseFieldLooks _ = Nothing
+
+looksNumeric :: FieldLooks -> Bool
+looksNumeric LooksEmpty = False
+looksNumeric LooksIntegral = True
+looksNumeric LooksReal = True
+looksNumeric LooksText = False
+looksNumeric LooksBoolean = False
+{-# INLINE looksNumeric #-}
 
 -- | Schema field types kinda look like a join semilattice under set
 -- inclusion. For example, if a given field is classified as a 

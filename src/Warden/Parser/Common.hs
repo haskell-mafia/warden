@@ -23,6 +23,7 @@ import           Warden.Data.Row
 cBool :: Word8 -> Bool
 cBool 0 = False
 cBool _ = True
+{-# INLINE cBool #-}
 
 sepByByte1P :: Parser a -> Separator -> Parser [a]
 sepByByte1P p !sep = {-# SCC sepByByte1P #-}

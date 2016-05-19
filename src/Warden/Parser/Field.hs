@@ -53,6 +53,7 @@ checkFieldNumeric bs = {-# SCC checkFieldNumeric #-}
     cNumericField 1 = Just' LooksIntegral
     cNumericField 2 = Just' LooksReal
     cNumericField _ = Nothing'
+    {-# INLINE cNumericField #-}
 {-# INLINE checkFieldNumeric #-}
 
 foreign import ccall unsafe warden_field_numeric
