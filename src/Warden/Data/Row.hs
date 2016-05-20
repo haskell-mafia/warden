@@ -183,10 +183,16 @@ data SVParseState =
   SVParseState {
     _badRows :: {-# UNPACK #-} !RowCount
   , _totalRows :: {-# UNPACK #-} !RowCount
+  -- | Unique counts of fields per row.
   , _numFields :: !(Set FieldCount)
+  -- | Table of guesses of data type for each field.
   , _fieldLooks :: !FieldLookCount
+  -- | Hashes of unique field values, used to determine if a field is
+  -- categorical. 
   , _textCounts :: !TextCounts
+  -- | Summary statistics for numeric fields.
   , _numericState :: !FieldNumericState
+  -- | Uniform sample of values from numeric fields.
   , _reservoirState :: !FieldReservoirAcc
   , _piiState :: !PIIObservations
   } deriving (Generic)

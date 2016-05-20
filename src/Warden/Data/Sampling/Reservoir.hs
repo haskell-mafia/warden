@@ -26,6 +26,8 @@ data ReservoirAcc =
 
 instance NFData ReservoirAcc where rnf = genericRnf
 
+-- | Reservoir is the same size as the final sample;
+-- one is stored for every numeric field.
 newtype Reservoir =
   Reservoir {
     unReservoir :: MVU.IOVector Double
