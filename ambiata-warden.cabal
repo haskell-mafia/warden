@@ -59,7 +59,7 @@ library
                        -Wall
 
   cc-options:
-                       -O3
+                       -O3 -Wall -Werror
 
   hs-source-dirs:
                        src gen
