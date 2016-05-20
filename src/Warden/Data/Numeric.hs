@@ -244,10 +244,15 @@ instance AEq MeanDevAcc where
     , n1 == n2
     ]
 
+-- | State stored for every field with numeric
+-- observations.
 data NumericState =
   NumericState {
       _stateMinimum :: !Minimum
     , _stateMaximum :: !Maximum
+    -- | Accumulator for mean/stddev - Welford's method
+    -- stores the current mean and the current
+    -- sum-of-squares of deviations from the mean.
     , _stateMeanDev :: !MeanDevAcc
     } deriving (Eq, Show, Generic)
 
