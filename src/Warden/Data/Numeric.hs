@@ -103,7 +103,18 @@ instance NFData KAcc where rnf = genericRnf
 newtype MeanAcc =
   MeanAcc {
     unMeanAcc :: Double
-  } deriving (Eq, Show, Generic)
+  } deriving (
+      Eq
+    , Show
+    , Generic
+    , Ord
+    , Num
+    , Real
+    , Fractional
+    , RealFrac
+    , Floating
+    , RealFloat
+  )
 
 instance NFData MeanAcc where rnf = genericRnf
 
@@ -147,7 +158,18 @@ instance NFData Median where rnf = genericRnf
 newtype StdDevAcc =
   StdDevAcc {
     unStdDevAcc :: Double
-  } deriving (Eq, Show, Generic)
+  } deriving (
+      Eq
+    , Show
+    , Generic
+    , Ord
+    , Num
+    , Real
+    , Fractional
+    , RealFrac
+    , Floating
+    , RealFloat
+  )
 
 instance NFData StdDevAcc where rnf = genericRnf
 

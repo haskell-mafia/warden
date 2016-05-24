@@ -7,7 +7,7 @@ module Test.Warden.Numeric where
 import           Data.List (take)
 import qualified Data.Vector.Unboxed as VU
 
-import           Disorder.Core.Property ((~~~))
+import           Disorder.Core.Property ((~~~), (###))
 import           Disorder.Core.UniquePair (UniquePair)
 
 import           P
@@ -96,6 +96,18 @@ prop_updateNumericState_associative xs =
 prop_combineNumericState_commutative :: UniquePair NumericState -> Property
 prop_combineNumericState_commutative = commutativity combineNumericState
 
+meanDevAccEq :: MeanDevAcc -> MeanDevAcc -> Property
+meanDevAccEq (MeanDevAcc m1 (MStdDevAcc d1) k1) (MeanDevAcc m2 (MStdDevAcc d2) k2) = conjoin [
+    m1 ### m2
+  , d1 ### d2
+  , k1 === k2
+  ]
+meanDevAccEq (MeanDevAcc m1 NoStdDevAcc k1) (MeanDevAcc m2 NoStdDevAcc k2) = conjoin [
+    m1 ### m2
+  , k1 === k2
+  ]
+meanDevAccEq x y = x ~~~ y
+
 prop_combineMeanDevAcc :: Property
 prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n (arbitrary :: Gen Double)) $ \xs ->
   let m = n `div` 2
@@ -105,7 +117,7 @@ prop_combineMeanDevAcc = forAll smallPositiveEven $ \n -> forAll (vectorOf n (ar
       mda1 = foldl updateMeanDev MeanDevInitial xs1
       mda2 = foldl updateMeanDev MeanDevInitial xs2
       mda' = combineMeanDevAcc mda1 mda2 in
-  mda ~~~ mda'
+  mda `meanDevAccEq` mda'
 
 prop_tripping_StdDevAcc :: KAcc -> StdDevAcc -> Property
 prop_tripping_StdDevAcc ka sda =
