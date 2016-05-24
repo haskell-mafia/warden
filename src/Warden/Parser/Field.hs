@@ -103,4 +103,4 @@ readNumeric bs = {-# SCC readNumeric #-}
         Just (n, "") -> Just' $ NumericField n
         _ -> Nothing'
     {-# INLINE real #-}
-{-# INLINE readNumeric #-}
+{-# INLINABLE readNumeric #-}
