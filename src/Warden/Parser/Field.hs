@@ -8,14 +8,17 @@ module Warden.Parser.Field (
     checkFieldBool
   , checkFieldNumeric
   , integralFieldP
-  , realFieldP
   , numericFieldP
+  , readNumeric
+  , realFieldP
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
 import           Data.Attoparsec.ByteString (endOfInput, choice)
 import           Data.Attoparsec.ByteString.Char8 (decimal, signed, double)
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Lex.Fractional as LexF
+import qualified Data.ByteString.Lex.Integral as LexI
 import qualified Data.ByteString.Unsafe as BSU
 
 import           Foreign (Ptr, Word8, castPtr)
@@ -78,3 +81,26 @@ numericFieldP = {-# SCC numericFieldP #-}
   , (NumericField . fromIntegral) <$> integralFieldP
   ]
 {-# INLINE numericFieldP #-}
+
+readNumeric :: ByteString -> Maybe' NumericField
+readNumeric bs = {-# SCC readNumeric #-}
+  case integral bs of
+    Just' n ->
+      Just' n
+    Nothing' ->
+      real bs
+  where
+    integral s =
+      case LexI.readSigned LexI.readDecimal s of
+        Nothing -> Nothing'
+        Just (n, "") -> Just' . NumericField $ fromIntegral (n :: Int64)
+        _ -> Nothing'
+    {-# INLINE integral #-}
+
+    real s =
+      case LexF.readSigned LexF.readExponential s of
+        Nothing -> Nothing'
+        Just (n, "") -> Just' $ NumericField n
+        _ -> Nothing'
+    {-# INLINE real #-}
+{-# INLINE readNumeric #-}

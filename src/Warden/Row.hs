@@ -279,12 +279,10 @@ updateFieldNumerics g rc st (SVFields v) fls fns fra = {-# SCC updateFieldNumeri
     {-# INLINE isNumeric #-}
 
     parseProbablyNumeric f =
-      toMNumericField $ AB.parseOnly numericFieldP f
+      case readNumeric f of
+        Nothing' -> NoNumericField
+        Just' n -> MNumericField n
     {-# INLINE parseProbablyNumeric #-}
-
-    toMNumericField (Left _) = NoNumericField
-    toMNumericField (Right x) = MNumericField x
-    {-# INLINE toMNumericField #-}
 updateFieldNumerics _ _ _ _ _ fns fra = {-# SCC updateFieldNumerics #-}
   pure (fns, fra)
 {-# INLINE updateFieldNumerics #-}
