@@ -8,10 +8,7 @@
 /* Stuff we expect to find separating digit groups in phone numbers,
  * credit card numbers, et cetera. */
 static inline bool is_number_filler(char c) {
-	if (c == ' ' || c == '-' || c == '.') {
-		return TRUE;
-	}
-	return FALSE;
+	return (c == ' ' || c == '-' || c == '.');
 }
 
 /*
@@ -84,10 +81,7 @@ static inline bool check_international_phone(char *buf, size_t n) {
 			return FALSE;
 		}
 	}
-	if (phone_chars == 11) {
-		return TRUE;
-	}
-	return FALSE;
+	return (phone_chars == 11);
 }
 
 static inline bool check_australian_phone(char *buf, size_t n) {
@@ -115,10 +109,7 @@ static inline bool check_australian_phone(char *buf, size_t n) {
 			return FALSE;
 		}
 	}
-	if (phone_chars == 8) {
-		return TRUE;
-	}
-	return FALSE;
+	return (phone_chars == 8);
 }
 
 bool warden_check_phone_number(char *buf, size_t n) {
