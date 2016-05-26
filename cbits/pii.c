@@ -230,6 +230,7 @@ bool warden_check_creditcard(char *buf, size_t n) {
 	char c;
 	size_t i;
 	int luhn_sum = 0;
+	int num_digits = 0;
 	bool doubling_digit = FALSE;
 
 	/* CC numbers are of varying length, but no major vendor is
@@ -247,6 +248,11 @@ bool warden_check_creditcard(char *buf, size_t n) {
 		 * sum. */
 		if (is_digit(c)) {
 			int x = c - '0';
+
+			num_digits++;
+
+			/* We double every second digit from the right-hand-side
+			 * (starting with the penultimate digit). */
 			if (doubling_digit) {
 				x *= 2;
 				if (x > 9) {
@@ -263,5 +269,7 @@ bool warden_check_creditcard(char *buf, size_t n) {
 		}
 	}
 
-	return (luhn_sum % 10 == 0);
+	/* Check digit must be correct and we must have seen at least
+	 * twelve digits (to avoid cases like "0-----------" matching). */
+	return (luhn_sum % 10 == 0) && (num_digits >= 12);
 }
