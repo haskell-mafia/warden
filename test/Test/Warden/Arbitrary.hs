@@ -687,6 +687,72 @@ genPII = oneof [
   , (fmap (flip (,) Address)) genAddress
   ]
 
+genCreditCard :: Gen BS.ByteString
+genCreditCard = do
+  ds <- fmap (BS.concat . fmap (encodeUtf8 . renderIntegral)) genCreditCardDigits
+  oneof [
+      pure ds
+    , mangle ds
+    ]
+  where
+    genCreditCardDigits :: Gen [Int]
+    genCreditCardDigits = do
+      ccLen <- choose (12, 19)
+      mainDigs <- vectorOf ccLen $ choose (0, 9)
+      pure $ mainDigs <> [luhnCheckDigit mainDigs]
+
+    luhnCheckDigit ds =
+      case (luhn ds) `mod` 10 of
+        0 -> 0
+        n -> 10 - n
+
+    luhn =
+      fst . foldl luhn' (0, True) . reverse
+
+    luhn' (acc, False) d =
+      (acc + d, True)
+    luhn' (acc, True) d =
+      let d' = if (d * 2) > 9
+                 then (d * 2) - 9
+                 else d * 2 in
+      (acc + d', False)
+
+    mangle ds = do
+      filler <- fmap BS.singleton $ elements [0x20, 0x2d, 0x2e] -- space, hyphen, period
+      pure . BS.intercalate filler $ splitEvery 4 ds
+
+    splitEvery n bs =
+      if BS.null bs
+        then pure bs
+        else
+          let c = BS.take n bs
+              bs' = BS.drop n bs in
+          c : (splitEvery n bs')
+
+genNonCreditCard :: Gen BS.ByteString
+genNonCreditCard = oneof [tooShort, tooLong, badLuhn]
+  where
+    tooShort = do
+      n <- choose (0, 11)
+      cc <- genCreditCard
+      pure $ BS.take n cc
+
+    tooLong = do
+      n <- choose (26, 50)
+      fmap BS.pack $ vectorOf n arbitrary
+
+    -- Insert a single-digit error into a valid CC number, which the Luhn
+    -- check should find.
+    badLuhn = do
+      cc <- genCreditCard
+      ix <- choose (0, (BS.length cc) - 1) `suchThat` (\ix -> digit (BS.index cc ix))
+      let old = BS.index cc ix
+      new <- fmap BS.singleton $ choose (0x30, 0x39) `suchThat` (/= old) -- 1-9
+      let (l, r) = (BS.take ix cc, BS.drop (ix+1) cc)
+      pure $ BS.concat [l, new, r]
+
+    digit c = c >= 0x30 && c <= 0x39
+
 nonPhoneNumber :: Gen BS.ByteString
 nonPhoneNumber = oneof [tooShort, tooLong, leadingZeroes]
   where

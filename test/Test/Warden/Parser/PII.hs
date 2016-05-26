@@ -49,6 +49,14 @@ prop_checkAddress_neg (NPlus n) = forAll (elements muppets) $ \m ->
       rs = checkAddress <$> [bs1, bs2, bs3] in
   and (not <$> rs) === True
 
+prop_checkCreditCard_pos :: Property
+prop_checkCreditCard_pos = forAll genCreditCard $ \a ->
+  checkCreditCard a === True
+
+prop_checkCreditCard_neg :: Property
+prop_checkCreditCard_neg = forAll genNonCreditCard $ \a ->
+  checkCreditCard a === False
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })
