@@ -5,6 +5,15 @@
 #include "pii.h"
 #include "predicates.h"
 
+/* Stuff we expect to find separating digit groups in phone numbers,
+ * credit card numbers, et cetera. */
+static inline bool is_number_filler(char c) {
+	if (c == ' ' || c == '-' || c == '.') {
+		return TRUE;
+	}
+	return FALSE;
+}
+
 /*
   Email address checks.
 */
@@ -61,14 +70,6 @@ bool warden_check_email(char *buf, size_t n) {
    Phone number checks.
 */
 
-/* Stuff we expect to find separating digit groups in phone numbers. */
-static inline bool is_phone_filler(char c) {
-	if (c == ' ' || c == '-' || c == '.') {
-		return TRUE;
-	}
-	return FALSE;
-}
-
 /* Matches numbers of the form +xxxxxxxxxxx
    Expects the initial '+' to be removed/already checked. */
 static inline bool check_international_phone(char *buf, size_t n) {
@@ -79,7 +80,7 @@ static inline bool check_international_phone(char *buf, size_t n) {
 	for (i = 0; i < n; i++) {
 		if (is_digit(buf[i])) {
 			phone_chars++;
-		} else if (!is_phone_filler(buf[i])) {
+		} else if (!is_number_filler(buf[i])) {
 			return FALSE;
 		}
 	}
@@ -110,7 +111,7 @@ static inline bool check_australian_phone(char *buf, size_t n) {
 	for (i = 2; i < n; i++) {
 		if (is_digit(buf[i])) {
 			phone_chars++;
-		} else if (!is_phone_filler(buf[i])) {
+		} else if (!is_number_filler(buf[i])) {
 			return FALSE;
 		}
 	}
@@ -219,4 +220,48 @@ bool warden_check_address(char *buf, size_t n) {
 	/* Check that a valid street type is present as a suffix; we
 	   don't care what else is at the end of the string. */
 	return check_street_type(buf + i, n - i);
+}
+
+/* Use the Luhn algorithm to check for potential credit card numbers,
+ * after performing some sanity checks on the length.
+ *
+ * https://en.wikipedia.org/wiki/Luhn_algorithm */
+bool warden_check_creditcard(char *buf, size_t n) {
+	char c;
+	size_t i;
+	int luhn_sum = 0;
+	bool doubling_digit = FALSE;
+
+	/* CC numbers are of varying length, but no major vendor is
+	 * less than 12 bytes (Maestro). The longest is VISA (19),
+	 * and we leave some room for filler characters. */
+	if (n < 12 || n > 25) {
+		return FALSE;
+	}
+
+	/* Walk backwards through the field accumulating a Luhn sum
+	 * and exiting early if we see impossible things. */
+	for (i = n; i > 0; i--) {
+		c = buf[i-1];
+		/* If it's a digit, add its numeric value to the Luhn
+		 * sum. */
+		if (is_digit(c)) {
+			int x = c - '0';
+			if (doubling_digit) {
+				x *= 2;
+				if (x > 9) {
+					x -= 9;
+				}
+			}
+			luhn_sum += x;
+			doubling_digit = ~doubling_digit;
+		}
+		/* Letters and random punctuation don't belong here,
+		 * but we expect hyphens or spaces. */
+		else if (!is_number_filler(c)) {
+			return FALSE;
+		}
+	}
+
+	return (luhn_sum % 10 == 0);
 }

@@ -6,6 +6,7 @@
 
 module Warden.Parser.PII (
     checkAddress
+  , checkCreditCard
   , checkEmail
   , checkPhoneNumber
   , streetTypes
@@ -67,6 +68,20 @@ checkAddress bs = {-# SCC checkAddress #-}
       cBool <$> warden_check_address (castPtr bsPtr) (fromIntegral bsLen)
 
 foreign import ccall unsafe warden_check_address
+  :: Ptr Word8
+  -> CSize
+  -> IO Word8
+
+-- | Use the Luhn algorithm to check for potential credit card numbers.
+--
+-- https://en.wikipedia.org/wiki/Luhn_algorithm
+checkCreditCard :: ByteString -> Bool
+checkCreditCard bs = {-# SCC checkCreditCard #-}
+  unsafePerformIO $ do
+    BSU.unsafeUseAsCStringLen bs $ \(bsPtr, bsLen) ->
+      cBool <$> warden_check_creditcard (castPtr bsPtr) (fromIntegral bsLen)
+
+foreign import ccall unsafe warden_check_creditcard
   :: Ptr Word8
   -> CSize
   -> IO Word8
