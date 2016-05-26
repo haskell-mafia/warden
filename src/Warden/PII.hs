@@ -63,7 +63,7 @@ combinePIIObservations (MaxPIIObservations mpo) (PIIObservations po1) (PIIObserv
 
 checkPII :: ByteString -> Maybe PIIType
 checkPII bs = {-# SCC checkPII #-}
-  let piis = [phoneNumber, emailAddress, address] in
+  let piis = [phoneNumber, emailAddress, creditCard, address] in
   case nonEmpty (catMaybes piis) of
     Nothing -> Nothing
     Just (p:|_) -> pure p
@@ -82,4 +82,9 @@ checkPII bs = {-# SCC checkPII #-}
       then pure Address
       else Nothing
     {-# INLINE address #-}
+
+    creditCard = if checkCreditCard bs
+      then pure CreditCard
+      else Nothing
+    {-# INLINE creditCard #-}
 {-# INLINE checkPII #-}

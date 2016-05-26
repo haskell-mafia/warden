@@ -685,6 +685,7 @@ genPII = oneof [
     (fmap (flip (,) PhoneNumber)) genPhoneNumber
   , (fmap (flip (,) EmailAddress)) genEmail
   , (fmap (flip (,) Address)) genAddress
+  , (fmap (flip (,) CreditCard)) genCreditCard
   ]
 
 genCreditCard :: Gen BS.ByteString
