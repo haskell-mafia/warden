@@ -731,16 +731,12 @@ genCreditCard = do
           c : (splitEvery n bs')
 
 genNonCreditCard :: Gen BS.ByteString
-genNonCreditCard = oneof [tooShort, tooLong, badLuhn]
+genNonCreditCard = oneof [tooShort, badLuhn]
   where
     tooShort = do
       n <- choose (0, 11)
       cc <- genCreditCard
       pure $ BS.take n cc
-
-    tooLong = do
-      n <- choose (26, 50)
-      fmap BS.pack $ vectorOf n arbitrary
 
     -- Insert a single-digit error into a valid CC number, which the Luhn
     -- check should find.

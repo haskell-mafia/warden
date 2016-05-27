@@ -226,8 +226,10 @@ bool warden_check_creditcard(char *buf, size_t n) {
 
 	/* CC numbers are of varying length, but no major vendor is
 	 * less than 12 bytes (Maestro). The longest is VISA (19),
-	 * and we leave some room for filler characters. */
-	if (n < 12 || n > 25) {
+	 * and we need some room for filler characters, but due to the
+	 * potential for unpredictable amounts of padding we don't
+	 * check the upper bound here. */
+	if (n < 12) {
 		return FALSE;
 	}
 
@@ -261,6 +263,7 @@ bool warden_check_creditcard(char *buf, size_t n) {
 	}
 
 	/* Check digit must be correct and we must have seen at least
-	 * twelve digits (to avoid cases like "0-----------" matching). */
+	 * twelve digits (to avoid cases like "0-----------"
+	 * matching). */
 	return (luhn_sum % 10 == 0) && (num_digits >= 12);
 }
