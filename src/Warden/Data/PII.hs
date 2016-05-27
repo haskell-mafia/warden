@@ -30,6 +30,7 @@ data PIIType =
   | PhoneNumber
   | Address
   | DateOfBirth
+  | CreditCard
   deriving (Eq, Show, Ord, Generic, Enum, Bounded)
 
 instance NFData PIIType where rnf = genericRnf
@@ -39,6 +40,7 @@ renderPIIType EmailAddress = "email address"
 renderPIIType PhoneNumber = "phone number"
 renderPIIType Address = "address"
 renderPIIType DateOfBirth = "date of birth"
+renderPIIType CreditCard = "credit card"
 
 data PotentialPII =
     PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
