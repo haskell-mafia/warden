@@ -34,6 +34,7 @@ data Command =
   | SingleFileCheck !ViewFile !CheckParams
   | Infer !Verbosity !FieldMatchRatio !InferUsingFailedChecks !SchemaFile ![FilePath]
   | Sanity !View !SanityParams
+  | SummarizeMarkers ![FilePath]
   | ValidateSchema !SchemaFile
   deriving (Eq, Show)
 
@@ -60,6 +61,8 @@ run wps (SingleFileCheck vf ps) = do
 run _wps (Infer v fmr fc sf fs) = do
   s <- orDie renderWardenError . mapEitherT runResourceT $ infer v fmr fc fs
   T.writeFile (unSchemaFile sf) $ renderSchema s
+run _wps (SummarizeMarkers fs) = do
+  void . orDie renderWardenError . mapEitherT runResourceT $ summarizeMarkers fs
 run wps (Sanity v sps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
   finishCheck (sanityVerbosity sps) (sanityExitType sps) r
@@ -79,6 +82,7 @@ wardenP = subparser $
      command' "check" "Run checks over a view." checkP
   <> command' "check-file" "Run checks over a single file." fileCheckP
   <> command' "infer" "Attempt to infer a schema from a set of metadata files." inferP
+  <> command' "marker" "Commands for dealing with marker files." summarizeMarkersP
   <> command' "sanity" "Run pre-extract sanity checks over a view." sanityP
   <> command' "validate-schema" "Validate a schema file." validateSchemaP
 
@@ -97,6 +101,13 @@ inferP = Infer <$> verbosityP
                <*> inferUsingFailedChecksP
                <*> outputSchemaP
                <*> some markerFileP
+
+summarizeMarkersP :: Parser Command
+summarizeMarkersP = subparser $
+  command'
+    "summarize"
+    "Summarize view markers."
+    (SummarizeMarkers <$> some markerFileP)
 
 validateSchemaP :: Parser Command
 validateSchemaP = ValidateSchema <$> schemaPathP
