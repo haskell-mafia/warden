@@ -6,6 +6,7 @@ module Warden.Commands(
   , fileCheck
   , infer
   , sanity
+  , summarizeMarkers
   , validateSchema
 ) where
 
@@ -102,3 +103,7 @@ validateSchema :: SchemaFile
 validateSchema sf =
   void $ readSchema sf
 
+summarizeMarkers :: [FilePath]
+                 -> EitherT WardenError (ResourceT IO) Schema
+summarizeMarkers _fs =
+  left WardenNotImplementedError
