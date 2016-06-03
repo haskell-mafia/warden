@@ -6,6 +6,7 @@ module Warden.Error (
   , InferenceError(..)
   , LoadError(..)
   , MarkerError(..)
+  , MarkerSummaryError(..)
   , SchemaError(..)
   , TraversalError(..)
   , ValidationFailure(..)
@@ -40,6 +41,7 @@ data WardenError =
   | WardenMarkerError MarkerError
   | WardenSchemaError SchemaError
   | WardenInferenceError InferenceError
+  | WardenMarkerSummaryError MarkerSummaryError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -52,6 +54,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenMarkerError me) = renderMarkerError me
     render' (WardenSchemaError se) = renderSchemaError se
     render' (WardenInferenceError ie) = renderInferenceError ie
+    render' (WardenMarkerSummaryError mse) = renderMarkerSummaryError mse
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -204,3 +207,11 @@ renderValidationFailure f = "Validation failure: " <> render' f
       ]
     render' NoFieldCounts = "No field counts to perform inference on."
     render' (ChecksMarkedFailed rids) = "Some markers recorded a failed check status and cannot be used in inference: " <> (T.intercalate ", " . NE.toList $ renderRunId <$> rids)
+
+data MarkerSummaryError =
+    CannotSummarizeMultipleViews [View]
+  deriving (Eq, Show)
+
+renderMarkerSummaryError :: MarkerSummaryError -> Text
+renderMarkerSummaryError (CannotSummarizeMultipleViews vs) =
+  "cannot summarize markers from multiple views" <> (T.intercalate ", " $ renderView <$> vs)

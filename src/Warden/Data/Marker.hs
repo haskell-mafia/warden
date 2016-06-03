@@ -11,6 +11,7 @@ module Warden.Data.Marker (
   , MarkerStatus(..)
   , RowCountSummary(..)
   , ViewMarker(..)
+  , ViewMarkerSummary(..)
   , ViewMetadata(..)
   , dateRange
   , filePathChar
@@ -209,6 +210,15 @@ mkViewMarker :: WardenParams
 mkViewMarker wps v dsc dt vm cs =
   let crs = [summarizeResult RowResult dsc cs] in
   ViewMarker wps v dt crs vm
+
+data ViewMarkerSummary =
+  ViewMarkerSummary {
+    vmsView :: !View
+  , vmsCheckResults :: ![CheckResultSummary]
+  , vmsMetadata :: !ViewMetadata
+  } deriving (Eq, Show, Generic)
+
+instance NFData ViewMarkerSummary where rnf = genericRnf
 
 data RowCountSummary =
   RowCountSummary {
