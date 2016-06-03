@@ -95,3 +95,29 @@ summarizeSVParseState ps = do
     (ps ^. fieldLooks)
     (ps ^. textCounts)
     nfs
+
+summarizeViewMarkers :: NonEmpty ViewMarker -> Either MarkerSummaryError ViewMarkerSummary
+summarizeViewMarkers vms =
+  let uqs = L.nub . NE.toList $ vmView <$> vms in
+  case uqs of
+    [x] ->
+      summarize' x
+    xs -> Left $ CannotSummarizeMultipleViews xs
+  where
+    summarize' v =
+      let ccrs = concatMap vmCheckResults vms
+          cvcs = combineRowCountSummaries $ vmViewCounts <$> vms
+          cdates = foldl' S.union S.empty $ vmDates <$> vms
+          cvfs = foldl' S.union S.empty $ vmViewFiles <$> vms in
+      Right $ ViewMarkerSummary v ccrs cvcs cdates cvfs
+
+    combineRowCountSummaries :: NonEmpty RowCountSummary -> RowCountSummary
+    combineRowCountSummaries (x:|xs) =
+      foldl' combine' x xs
+
+    combine' x y =
+      let rbrs = (rcsBadRows x) + (rcsBadRows y)
+          rtrs = (rcsTotalRows x) + (rcsTotalRows y)
+          rnfs = S.union (rcsNumFields x) (rcsNumFields y)
+          rfls = combineFieldLooks (rcsNumFields x) (rcsNumFields y)
+          rtcs = combineTextCounts (rcsTextCounts x) (rcsTextCounts y)

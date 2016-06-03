@@ -215,7 +215,9 @@ data ViewMarkerSummary =
   ViewMarkerSummary {
     vmsView :: !View
   , vmsCheckResults :: ![CheckResultSummary]
-  , vmsMetadata :: !ViewMetadata
+  , vmsViewCounts :: !RowCountSummary
+  , vmsDates :: !(Set Date)
+  , vmsViewFiles :: !(Set ViewFile)
   } deriving (Eq, Show, Generic)
 
 instance NFData ViewMarkerSummary where rnf = genericRnf
