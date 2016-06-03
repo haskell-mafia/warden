@@ -3,6 +3,7 @@
 
 module Warden.Commands(
     check
+  , failedMarkers
   , fileCheck
   , infer
   , sanity
@@ -104,6 +105,15 @@ validateSchema sf =
   void $ readSchema sf
 
 summarizeMarkers :: [FilePath]
-                 -> EitherT WardenError (ResourceT IO) Schema
+                 -> EitherT WardenError (ResourceT IO) ()
 summarizeMarkers _fs =
   left WardenNotImplementedError
+
+failedMarkers :: [FilePath]
+              -> EitherT WardenError (ResourceT IO) [FilePath]
+failedMarkers fs =
+  filterM markerFailed fs
+  where
+    markerFailed mf = do
+      vm <- readViewMarker mf
+      pure $ or (fmap resultSummaryFailed $ vmCheckResults vm)

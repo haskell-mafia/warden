@@ -35,6 +35,7 @@ data Command =
   | Infer !Verbosity !FieldMatchRatio !InferUsingFailedChecks !SchemaFile ![FilePath]
   | Sanity !View !SanityParams
   | SummarizeMarkers ![FilePath]
+  | FailedMarkers ![FilePath]
   | ValidateSchema !SchemaFile
   deriving (Eq, Show)
 
@@ -63,6 +64,9 @@ run _wps (Infer v fmr fc sf fs) = do
   T.writeFile (unSchemaFile sf) $ renderSchema s
 run _wps (SummarizeMarkers fs) = do
   void . orDie renderWardenError . mapEitherT runResourceT $ summarizeMarkers fs
+run _wps (FailedMarkers fs) = do
+  ms <- orDie renderWardenError . mapEitherT runResourceT $ failedMarkers fs
+  mapM_ putStrLn ms
 run wps (Sanity v sps) = do
   r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
   finishCheck (sanityVerbosity sps) (sanityExitType sps) r

@@ -6,6 +6,7 @@ module Warden.Marker(
   , readFileMarker
   , readFileMarker'
   , readViewMarker
+  , resultSummaryFailed
   , summarizeSVParseState
   , utcNow
   , viewMarkerExists
@@ -95,3 +96,7 @@ summarizeSVParseState ps = do
     (ps ^. fieldLooks)
     (ps ^. textCounts)
     nfs
+
+resultSummaryFailed :: CheckResultSummary -> Bool
+resultSummaryFailed (CheckResultSummary MarkerPass _ _) = False
+resultSummaryFailed (CheckResultSummary (MarkerFail _) _ _) = True

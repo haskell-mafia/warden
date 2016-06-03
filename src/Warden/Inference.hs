@@ -34,6 +34,7 @@ import           P
 
 import           Warden.Data
 import           Warden.Error
+import           Warden.Marker
 
 -- | Do these two markers look like they're compatible?
 viewMarkerMismatch :: ViewMarker -> ViewMarker -> Either ValidationFailure ()
@@ -71,8 +72,8 @@ validateViewMarkers fc (m:|ms) = go m ms >> case fc of
 
     checkFails =
       let markers = m:ms
-          stati = join $ (fmap summaryStatus . vmCheckResults) <$> markers in
-      case nonEmpty (filter ((/= MarkerPass) . snd) $ zip markers stati) of
+          crs = join $ vmCheckResults <$> markers in
+      case nonEmpty (filter (resultSummaryFailed . snd) $ zip markers crs) of
         Nothing -> pure $ ValidViewMarkers (m:|ms)
         Just fs -> Left . MarkerValidationFailure . ChecksMarkedFailed $ (wpRunId . vmWardenParams . fst) <$> fs
 
