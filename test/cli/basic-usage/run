@@ -38,4 +38,6 @@ $WARDEN sanity /not/a/real/view
 
 $WARDEN sanity -e -v /not/a/real/view
 
-$WARDEN validate-schema /not/a/real/schema.json
+$WARDEN schema validate /not/a/real/schema.json
+
+$WARDEN marker failed /not/a/real/marker1.warden /not/a/real/marker2.warden
