@@ -258,7 +258,7 @@ precision lost on large datasets when storing the entire sum in one
 \subsection{Standard deviation and
 variance}\label{standard-deviation-and-variance}
 
-The accumulator is computed using the following recurrence relation\cite[pp.~232]{Knuth1997}:
+The accumulator is computed using the following recurrence relation\cite[pp.~232]{Knuth1997}, known as Welford's method\cite{welford1962}:
 
 \[S_1 = 0, S_k = S_{k-1} + (x_k - M_{k-1})(x_k - M_k)\]
 
