@@ -22,7 +22,7 @@ library
                      , ambiata-x-attoparsec
                      , ambiata-x-conduit
                      , ambiata-x-eithert
-                     , async                           == 2.0.*
+                     , async                           >= 2.0 && <= 2.1.0
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      -- Changing the cityhash bound may break TextCount
@@ -41,7 +41,7 @@ library
                      , foldl                           == 1.1.*
                      , ieee754                         == 0.7.*
                      , lens                            == 4.9.*
-                     , lifted-async                    == 0.5.*
+                     , lifted-async                    >= 0.5 && < 0.9
                      , mwc-random                      == 0.13.*
                      , primitive                       == 0.6.*
                      , resourcet                       == 1.1.*
@@ -49,7 +49,7 @@ library
                      , text                            == 1.2.*
                      , tz                              == 0.1.0.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.1.*
+                     , unix                            >= 2.7.1 && < 2.7.3
                      , vector                          == 0.10.*
                      , vector-algorithms               == 0.7.*
                      , vector-th-unbox                 == 0.2.1.*
@@ -162,7 +162,7 @@ executable             warden-gen
                      , ambiata-warden
                      , ambiata-x-eithert
                      , ambiata-x-optparse
-                     , async                           == 2.0.*
+                     , async                           >= 2.0 && <= 2.1.0
                      , attoparsec                      == 0.12.*
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
@@ -179,7 +179,7 @@ executable             warden-gen
                      , temporary                       == 1.2.*
                      , transformers                    >= 0.3 && < 5
                      , text
-                     , unix                            == 2.7.1.*
+                     , unix                            >= 2.7.1 && < 2.7.3
                      , vector                          == 0.10.*
 
 test-suite test
@@ -246,7 +246,7 @@ test-suite test-io
                      , ambiata-warden
                      , ambiata-x-conduit
                      , ambiata-x-eithert
-                     , async                           == 2.0.*
+                     , async                           >= 2.0 && <= 2.1.0
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
                      , conduit                         == 1.2.*
@@ -261,13 +261,13 @@ test-suite test-io
                      , lens                            == 4.9.*
                      , quickcheck-instances            == 0.3.*
                      , mwc-random                      == 0.13.*
-                     , process                         == 1.2.*
+                     , process                         >= 1.2 && <= 1.4.2
                      , resourcet                       == 1.1.*
                      , semigroups
                      , temporary
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.1.*
+                     , unix                            >= 2.7.1 && < 2.7.3
                      , vector                          == 0.10.*
                      , vector-algorithms               == 0.7.*
 
@@ -293,7 +293,7 @@ benchmark bench
                      , ambiata-p
                      , ambiata-warden
                      , ambiata-x-eithert
-                     , async                           == 2.0.*
+                     , async                           >= 2.0 && <= 2.1.0
                      , bytestring                      == 0.10.*
                      , cassava                         == 0.4.*
                      , containers                      == 0.5.*
@@ -313,7 +313,7 @@ benchmark bench
                      , temporary
                      , text                            == 1.2.*
                      , transformers                    >= 0.3 && < 5
-                     , unix                            == 2.7.1.*
+                     , unix                            >= 2.7.1 && < 2.7.3
                      , vector                          == 0.10.*
 
 
