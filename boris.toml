@@ -1,0 +1,15 @@
+[boris]
+  version = 1
+
+[build.profiling]
+
+[build.dist-7-10]
+  command = [["master", "build", "dist-7-10"], ["./bin/ci.doc"]]
+
+[build.branches-7-10]
+  command = [["master", "build", "branches-7-10"], ["./bin/ci.doc.branches"]]
+
+[build.validate]
+  pre = []
+  command = [["validate-respect"]]
+  success = []
