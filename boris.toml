@@ -3,12 +3,8 @@
 
 [build.profiling]
 
-[build.dist-7-8]
-
 [build.dist-7-10]
   command = [["master", "build", "dist-7-10"], ["./bin/ci.doc"]]
-
-[build.branches-7-8]
 
 [build.branches-7-10]
   command = [["master", "build", "branches-7-10"], ["./bin/ci.doc.branches"]]
