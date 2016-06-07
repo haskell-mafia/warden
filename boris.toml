@@ -10,3 +10,8 @@
 [build.branches-7-8]
 
 [build.branches-7-10]
+
+[build.validate]
+  pre = []
+  command = [["validate-respect"]]
+  success = []
