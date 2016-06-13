@@ -178,4 +178,4 @@ prop_inferField_empty fmr fi = forAll (choose (1, 10000)) $ \n ->
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 } )

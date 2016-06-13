@@ -48,4 +48,4 @@ prop_toRow = forAll ((,) <$> invalidSVField <*> invalidSVField) $ \(bs1, bs2) ->
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 } )

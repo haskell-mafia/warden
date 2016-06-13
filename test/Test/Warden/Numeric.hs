@@ -150,4 +150,4 @@ prop_unsafeMedian_even mda mdb =
 
 return []
 tests :: IO Bool
-tests = $quickCheckAll
+tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 } )
