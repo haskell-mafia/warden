@@ -66,10 +66,15 @@ configured view:
 warden sanity path/to/view
 # full view checks
 warden check path/to/view
+
 # infer schema from check metadata
 warden infer _warden/$view/$data_dates/$check_date/*.json
+
 # validate the schema which was generated
-warden validate-schema schema.json
+warden schema validate schema.json
+
+# locate failed check markers
+find _warden -name \*.warden -print0 | xargs -0 warden marker failed
 ```
 
 Future Work
