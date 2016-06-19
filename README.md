@@ -75,5 +75,15 @@ warden validate-schema schema.json
 Future Work
 -----------
 
- - Tighter integration with monitoring tools (sending alerts, feeding into smarter online checking etc...).
- - warden integration for downstream tools so they only accept warden approved feeds.
+ - Tighter integration with monitoring tools (sending alerts, feeding
+   into smarter online checking etc...). 
+ - warden integration for downstream tools so they only accept warden
+   approved feeds.
+
+Further reading
+---------------
+
+ - [Documentation](https://github.com/ambiata/warden/tree/master/doc)
+   (or find a built version on S3 under
+   `s3://ambiata-dispensary-v2/doc/master/warden/`).
+ - [Talk slides](https://github.com/ambiata/talks/blob/master/warden-2016-05-20/slides.pdf).
