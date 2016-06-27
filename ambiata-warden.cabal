@@ -67,6 +67,7 @@ library
 
   exposed-modules:
                        BuildInfo_ambiata_warden
+                       DependencyInfo_ambiata_warden
                        Warden
                        Warden.Check
                        Warden.Check.File

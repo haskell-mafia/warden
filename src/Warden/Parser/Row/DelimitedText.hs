@@ -16,11 +16,12 @@ import qualified Data.Vector as V
 import           P
 
 import           Warden.Data.Row
-import           Warden.Parser.Common
+
+import           X.Data.Attoparsec.ByteString (sepByByte1)
 
 rawRecordP :: Separator -> Parser RawRecord
 rawRecordP sep = {-# SCC rawRecordP #-}
-  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
+  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1` (unSeparator sep)
 {-# INLINE rawRecordP #-}
 
 rawFieldP :: Separator -> Parser ByteString

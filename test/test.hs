@@ -11,7 +11,6 @@ import qualified Test.Warden.Data.TextCounts
 import qualified Test.Warden.Data.View
 import qualified Test.Warden.Inference
 import qualified Test.Warden.Numeric
-import qualified Test.Warden.Parser.Common
 import qualified Test.Warden.Parser.Field
 import qualified Test.Warden.Parser.PII
 import qualified Test.Warden.Parser.Row.DelimitedText
@@ -36,7 +35,6 @@ main = disorderMain [
   , Test.Warden.Data.View.tests
   , Test.Warden.Inference.tests
   , Test.Warden.Numeric.tests
-  , Test.Warden.Parser.Common.tests
   , Test.Warden.Parser.Field.tests
   , Test.Warden.Parser.PII.tests
   , Test.Warden.Parser.Row.DelimitedText.tests

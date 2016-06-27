@@ -7,7 +7,6 @@ module Warden.Parser.Row.RFC4180 (
     escapedFieldP
   , rawFieldP
   , rawRecordP
-  , sepByByte1P
   ) where
 
 import           Data.Attoparsec.ByteString (Parser)
@@ -23,9 +22,11 @@ import           P
 import           Warden.Data.Row
 import           Warden.Parser.Common
 
+import           X.Data.Attoparsec.ByteString (sepByByte1)
+
 rawRecordP :: Separator -> Parser RawRecord
 rawRecordP sep = {-# SCC rawRecordP #-}
-  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1P` sep
+  (RawRecord . V.fromList) <$!> rawFieldP sep `sepByByte1` (unSeparator sep)
 {-# INLINE rawRecordP #-}
 
 rawFieldP :: Separator -> Parser ByteString

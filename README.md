@@ -66,14 +66,29 @@ configured view:
 warden sanity path/to/view
 # full view checks
 warden check path/to/view
+
 # infer schema from check metadata
 warden infer _warden/$view/$data_dates/$check_date/*.json
+
 # validate the schema which was generated
-warden validate-schema schema.json
+warden schema validate schema.json
+
+# locate failed check markers
+find _warden -name \*.warden -print0 | xargs -0 warden marker failed
 ```
 
 Future Work
 -----------
 
- - Tighter integration with monitoring tools (sending alerts, feeding into smarter online checking etc...).
- - warden integration for downstream tools so they only accept warden approved feeds.
+ - Tighter integration with monitoring tools (sending alerts, feeding
+   into smarter online checking etc...). 
+ - warden integration for downstream tools so they only accept warden
+   approved feeds.
+
+Further reading
+---------------
+
+ - [Documentation](https://github.com/ambiata/warden/tree/master/doc)
+   (or find a built version on S3 under
+   `s3://ambiata-dispensary-v2/doc/master/warden/`).
+ - [Talk slides](https://github.com/ambiata/talks/blob/master/warden-2016-05-20/slides.pdf).

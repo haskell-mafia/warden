@@ -8,36 +8,17 @@ module Warden.Parser.Common (
   , doubleQuote
   , lineFeed
   , numeric
-  , sepByByte1P
   , space
   ) where
 
-import           Data.Attoparsec.ByteString (Parser)
-import           Data.Attoparsec.ByteString (peekWord8, anyWord8)
 import           Data.Word (Word8)
 
 import           P
-
-import           Warden.Data.Row
 
 cBool :: Word8 -> Bool
 cBool 0 = False
 cBool _ = True
 {-# INLINE cBool #-}
-
-sepByByte1P :: Parser a -> Separator -> Parser [a]
-sepByByte1P p !sep = {-# SCC sepByByte1P #-}
-  liftM2' (:) p go
-  where
-    go = do
-      peekWord8 >>= \case
-        Just c -> if c == sep'
-                    then liftM2' (:) (anyWord8 *> p) go
-                    else pure []
-        Nothing -> pure []
-
-    sep' = unSeparator sep
-{-# INLINE sepByByte1P #-}
 
 lineFeed :: Word8
 lineFeed = 0x0a
