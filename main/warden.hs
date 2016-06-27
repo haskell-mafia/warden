@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           BuildInfo_ambiata_warden
+import           DependencyInfo_ambiata_warden
 
 import           Control.Monad.Trans.Resource (runResourceT)
 
@@ -45,6 +46,8 @@ main = do
     VersionCommand -> do
       putStrLn ("warden: " <> buildInfoVersion)
       exitSuccess
+    DependencyCommand -> do
+      mapM_ putStrLn dependencyInfo
     RunCommand DryRun c -> do
       print c
       exitSuccess

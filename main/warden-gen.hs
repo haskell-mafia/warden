@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import           DependencyInfo_ambiata_warden
+
 import           P
 
 import           System.Exit (exitSuccess)
@@ -25,6 +27,8 @@ main = do
   dispatch (safeCommand wardenGenP) >>= \case
     VersionCommand -> do
       exitSuccess
+    DependencyCommand -> do
+      mapM_ putStrLn dependencyInfo
     RunCommand DryRun c -> do
       print c
       exitSuccess
