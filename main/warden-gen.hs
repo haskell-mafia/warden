@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 
+import           BuildInfo_ambiata_warden
 import           DependencyInfo_ambiata_warden
 
 import           P
@@ -26,7 +27,7 @@ main :: IO ()
 main = do
   dispatch (safeCommand wardenGenP) >>= \case
     VersionCommand -> do
-      exitSuccess
+      putStrLn ("warden-gen: " <> buildInfoVersion)
     DependencyCommand -> do
       mapM_ putStrLn dependencyInfo
     RunCommand DryRun c -> do

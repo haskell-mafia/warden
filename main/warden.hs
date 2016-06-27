@@ -45,7 +45,6 @@ main = do
   dispatch (safeCommand wardenP) >>= \case
     VersionCommand -> do
       putStrLn ("warden: " <> buildInfoVersion)
-      exitSuccess
     DependencyCommand -> do
       mapM_ putStrLn dependencyInfo
     RunCommand DryRun c -> do
