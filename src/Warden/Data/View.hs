@@ -4,6 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE BangPatterns #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.View(
     DirTree(..)

@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.Sampling.Reservoir(
     Reservoir(..)
@@ -21,7 +22,7 @@ import           P
 
 data ReservoirAcc =
     NoReservoirAcc
-  | ReservoirAcc {-# UNPACK #-} !Reservoir {-# UNPACK #-} !SampleCount
+  | ReservoirAcc !Reservoir !SampleCount
   deriving Generic
 
 instance NFData ReservoirAcc where rnf = genericRnf

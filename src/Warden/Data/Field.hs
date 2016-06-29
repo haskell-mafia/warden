@@ -5,6 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 {- This module will probably live in brandix soon. -}
 
