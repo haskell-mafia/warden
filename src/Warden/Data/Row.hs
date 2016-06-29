@@ -10,6 +10,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.Row (
     FieldCount(..)
@@ -181,8 +182,8 @@ instance NFData FieldReservoirAcc where rnf = genericRnf
 
 data SVParseState =
   SVParseState {
-    _badRows :: {-# UNPACK #-} !RowCount
-  , _totalRows :: {-# UNPACK #-} !RowCount
+    _badRows :: !RowCount
+  , _totalRows :: !RowCount
   -- | Unique counts of fields per row.
   , _numFields :: !(Set FieldCount)
   -- | Table of guesses of data type for each field.

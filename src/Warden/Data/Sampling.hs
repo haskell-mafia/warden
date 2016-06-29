@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.Sampling(
     Sample(..)
@@ -17,7 +18,7 @@ import           P
 
 data Sample =
     NoSample
-  | Sample {-# UNPACK #-} !(VU.Vector Double)
+  | Sample !(VU.Vector Double)
   deriving (Eq, Show, Generic)
 
 instance NFData Sample where rnf = genericRnf

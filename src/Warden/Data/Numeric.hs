@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.Numeric (
     FieldNumericState(..)
@@ -45,7 +46,7 @@ import           GHC.Generics (Generic)
 import           P
 
 data Minimum =
-    Minimum {-# UNPACK #-} !Double
+    Minimum !Double
   | NoMinimum
   deriving (Eq, Show, Generic)
 
@@ -68,7 +69,7 @@ instance Monoid Minimum where
   {-# INLINE mappend #-}
 
 data Maximum =
-    Maximum {-# UNPACK #-} !Double
+    Maximum !Double
   | NoMaximum
   deriving (Eq, Show, Generic)
 
@@ -126,7 +127,7 @@ instance AEq MeanAcc where
 -- | Final mean.
 data Mean =
     NoMean
-  | Mean {-# UNPACK #-} !Double
+  | Mean !Double
   deriving (Eq, Show, Generic)
 
 instance NFData Mean where rnf = genericRnf
@@ -143,7 +144,7 @@ instance AEq Mean where
   (Mean x) ~== (Mean y) = x ~== y
 
 data Median =
-    Median {-# UNPACK #-} !Double
+    Median !Double
   | NoMedian
   deriving (Eq, Show, Generic)
 
@@ -181,7 +182,7 @@ instance AEq StdDevAcc where
 -- | Possibly-uninitialized 'StdDevAcc'.
 data MStdDevAcc =
     NoStdDevAcc
-  | MStdDevAcc {-# UNPACK #-} !StdDevAcc
+  | MStdDevAcc !StdDevAcc
   deriving (Eq, Show, Generic)
 
 instance NFData MStdDevAcc where rnf = genericRnf
@@ -203,7 +204,7 @@ instance NFData Variance where rnf = genericRnf
 
 data StdDev =
     NoStdDev
-  | StdDev {-# UNPACK #-} !Double
+  | StdDev !Double
   deriving (Eq, Show, Generic)
 
 instance NFData StdDev where rnf = genericRnf
@@ -249,7 +250,7 @@ instance NFData NumericFieldSummary where rnf = genericRnf
 
 data MeanDevAcc =
     MeanDevInitial
-  | MeanDevAcc {-# UNPACK #-} !MeanAcc !MStdDevAcc {-# UNPACK #-} !KAcc
+  | MeanDevAcc !MeanAcc !MStdDevAcc !KAcc
   deriving (Eq, Show, Generic)
 
 instance NFData MeanDevAcc where rnf = genericRnf

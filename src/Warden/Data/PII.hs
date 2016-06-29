@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Data.PII (
     MaxPIIObservations(..)
@@ -43,7 +44,7 @@ renderPIIType DateOfBirth = "date of birth"
 renderPIIType CreditCard = "credit card"
 
 data PotentialPII =
-    PotentialPII !PIIType {-# UNPACK #-} !FieldIndex
+    PotentialPII !PIIType !FieldIndex
   deriving (Eq, Show, Ord, Generic)
 
 instance NFData PotentialPII where rnf = genericRnf
