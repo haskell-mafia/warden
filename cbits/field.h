@@ -16,4 +16,6 @@ bool warden_field_bool(char *, size_t);
 
 numeric_field warden_field_numeric(char *, size_t);
 
+bool warden_field_datetime(char *, size_t);
+
 #endif
