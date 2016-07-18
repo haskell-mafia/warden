@@ -142,7 +142,7 @@ static inline bool match_ymd(const char *buf, size_t n) {
 
 	/* First, we drop everything which doesn't start with '20' and
 	   have eight bytes compatible with a YYYYxMMxDD format. */
-	if (!((*p & ymd_mask) == ymd_bits) && is_digit(buf[2]) && is_digit(buf[3])) {
+	if (!(((*p & ymd_mask) == ymd_bits) && is_digit(buf[2]) && is_digit(buf[3]))) {
 		return FALSE;
 	}
 
@@ -170,6 +170,8 @@ static inline bool match_ymd(const char *buf, size_t n) {
    Currently checks:
 
     - Fields beginning with big-endian dates.
+
+   FIXME: more supported date formats
 */
 bool warden_field_datetime(char *buf, size_t n) {
 	return match_ymd(buf, n);

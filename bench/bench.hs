@@ -105,6 +105,12 @@ prepareBools = fmap (fmap T.encodeUtf8) . generate' (Deterministic 555) (GenSize
 prepareNonBools :: IO [ByteString]
 prepareNonBools = fmap (fmap T.encodeUtf8) . generate' (Deterministic 666) (GenSize 100) $ vectorOf 100 renderedNonBool
 
+prepareDates :: IO [ByteString]
+prepareDates = generate' (Deterministic 555) (GenSize 100) $ vectorOf 100 renderedDate
+
+prepareNonDates :: IO [ByteString]
+prepareNonDates = generate' (Deterministic 666) (GenSize 100) $ vectorOf 100 renderedNonDate
+
 benchABDecode :: FileFormat -> NonEmpty ViewFile -> IO ()
 benchABDecode ff vfs =
   let sep = Separator . fromIntegral $ ord '|'
@@ -150,6 +156,9 @@ benchToRow = toRow . Right
 benchCheckFieldBool :: [ByteString] -> [Bool]
 benchCheckFieldBool = fmap checkFieldBool
 
+benchCheckFieldDate :: [ByteString] -> [Bool]
+benchCheckFieldDate = fmap checkFieldDate
+
 main :: IO ()
 main = do
   withTempDirectory "." "warden-bench-" $ \root ->
@@ -160,11 +169,17 @@ main = do
               , bench "decode/delimited-text/1000" $ nfIO (benchABDecode DelimitedText vfs)
               , bench "decode/toRow/100" $ nf benchToRow bss
             ]
-        , env ((,,) <$> prepareRow <*> prepareBools <*> prepareNonBools) $ \ ~(rs, bools, nonbools) ->
+        , env ((,,,,) <$> prepareRow
+                      <*> prepareBools
+                      <*> prepareNonBools
+                      <*> prepareDates
+                      <*> prepareNonDates) $ \ ~(rs, bools, nonbools, dates, nondates) ->
             bgroup "field-parsing" $ [
                 bench "parseField/200" $ nf benchFieldParse rs
               , bench "checkFieldBool/boolean/100" $ nf benchCheckFieldBool bools
               , bench "checkFieldBool/non-boolean/100" $ nf benchCheckFieldBool nonbools
+              , bench "checkFieldDate/date/100" $ nf benchCheckFieldDate dates
+              , bench "checkFieldDate/non-date/100" $ nf benchCheckFieldDate nondates
             ]
         , env prepareFolds $ \ ~(rs, ts, piis, nonPiis, bs100, bs10) ->
             bgroup "folds" $ [
