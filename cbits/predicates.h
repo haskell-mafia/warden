@@ -4,10 +4,7 @@
 #include "warden.h"
 
 static inline bool is_digit(char c) {
-	if (c >= '0' && c <= '9') {
-		return TRUE;
-	}
-	return FALSE;
+	return (c >= '0' && c <= '9');
 }
 
 #endif
