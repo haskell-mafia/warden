@@ -59,8 +59,17 @@ library
                        -Wall
 
   cc-options:
-                       -O3 -Wall -Werror
-
+                       -O3
+                       -Wall
+                       -Wextra
+                       -Werror
+                       -Wbad-function-cast
+                       -Wnested-externs
+                       -Wstrict-prototypes
+                       -Wmissing-prototypes
+                       -Wmissing-declarations
+                       -Waggregate-return
+          
   hs-source-dirs:
                        src gen
 
