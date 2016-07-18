@@ -61,7 +61,6 @@ library
   cc-options:
                        -O3
                        -Wall
-                       -Wextra
                        -Werror
                        -Wbad-function-cast
                        -Wnested-externs
