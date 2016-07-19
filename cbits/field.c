@@ -5,7 +5,7 @@
 
 /* Returns TRUE if the buffer we're passed contains a bool, otherwise
  * FALSE. */
-bool warden_field_bool(char *buf, size_t n) {
+bool warden_field_bool(const char *buf, size_t n) {
 	/* little-endian "false" */
 	static const int64_t false_bits = 0x00000065736c6166;
 	static const int64_t false_mask = 0x000000ffffffffff;
@@ -50,7 +50,7 @@ bool warden_field_bool(char *buf, size_t n) {
    in scientific notation.
 
    Otherwise returns non_numeric_field. */
-numeric_field warden_field_numeric(char *buf, size_t n) {
+numeric_field warden_field_numeric(const char *buf, size_t n) {
 	size_t i = 0;
 	int preradix_digits = 0; /* digits before the radix point */
 	int exponent_digits = 0; /* digits in the exponent (scientific notation) */
@@ -173,6 +173,6 @@ static inline bool match_ymd(const char *buf, size_t n) {
 
    FIXME: more supported date formats
 */
-bool warden_field_datetime(char *buf, size_t n) {
+bool warden_field_datetime(const char *buf, size_t n) {
 	return match_ymd(buf, n);
 }

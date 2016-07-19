@@ -15,7 +15,7 @@ static inline bool is_number_filler(char c) {
   Email address checks.
 */
 
-bool warden_check_email(char *buf, size_t n) {
+bool warden_check_email(const char *buf, size_t n) {
 	size_t i = 1;
 
 	/* local part */
@@ -69,7 +69,7 @@ bool warden_check_email(char *buf, size_t n) {
 
 /* Matches numbers of the form +xxxxxxxxxxx
    Expects the initial '+' to be removed/already checked. */
-static inline bool check_international_phone(char *buf, size_t n) {
+static inline bool check_international_phone(const char *buf, size_t n) {
 	size_t i;
 	int phone_chars = 0;
 	/* We need exactly 11 digits, but don't care if there are
@@ -84,7 +84,7 @@ static inline bool check_international_phone(char *buf, size_t n) {
 	return (phone_chars == 11);
 }
 
-static inline bool check_australian_phone(char *buf, size_t n) {
+static inline bool check_australian_phone(const char *buf, size_t n) {
 	size_t i;
 	int phone_chars = 0;
 	/* length already checked, >= 10 */
@@ -112,7 +112,7 @@ static inline bool check_australian_phone(char *buf, size_t n) {
 	return (phone_chars == 8);
 }
 
-bool warden_check_phone_number(char *buf, size_t n) {
+bool warden_check_phone_number(const char *buf, size_t n) {
 	/* Field too short, no point checking it. */
 	if (n < 10) {
 		return FALSE;
@@ -142,7 +142,7 @@ static char *street_types[N_STREET_TYPES] = {
 	"ave"
 };
 
-static inline bool check_street_type(char *buf, size_t n) {
+static inline bool check_street_type(const char *buf, size_t n) {
 	int i;
 	/* no street types shorter than this */
 	if (2 > n) {
@@ -168,7 +168,7 @@ static inline bool is_alpha(char c) {
 	return FALSE;
 }
 
-bool warden_check_address(char *buf, size_t n) {
+bool warden_check_address(const char *buf, size_t n) {
 	size_t i;
 	if (n < 1) {
 		return FALSE;
@@ -217,7 +217,7 @@ bool warden_check_address(char *buf, size_t n) {
  * after performing some sanity checks on the length.
  *
  * https://en.wikipedia.org/wiki/Luhn_algorithm */
-bool warden_check_creditcard(char *buf, size_t n) {
+bool warden_check_creditcard(const char *buf, size_t n) {
 	char c;
 	size_t i;
 	int luhn_sum = 0;
