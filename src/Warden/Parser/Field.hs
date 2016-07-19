@@ -6,6 +6,7 @@
 
 module Warden.Parser.Field (
     checkFieldBool
+  , checkFieldDate
   , checkFieldNumeric
   , integralFieldP
   , realFieldP
@@ -78,3 +79,15 @@ numericFieldP = {-# SCC numericFieldP #-}
   , (NumericField . fromIntegral) <$> integralFieldP
   ]
 {-# INLINE numericFieldP #-}
+
+checkFieldDate :: ByteString -> Bool
+checkFieldDate bs = {-# SCC checkFieldDate #-}
+  unsafePerformIO $ do
+    BSU.unsafeUseAsCStringLen bs $ \(bsPtr, bsLen) ->
+      cBool <$> warden_field_datetime (castPtr bsPtr) (fromIntegral bsLen)
+{-# INLINE checkFieldDate #-}
+
+foreign import ccall unsafe warden_field_datetime
+  :: Ptr Word8
+  -> CSize
+  -> IO Word8

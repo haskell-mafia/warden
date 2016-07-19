@@ -12,8 +12,10 @@ typedef enum _numeric_field {
 	real_field = 2
 } numeric_field;
 
-bool warden_field_bool(char *, size_t);
+bool warden_field_bool(const char *, size_t);
 
-numeric_field warden_field_numeric(char *, size_t);
+numeric_field warden_field_numeric(const char *, size_t);
+
+bool warden_field_datetime(const char *, size_t);
 
 #endif

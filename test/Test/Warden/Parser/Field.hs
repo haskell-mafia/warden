@@ -78,6 +78,16 @@ prop_numericFieldP_neg = forAll (elements muppets) $ \t ->
   let r = parseOnly numericFieldP $ T.encodeUtf8 t in
   isLeft r === True
 
+prop_checkFieldDate_pos :: Property
+prop_checkFieldDate_pos = forAll renderedDate $ \bs ->
+  let r = checkFieldDate bs in
+  r === True
+
+prop_checkFieldDate_neg :: Property
+prop_checkFieldDate_neg = forAll renderedNonDate $ \bs ->
+  let r = checkFieldDate bs in
+  r === False
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1000 })

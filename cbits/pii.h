@@ -5,12 +5,12 @@
 
 #include "warden.h"
 
-bool warden_check_email(char *, size_t);
+bool warden_check_email(const char *, size_t);
 
-bool warden_check_phone_number(char *, size_t);
+bool warden_check_phone_number(const char *, size_t);
 
-bool warden_check_address(char *, size_t);
+bool warden_check_address(const char *, size_t);
 
-bool warden_check_creditcard(char *, size_t);
+bool warden_check_creditcard(const char *, size_t);
 
 #endif

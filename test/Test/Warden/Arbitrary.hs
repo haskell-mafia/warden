@@ -11,12 +11,16 @@ import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import           Data.Csv
 import qualified Data.Set as S
-import           Data.List (nub)
+import           Data.List ((\\), nub)
 import qualified Data.List as L
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import           Data.String (String)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8, decodeUtf8', encodeUtf8)
+import           Data.Time.Calendar (Day(..))
+import           Data.Time.Clock (UTCTime(..), secondsToDiffTime)
+import           Data.Time.Format (defaultTimeLocale, formatTime)
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 import           Data.Word
@@ -36,6 +40,7 @@ import           Test.Delorean.Arbitrary ()
 import           Test.QuickCheck (Small(..), NonNegative(..))
 import           Test.QuickCheck (Arbitrary, Gen, elements, choose, listOf, listOf1)
 import           Test.QuickCheck (vectorOf, arbitrary, suchThat, oneof, sized)
+import           Test.QuickCheck (frequency)
 import           Test.QuickCheck.Instances ()
 
 import           Text.Printf (printf)
@@ -792,3 +797,69 @@ instance Arbitrary PIICheckType where
       pure NoPIIChecks
     , PIIChecks <$> arbitrary
     ]
+
+genSensibleDateTime :: Gen UTCTime
+genSensibleDateTime = do
+  -- sometime this century
+  days <- ModifiedJulianDay <$> choose (142 * 365, 192 * 365)
+  secs <- secondsToDiffTime <$> choose (0, 86401)
+  pure $ UTCTime days secs
+
+genSillyDateTime :: Gen UTCTime
+genSillyDateTime = do
+  days <- oneof [
+      whenIWasALad
+    , hurdReleaseDate
+    ]
+  secs <- secondsToDiffTime <$> choose (0, 86401)
+  pure $ UTCTime days secs
+  where
+    -- Uniform between 0001-01-01 and 1858-11-17
+    whenIWasALad = ModifiedJulianDay <$> choose ((- 678575), 0)
+
+    -- Uniform between 4616-10-14 and 2739765-11-19.
+    hurdReleaseDate = ModifiedJulianDay <$> choose (100000, 100000000)
+
+renderedDate :: Gen BS.ByteString
+renderedDate = renderedDate' genSensibleDateTime
+
+renderedDate' :: Gen UTCTime -> Gen BS.ByteString
+renderedDate' gdt = do
+  dt <- gdt
+  render <- frequency [(1, renderDateNoSeparator), (9, renderDateSeparator)]
+  pure . BSC.pack $ render dt
+
+renderDateNoSeparator :: Gen (UTCTime -> String)
+renderDateNoSeparator = do
+  tp <- timePart
+  pure (formatTime defaultTimeLocale ("%Y%m%d" <> tp))
+
+renderDateSeparator :: Gen (UTCTime -> String)
+renderDateSeparator = do
+  tp <- timePart
+  sep <- elements ["-", ".", "/"]
+  pure (formatTime defaultTimeLocale ((concat ["%Y", sep, "%m", sep, "%d"]) <> tp))
+
+timePart :: Gen String
+timePart = elements [
+    ""
+  , "%H%M"
+  , "%H:%M"
+  , "%H%M%S"
+  , "%H:%M:%S"
+  , "T%H:%M:%SZ"
+  ]
+
+
+renderedNonDate :: Gen BS.ByteString
+renderedNonDate = do
+  x <- fmap BS.pack $ listOf1 noDigits
+  dt <- renderedDate
+  oneof [
+      pure $ x <> dt
+    , renderedDate' genSillyDateTime
+    , encodeUtf8 <$> elements muppets
+    ]
+  where
+    noDigits =
+      elements $ [0x00..0xff] \\ [0x30..0x39]
