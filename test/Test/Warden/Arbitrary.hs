@@ -817,8 +817,8 @@ genSillyDateTime = do
     -- Uniform between 0001-01-01 and 1858-11-17
     whenIWasALad = ModifiedJulianDay <$> choose ((- 678575), 0)
 
-    -- Uniform between 4616-10-14 and 2739765-11-19.
-    hurdReleaseDate = ModifiedJulianDay <$> choose (100000, 100000000)
+    -- Uniform between 4616-10-14 and 15548-05-31.
+    hurdReleaseDate = ModifiedJulianDay <$> choose (100000, 5000000)
 
 renderedDate :: Gen BS.ByteString
 renderedDate = renderedDate' genSensibleDateTime
