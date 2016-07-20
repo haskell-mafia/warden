@@ -42,6 +42,7 @@ library
                      , ieee754                         == 0.7.*
                      , lens                            == 4.9.*
                      , lifted-async                    >= 0.5 && < 0.9
+                     , lifted-base                     < 0.2.3.7
                      , mwc-random                      == 0.13.*
                      , primitive                       == 0.6.*
                      , resourcet                       == 1.1.*
