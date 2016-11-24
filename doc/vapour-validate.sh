@@ -63,7 +63,7 @@ for FEED_NAME in ${FEEDS}; do
             touch $FAILURE_MARKER
         fi
 
-        aws s3 cp --sse --recursive _warden ${WARDEN_STORE}
+        aws s3 cp --recursive _warden ${WARDEN_STORE} --sse
 
         cat ${WORKDIR}/warden-files | \
             while read F; do
