@@ -6,4 +6,4 @@ $(dirname $0)/ci.doc.common
 
 version=$(cat gen/version.txt)
 
-aws s3 cp --sse doc/warden.pdf ${AMBIATA_DOC_MASTER}/warden/${version}/warden-${version}.pdf
+s3 upload doc/warden.pdf ${AMBIATA_DOC_MASTER}/warden/${version}/warden-${version}.pdf
