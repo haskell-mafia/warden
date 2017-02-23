@@ -3,7 +3,7 @@
   version = 1
   sha1 = "c3e341a734f0938ab5352563db54d5db3137f766"
 
-[build.profiling]
+[build.profiling-7-10]
   PROFILING = "true"
   PUBLISH_PROFILING = "warden warden-gen"
   GHC_VERSION="7.10.2"
