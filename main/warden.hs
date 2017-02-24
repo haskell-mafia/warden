@@ -233,10 +233,20 @@ fieldMatchRatioP = FieldMatchRatio <$> (option auto $
 
 exitTypeP :: Parser ExitType
 exitTypeP =
-  flag ExitWithCheckStatus ExitWithSuccess $
-       long "exit-success"
-    <> short 'e'
-    <> help "Exit with success status if no errors occur, even if checks have failures."
+  exitCheckStatusFlag <* exitSuccessFlag
+  where
+    exitCheckStatusFlag =
+      flag ExitWithSuccess ExitWithCheckStatus $
+           long "exit-check-status"
+        <> short 'x'
+        <> help "Exit with failure if any checks fail, even if warden has run successfully."
+
+    -- Old, kept for compatibility.
+    exitSuccessFlag =
+      flag ExitWithSuccess ExitWithSuccess $
+           long "exit-success"
+        <> short 'e'
+        <> help "(Deprecated: this is now the default behaviour.) Exit with success status if no errors occur, even if checks have failures."
 
 includeDotFilesP :: Parser IncludeDotFiles
 includeDotFilesP =
