@@ -38,6 +38,7 @@ data MarkerVersion =
   | MarkerV2
   | MarkerV3
   | MarkerV4
+  | MarkerV5
   deriving (Eq, Show, Ord, Bounded, Enum)
 
 currentMarkerVersion :: MarkerVersion
@@ -58,6 +59,7 @@ fromMarkerVersion MarkerV1 = String "v1"
 fromMarkerVersion MarkerV2 = String "v2"
 fromMarkerVersion MarkerV3 = String "v3"
 fromMarkerVersion MarkerV4 = String "v4"
+fromMarkerVersion MarkerV5 = String "v5"
 
 toMarkerVersion :: Value -> Parser MarkerVersion
 toMarkerVersion (String s) = case s of
@@ -65,6 +67,7 @@ toMarkerVersion (String s) = case s of
   "v2" -> pure MarkerV2
   "v3" -> pure MarkerV3
   "v4" -> pure MarkerV4
+  "v5" -> pure MarkerV5
   _    -> fail $ "Unknown marker version " <> (T.unpack s)
 toMarkerVersion x          = typeMismatch "Warden.Data.Marker.MarkerVersion" x
 
@@ -147,12 +150,13 @@ fromFileMarker (FileMarker wps vf ts crs) = object [
 toFileMarker :: Value -> Parser FileMarker
 toFileMarker (Object o) = do
   (toMarkerVersion =<< (o .: "version")) >>= \case
-    MarkerV1 -> markerV1V4
-    MarkerV2 -> markerV1V4
-    MarkerV3 -> markerV1V4
-    MarkerV4 -> markerV1V4
+    MarkerV1 -> markerV1V5
+    MarkerV2 -> markerV1V5
+    MarkerV3 -> markerV1V5
+    MarkerV4 -> markerV1V5
+    MarkerV5 -> markerV1V5
   where
-    markerV1V4 = do
+    markerV1V5 = do
       wps <- toWardenParams =<< (o .: "warden-params")
       vf <- toViewFile =<< (o .: "view-file")
       ts <- toDateTime =<< (o .: "timestamp")
@@ -190,12 +194,13 @@ fromViewMarker (ViewMarker wps vi ts crs vm) = object [
 toViewMarker :: Value -> Parser ViewMarker
 toViewMarker (Object o) = do
   (toMarkerVersion =<< (o .: "version")) >>= \case
-    MarkerV1 -> markerV1V4
-    MarkerV2 -> markerV1V4
-    MarkerV3 -> markerV1V4
-    MarkerV4 -> markerV1V4
+    MarkerV1 -> markerV1V5
+    MarkerV2 -> markerV1V5
+    MarkerV3 -> markerV1V5
+    MarkerV4 -> markerV1V5
+    MarkerV5 -> markerV1V5
   where
-    markerV1V4 = do
+    markerV1V5 = do
       wps <- toWardenParams =<< (o .: "warden-params")
       vi <- toView =<< (o .: "view")
       ts <- toDateTime =<< (o .: "timestamp")
