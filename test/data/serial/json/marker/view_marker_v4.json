@@ -1,0 +1,461 @@
+{
+    "results": [
+        {
+            "status": {
+                "status": "pass"
+            },
+            "type": "row",
+            "description": "view-row-counts"
+        }
+    ],
+    "warden-params": {
+        "warden-version": "0.0.1-20160427000822-c29b37a-M",
+        "num-caps": 8,
+        "run-id": "565687ac1636d779",
+	"file-format": "delimited-text"
+    },
+    "version": "v3",
+    "metadata": {
+        "check-dates": [
+            "8153-04-17"
+        ],
+        "check-params": {
+            "force": "force",
+            "separator": "|",
+            "freeform-text-threshold": 100,
+            "verbosity": "quiet",
+            "sampling-type": {
+                "type": "no-sampling"
+            },
+            "include-dot-files": "no-include-dot-files",
+            "line-bound": 65536,
+            "schema-file": null,
+            "exit-type": "check-status-exit"
+        },
+        "counts": {
+            "field-counts": [
+                9
+            ],
+            "field-looks": [
+                [
+                    {
+                        "count": 359740,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22737,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 507,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327578,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3805,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 359848,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22590,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 478,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327739,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3712,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 361200,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22908,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 468,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326150,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3641,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360601,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22901,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 471,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326555,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3839,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360133,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22754,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 525,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327149,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3806,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360309,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 23011,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 465,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326952,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3630,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 360089,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22699,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 467,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6327376,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3736,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 361187,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 22559,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 476,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6326438,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 3707,
+                        "looks": "looks-boolean"
+                    }
+                ],
+                [
+                    {
+                        "count": 0,
+                        "looks": "looks-empty"
+                    },
+                    {
+                        "count": 0,
+                        "looks": "looks-integral"
+                    },
+                    {
+                        "count": 0,
+                        "looks": "looks-real"
+                    },
+                    {
+                        "count": 6714367,
+                        "looks": "looks-text"
+                    },
+                    {
+                        "count": 0,
+                        "looks": "looks-boolean"
+                    }
+                ]
+            ],
+            "bad-rows": 0,
+            "total-rows": 6714367,
+            "numeric-summaries": {
+                "type": "numeric-field-summary",
+                "field-summary": [
+                    {
+                        "mean": {
+                            "value": 576313514551916550000000000000000000000,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 6000000000000000000000000000000000000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -802,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 58800926438657700000000000000000000000000,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 19243721735783704000000000000000000000000000000000000000000000000000000000000,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 200000000000000000000000000000000000000000000000000000000000000000000000000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -785,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 1961727306821844400000000000000000000000000000000000000000000000000000000000000,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 668449197860962600000000000000000000000000000,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 7000000000000000000000000000000000000000000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -315,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 68401005553256460000000000000000000000000000000,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 285498.22389658465,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 3000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -87,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 2.9220106106104862e7,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 5555319.783653198,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 38000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -373,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 3.8998950271040815e8,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 28264556246466950000000000,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 300000000000000000000000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -927,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 2911798067998581000000000000,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 4769172071728354000000000000000000000000000000000000000000000000000000000000000000000,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -98,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 488298943869600900000000000000000000000000000000000000000000000000000000000000000000000,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "mean": {
+                            "value": 1327703.403868194,
+                            "type": "mean"
+                        },
+                        "median": {
+                            "type": "no-median"
+                        },
+                        "maximum": {
+                            "value": 8000000000,
+                            "type": "maximum"
+                        },
+                        "minimum": {
+                            "value": -92,
+                            "type": "minimum"
+                        },
+                        "stddev": {
+                            "value": 8.508187210104227e7,
+                            "type": "stddev"
+                        },
+                        "type": "numeric-summary"
+                    },
+                    {
+                        "type": "no-numeric-summary"
+                    }
+                ]
+            },
+            "text-counts": [
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                },
+                {
+                    "type": "looks-freeform"
+                }
+            ]
+        },
+        "check-files": [
+            "single-file/warden-gen-fozzy/smallpox/year=8153/month=04/day=17/dengue/cartman"
+        ]
+    },
+    "view": "single-file/warden-gen-fozzy/smallpox/",
+    "timestamp": "2016-04-27 00:15:52"
+}

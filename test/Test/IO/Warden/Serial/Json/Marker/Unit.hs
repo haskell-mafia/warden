@@ -48,6 +48,17 @@ prop_ViewMarker_compatibility_v3 = testIO $ do
   vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v3.json"
   pure $ isRight vm === True
 
+prop_FileMarker_compatibility_v4 :: Property
+prop_FileMarker_compatibility_v4 = testIO $ do
+  fm <- runResourceT . runEitherT $ readFileMarker' "test/data/serial/json/marker/file_marker_v4.json"
+  pure $ isRight fm === True
+
+prop_ViewMarker_compatibility_v4 :: Property
+prop_ViewMarker_compatibility_v4 = testIO $ do
+  vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v4.json"
+  pure $ isRight vm === True
+
+
 return []
 tests :: IO Bool
 tests = $forAllProperties $ quickCheckWithResult (stdArgs { maxSuccess = 1 })
