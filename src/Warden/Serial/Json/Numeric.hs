@@ -13,10 +13,12 @@ import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 
 import           P
 
 import           Warden.Data.Numeric
+import           Warden.Data.Sampling
 
 fromNumericFieldSummary :: NumericFieldSummary -> Value
 fromNumericFieldSummary NoNumericFieldSummary = object [
@@ -46,13 +48,14 @@ fromNumericSummary :: NumericSummary -> Value
 fromNumericSummary NoNumericSummary = object [
     "type" .= String "no-numeric-summary"
   ]
-fromNumericSummary (NumericSummary mn mx mean s md) = object [
+fromNumericSummary (NumericSummary mn mx mean s md smpl) = object [
     "type" .= String "numeric-summary"
   , "minimum" .= fromMinimum mn
   , "maximum" .= fromMaximum mx
   , "mean" .= fromMean mean
   , "stddev" .= fromStdDev s
   , "median" .= fromMedian md
+  , "sample" .= fromSample smpl
   ]
 
 toNumericSummary :: Value -> Parser NumericSummary
@@ -64,6 +67,7 @@ toNumericSummary (Object o) =
       <*> (toMean =<< (o .: "mean"))
       <*> (toStdDev =<< (o .: "stddev"))
       <*> (toMedian =<< (o .: "median"))
+      <*> (toSample =<< (o .:? "sample"))
     "no-numeric-summary" -> pure NoNumericSummary
     s -> fail . T.unpack $ "invalid NumericSummary type: " <> s
 toNumericSummary x = typeMismatch "Warden.Data.Numeric.NumericSummary" x
@@ -162,3 +166,28 @@ toStdDev (Object o) = do
       pure $ StdDev v
     s -> fail . T.unpack $ "invalid StdDev type: " <> s
 toStdDev x = typeMismatch "Warden.Data.Numeric.StdDev" x
+
+fromSample :: Sample -> Value
+fromSample NoSample =
+  object [
+    "sample-type" .= String "no-sample"
+  ]
+fromSample (Sample v) =
+  object [
+    "sample-type" .= String "sample"
+  , "sample-values" .= toJSON (VU.toList v)
+  ]
+
+toSample :: Maybe Value -> Parser Sample
+toSample Nothing =
+  -- compatibility
+  pure NoSample
+toSample (Just (Object o)) = do
+  o .: "sample-type" >>= \case
+    "no-sample" -> pure NoSample
+    "sample" -> do
+      xs <- parseJSON =<< (o .: "sample-values")
+      pure . Sample $ VU.fromList xs
+    s -> fail . T.unpack $ "invalid Sample type: " <> s
+toSample (Just x) = typeMismatch "Warden.Data.Sampling.Sample" x
+

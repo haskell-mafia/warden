@@ -198,6 +198,7 @@ summarizeNumericState st smpl =
         mn
         stddev
         (sampleMedian smpl)
+        smpl
 
 summarizeFieldNumericState :: FieldNumericState
                            -> FieldReservoirAcc
