@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module Test.IO.Warden.Serial.Json.Marker.Unit where
 
@@ -10,7 +11,7 @@ import           Disorder.Core.IO (testIO)
 
 import           P
 
-import           System.IO (IO)
+import           System.IO (IO, FilePath)
 
 import           Test.QuickCheck
 
@@ -18,46 +19,39 @@ import           Warden.Marker
 
 import           X.Control.Monad.Trans.Either (runEitherT)
 
-prop_FileMarker_compatibility_v1 :: Property
-prop_FileMarker_compatibility_v1 = testIO $ do
-  fm <- runResourceT . runEitherT $ readFileMarker' "test/data/serial/json/marker/file_marker_v1.json"
+fileMarkerCompatibility :: FilePath -> Property
+fileMarkerCompatibility fp = testIO $ do
+  fm <- runResourceT . runEitherT $ readFileMarker' fp
   pure $ isRight fm === True
 
-prop_ViewMarker_compatibility_v1 :: Property
-prop_ViewMarker_compatibility_v1 = testIO $ do
-  vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v1.json"
+viewMarkerCompatibility :: FilePath -> Property
+viewMarkerCompatibility fp = testIO $ do
+  vm <- runResourceT . runEitherT $ readViewMarker fp
   pure $ isRight vm === True
 
-prop_FileMarker_compatibility_v2 :: Property
-prop_FileMarker_compatibility_v2 = testIO $ do
-  fm <- runResourceT . runEitherT $ readFileMarker' "test/data/serial/json/marker/file_marker_v2.json"
-  pure $ isRight fm === True
+prop_FileMarker_compatibility_v1 =
+  fileMarkerCompatibility "test/data/serial/json/marker/file_marker_v1.json"
 
-prop_ViewMarker_compatibility_v2 :: Property
-prop_ViewMarker_compatibility_v2 = testIO $ do
-  vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v2.json"
-  pure $ isRight vm === True
+prop_ViewMarker_compatibility_v1 =
+  viewMarkerCompatibility "test/data/serial/json/marker/view_marker_v1.json"
 
-prop_FileMarker_compatibility_v3 :: Property
-prop_FileMarker_compatibility_v3 = testIO $ do
-  fm <- runResourceT . runEitherT $ readFileMarker' "test/data/serial/json/marker/file_marker_v3.json"
-  pure $ isRight fm === True
+prop_FileMarker_compatibility_v2 =
+  fileMarkerCompatibility "test/data/serial/json/marker/file_marker_v2.json"
 
-prop_ViewMarker_compatibility_v3 :: Property
-prop_ViewMarker_compatibility_v3 = testIO $ do
-  vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v3.json"
-  pure $ isRight vm === True
+prop_ViewMarker_compatibility_v2 =
+  viewMarkerCompatibility "test/data/serial/json/marker/view_marker_v2.json"
 
-prop_FileMarker_compatibility_v4 :: Property
-prop_FileMarker_compatibility_v4 = testIO $ do
-  fm <- runResourceT . runEitherT $ readFileMarker' "test/data/serial/json/marker/file_marker_v4.json"
-  pure $ isRight fm === True
+prop_FileMarker_compatibility_v3 =
+  fileMarkerCompatibility "test/data/serial/json/marker/file_marker_v3.json"
 
-prop_ViewMarker_compatibility_v4 :: Property
-prop_ViewMarker_compatibility_v4 = testIO $ do
-  vm <- runResourceT . runEitherT $ readViewMarker "test/data/serial/json/marker/view_marker_v4.json"
-  pure $ isRight vm === True
+prop_ViewMarker_compatibility_v3 =
+  viewMarkerCompatibility "test/data/serial/json/marker/view_marker_v3.json"
 
+prop_FileMarker_compatibility_v4 =
+  fileMarkerCompatibility "test/data/serial/json/marker/file_marker_v4.json"
+
+prop_ViewMarker_compatibility_v4 =
+  viewMarkerCompatibility "test/data/serial/json/marker/view_marker_v4.json"
 
 return []
 tests :: IO Bool
