@@ -180,6 +180,7 @@ instance Arbitrary NumericSummary where
                      <*> arbitrary
                      <*> arbitrary
                      <*> arbitrary
+                     <*> arbitrary
     ]
 
 instance Arbitrary ReservoirSize where
@@ -443,6 +444,12 @@ instance Arbitrary SamplingType where
   arbitrary = oneof [
       pure NoSampling
     , ReservoirSampling <$> arbitrary
+    ]
+
+instance Arbitrary Sample where
+  arbitrary = frequency [
+      (1, pure NoSample)
+    , (99, (Sample . VU.fromList) <$> arbitrary)
     ]
 
 instance Arbitrary CheckParams where

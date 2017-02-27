@@ -1,0 +1,20 @@
+{
+    "results": [
+        {
+            "status": {
+                "status": "pass"
+            },
+            "type": "file",
+            "description": "file-sanity-checks"
+        }
+    ],
+    "warden-params": {
+        "warden-version": "0.0.1-20160427000822-c29b37a-M",
+        "num-caps": 8,
+        "run-id": "565687ac1636d779",
+	"file-format": "rfc4180"
+    },
+    "version": "v3",
+    "view-file": "single-file/warden-gen-fozzy/smallpox/year=8153/month=04/day=17/dengue/cartman",
+    "timestamp": "2016-04-27 00:15:32"
+}

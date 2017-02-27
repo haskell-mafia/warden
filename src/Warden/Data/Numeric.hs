@@ -45,6 +45,8 @@ import           GHC.Generics (Generic)
 
 import           P
 
+import           Warden.Data.Sampling (Sample(..))
+
 data Minimum =
     Minimum !Double
   | NoMinimum
@@ -229,7 +231,13 @@ mkStdDev v
 --   Will probably also end up in brandix.
 data NumericSummary =
     NoNumericSummary
-  | NumericSummary !Minimum !Maximum !Mean !StdDev !Median
+  | NumericSummary
+      !Minimum
+      !Maximum
+      !Mean
+      !StdDev
+      !Median 
+      !Sample
   deriving (Eq, Show, Generic)
 
 instance NFData NumericSummary where rnf = genericRnf
