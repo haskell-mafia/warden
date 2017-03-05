@@ -5,5 +5,16 @@
 $(dirname $0)/ci.doc.common
 
 version=$(cat gen/version.txt)
+git_commit=$(git rev-parse HEAD)
+
+PROJECT="warden"
+
+find doc \
+     -maxdepth 1 \
+     -name \*.pdf | while read F; do
+    s3 upload ${F} ${AMBIATA_DOC_BRANCHES}/${PROJECT}/${version}/${F}
+    doc_url="http://doc.engineering.ambiata.com/branches/${PROJECT}/${version}/${F}"
+    spoke -r "$PROJECT" --commit "$git_commit" --state "success" --context "doc-$F" -d "Documentation build: $F" -t "$doc_url"
+done
 
 s3 upload doc/warden.pdf ${AMBIATA_DOC_BRANCHES}/warden/${version}/warden-${version}.pdf
