@@ -5,30 +5,15 @@
 import           BuildInfo_ambiata_warden
 import           DependencyInfo_ambiata_warden
 
-import           Control.Monad.Trans.Resource (runResourceT)
-
-import           Data.Char (ord)
-import           Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
-import qualified Data.Text.IO as T
-import qualified Data.Text as T
-
-import           Options.Applicative
+import           Options.Applicative (Parser)
+import           Options.Applicative (subparser)
 
 import           P
 
-import           System.Exit (exitSuccess, exitFailure)
-import           System.IO (IO, FilePath, print, putStrLn)
+import           System.IO (IO, BufferMode(..))
+import           System.IO (stdout, stderr, hSetBuffering)
 
-import           Warden.Commands
-import           Warden.Data
-import           Warden.Error
-import           Warden.Param
-import           Warden.Schema
-
-import           X.Control.Monad.Trans.Either (mapEitherT)
-import           X.Control.Monad.Trans.Either.Exit (orDie)
-import           X.Options.Applicative
+import           X.Options.Applicative (cli, command')
 
 data Command =
     Simulate
@@ -36,22 +21,13 @@ data Command =
 
 main :: IO ()
 main = do
-  dispatch (safeCommand wardenP) >>= \case
-    VersionCommand -> do
-      putStrLn ("warden: " <> buildInfoVersion)
-    DependencyCommand -> do
-      mapM_ putStrLn dependencyInfo
-    RunCommand DryRun c -> do
-      print c
-      exitSuccess
-    RunCommand RealRun cmd -> do
-      wps <- buildWardenParams . WardenVersion $ T.pack buildInfoVersion
-      run wps cmd
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
+  cli "warden-numerics" buildInfoVersion dependencyInfo commandP $ \cmd ->
+    case cmd of
+      Simulate ->
+        pure ()
 
-run :: Command -> IO ()
-run Simulate = do
-  pure ()
-
-wardenP :: Parser Command
-wardenP = subparser $
+commandP :: Parser Command
+commandP = subparser $
      command' "simulate" "Run simulations of numerical computations for accuracy evaluation." (pure Simulate)
