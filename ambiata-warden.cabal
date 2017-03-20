@@ -193,6 +193,22 @@ executable             warden-gen
                      , unix                            >= 2.7.1 && < 2.7.3
                      , vector                          == 0.10.*
 
+executable warden-numerics
+  main-is:             warden-numerics.hs
+
+  ghc-options:         -Wall -threaded -O2
+
+  hs-source-dirs:
+                       main
+
+  build-depends:
+                       base                            >= 3          && < 5
+                     , ambiata-p
+                     , ambiata-warden
+                     , ireal                           == 0.2.*
+                     , text
+                     , vector                          == 0.10.*
+
 test-suite test
   type:                exitcode-stdio-1.0
 
