@@ -8,6 +8,7 @@ import qualified Data.Vector.Unboxed as VU
 
 import           Options.Applicative (Parser)
 import           Options.Applicative (subparser, flag', long)
+import           Options.Applicative (option, auto, value)
 
 import           P
 
@@ -22,7 +23,7 @@ import           Test.Numeric.Warden.Simulate
 import           X.Options.Applicative (cli, command')
 
 data Command =
-    Simulate !Computation
+    Simulate !Computation !TestRange
   deriving (Eq, Show)
 
 main :: IO ()
@@ -31,11 +32,10 @@ main = do
   hSetBuffering stderr LineBuffering
   cli "warden-numerics" buildInfoVersion dependencyInfo commandP $ \cmd ->
     case cmd of
-      Simulate _c -> do
+      Simulate _c (TestRange l u) -> do
         g <- R.createSystemRandom
-        xv <- genUniformWithin 1000 0.0 1.0 g
+        xv <- genUniformWithin 1000 l u g
         VU.mapM_ (hPutStrLn stderr . show) xv
-        
 
 commandP :: Parser Command
 commandP = subparser $
@@ -45,11 +45,19 @@ simulateP :: Parser Command
 simulateP =
   Simulate
     <$> computationP
+    <*> testRangeP
+
+testRangeP :: Parser TestRange
+testRangeP =
+  fmap (uncurry TestRange) $
+    option auto $
+         long "test-range"
+      <> value (0.0, 1.0)
 
 computationP :: Parser Computation
 computationP =
   let
-    summationP = flag' Summation $ long "summation"
+    meanP = flag' DataMean $ long "mean"
   in
-  summationP
+  meanP
   
