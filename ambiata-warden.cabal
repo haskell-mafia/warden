@@ -200,6 +200,7 @@ executable warden-numerics
 
   hs-source-dirs:
                        main
+                     , test
 
   build-depends:
                        base                            >= 3          && < 5
@@ -208,8 +209,10 @@ executable warden-numerics
                      , ambiata-x-eithert
                      , ambiata-x-optparse
                      , ireal                           == 0.2.*
+                     , mwc-random                      == 0.13.*
                      , optparse-applicative            == 0.11.*
-                     , text
+                     , primitive                       == 0.6.*
+                     , text                            == 1.2.*
                      , vector                          == 0.10.*
 
 test-suite test

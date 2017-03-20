@@ -1,22 +1,28 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import           BuildInfo_ambiata_warden
 import           DependencyInfo_ambiata_warden
 
+import qualified Data.Vector.Unboxed as VU
+
 import           Options.Applicative (Parser)
-import           Options.Applicative (subparser)
+import           Options.Applicative (subparser, flag', long)
 
 import           P
 
 import           System.IO (IO, BufferMode(..))
 import           System.IO (stdout, stderr, hSetBuffering)
+import           System.IO (hPutStrLn)
+import qualified System.Random.MWC as R
+
+import           Test.Numeric.Warden.Gen
+import           Test.Numeric.Warden.Simulate
 
 import           X.Options.Applicative (cli, command')
 
 data Command =
-    Simulate
+    Simulate !Computation
   deriving (Eq, Show)
 
 main :: IO ()
@@ -25,9 +31,25 @@ main = do
   hSetBuffering stderr LineBuffering
   cli "warden-numerics" buildInfoVersion dependencyInfo commandP $ \cmd ->
     case cmd of
-      Simulate ->
-        pure ()
+      Simulate _c -> do
+        g <- R.createSystemRandom
+        xv <- genUniformWithin 1000 0.0 1.0 g
+        VU.mapM_ (hPutStrLn stderr . show) xv
+        
 
 commandP :: Parser Command
 commandP = subparser $
-     command' "simulate" "Run simulations of numerical computations for accuracy evaluation." (pure Simulate)
+     command' "simulate" "Run simulations of numerical computations for accuracy evaluation." simulateP
+
+simulateP :: Parser Command
+simulateP =
+  Simulate
+    <$> computationP
+
+computationP :: Parser Computation
+computationP =
+  let
+    summationP = flag' Summation $ long "summation"
+  in
+  summationP
+  
