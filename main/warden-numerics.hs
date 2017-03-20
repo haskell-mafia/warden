@@ -4,7 +4,7 @@
 import           BuildInfo_ambiata_warden
 import           DependencyInfo_ambiata_warden
 
-import qualified Data.Vector.Unboxed as VU
+import qualified Data.Vector as VU
 
 import           Options.Applicative (Parser)
 import           Options.Applicative (subparser, flag', long)
@@ -32,9 +32,11 @@ main = do
   hSetBuffering stderr LineBuffering
   cli "warden-numerics" buildInfoVersion dependencyInfo commandP $ \cmd ->
     case cmd of
-      Simulate _c (TestRange l u) -> do
+      Simulate DataMean (TestRange l u) -> do
         g <- R.createSystemRandom
         xv <- genUniformWithin 1000 l u g
+        let
+          fix = fromFractional $ fixedMean $ 
         VU.mapM_ (hPutStrLn stderr . show) xv
 
 commandP :: Parser Command

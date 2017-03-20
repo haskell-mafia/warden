@@ -6,8 +6,8 @@ module Test.Numeric.Warden.Gen(
 
 import           Control.Monad.Primitive (PrimBase, PrimState)
 
-import           Data.Vector.Unboxed (Vector)
-import qualified Data.Vector.Unboxed as VU
+import           Data.Vector (Vector)
+import qualified Data.Vector as VU
 
 import           P
 
