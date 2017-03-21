@@ -8,6 +8,7 @@ module Warden.Row (
     combineSVParseState
   , decodeByteString
   , parseField
+  , parseProbablyNumeric
   , readView
   , readView'
   , readViewChunk
@@ -277,17 +278,18 @@ updateFieldNumerics g rc st (SVFields v) fls fns fra = {-# SCC updateFieldNumeri
         then parseProbablyNumeric f
         else NoNumericField
     {-# INLINE isNumeric #-}
-
-    parseProbablyNumeric f =
-      toMNumericField $ AB.parseOnly numericFieldP f
-    {-# INLINE parseProbablyNumeric #-}
-
-    toMNumericField (Left _) = NoNumericField
-    toMNumericField (Right x) = MNumericField x
-    {-# INLINE toMNumericField #-}
 updateFieldNumerics _ _ _ _ _ fns fra = {-# SCC updateFieldNumerics #-}
   pure (fns, fra)
 {-# INLINE updateFieldNumerics #-}
+
+parseProbablyNumeric :: ByteString -> MNumericField
+parseProbablyNumeric f =
+  let
+    toMNumericField (Left _) = NoNumericField
+    toMNumericField (Right x) = MNumericField x
+  in
+  toMNumericField $ AB.parseOnly numericFieldP f
+{-# INLINE parseProbablyNumeric #-}
 
 updateFieldNumericState :: V.Vector MNumericField -> FieldNumericState -> FieldNumericState
 updateFieldNumericState ns NoFieldNumericState = {-# SCC updateFieldNumericState #-}
