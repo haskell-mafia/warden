@@ -4,7 +4,7 @@
 [build.profiling-7-10]
 
 [build.dist-7-10]
-  command = [["master", "build", "dist-7-10"], ["./bin/ci.doc"]]
+  command = [["master", "build", "dist-7-10"]]
 
 [build.dist-doc]
   command = [["./bin/ci.doc"]]
