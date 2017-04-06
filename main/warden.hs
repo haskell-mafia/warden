@@ -192,8 +192,8 @@ lineBoundP = LineBound <$> (option auto $
      long "max-line-length"
   <> short 'b'
   <> metavar "LINE_LENGTH"
-  <> value 65536
-  <> help "Maximum line length. Defaults to 65536.")
+  <> value 131072
+  <> help "Maximum line length. Defaults to 131072 bytes.")
 
 verbosityP :: Parser Verbosity
 verbosityP =
