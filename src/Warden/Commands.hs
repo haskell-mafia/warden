@@ -24,7 +24,6 @@ import           System.Directory (makeAbsolute)
 import           System.FilePath (takeDirectory)
 import           System.IO (IO, FilePath)
 
-import qualified Warden.Check.File as File
 import qualified Warden.Check.Row as Row
 
 import           Warden.Data
@@ -55,16 +54,6 @@ fileCheck wps vf ps = do
   let view = View $ takeDirectory vf'
   checkViewFiles wps ps view $ vf :| []
 
-sanity :: WardenParams
-       -> View
-       -> SanityParams
-       -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
-sanity wps view sps =
-  let idf = sanityIncludeDotFiles sps in do
-  vfs <- traverseView idf view
-  frs <- fmap join . traverse (forM File.fileChecks) $ (File.runFileCheck wps (sanityVerbosity sps) (sanityForce sps)) <$> vfs
-  pure frs
-
 checkViewFiles :: WardenParams
                -> CheckParams
                -> View
@@ -72,10 +61,7 @@ checkViewFiles :: WardenParams
                -> EitherT WardenError (ResourceT IO) (NonEmpty CheckResult)
 checkViewFiles wps ps v vfs = do
   schema <- maybe (pure Nothing) (fmap Just . readSchema) $ checkSchemaFile ps
-  frs <- fmap join . traverse (forM File.fileChecks) $
-    (File.runFileCheck wps (checkVerbosity ps) (checkForce ps)) <$> vfs
-  rr <- Row.runRowCheck wps ps schema v vfs
-  pure $ rr <| frs
+  Row.runRowCheck wps ps schema v vfs
 
 infer :: Verbosity
       -> FieldMatchRatio

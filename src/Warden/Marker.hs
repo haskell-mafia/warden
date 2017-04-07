@@ -2,15 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Warden.Marker(
-    fileMarkerExists
-  , readFileMarker
-  , readFileMarker'
-  , readViewMarker
+    readViewMarker
   , resultSummaryFailed
   , summarizeSVParseState
   , utcNow
   , viewMarkerExists
-  , writeFileMarker
   , writeViewMarker
   ) where
 
@@ -40,12 +36,6 @@ import           Warden.Serial.Json.Marker
 
 import           X.Control.Monad.Trans.Either (EitherT, firstEitherT, hoistEither, eitherTFromMaybe)
 
-writeFileMarker :: FileMarker -> EitherT WardenError (ResourceT IO) ()
-writeFileMarker fm =
-  let markf = fileToMarker $ fmViewFile fm
-      markJson = encodePretty $ fromFileMarker fm in
-  liftIO $ writeFile markf markJson
-
 writeViewMarker :: ViewMarker -> EitherT WardenError (ResourceT IO) ()
 writeViewMarker vm =
   let markf = viewMarkerPath vm
@@ -60,15 +50,6 @@ readJson fp = do
   eitherTFromMaybe (WardenMarkerError $ MarkerDecodeError fp "invalid json") $
     pure $ decode' bs
 
-readFileMarker :: ViewFile -> EitherT WardenError (ResourceT IO) FileMarker
-readFileMarker = readFileMarker' . fileToMarker
-
-readFileMarker' :: FilePath -> EitherT WardenError (ResourceT IO) FileMarker
-readFileMarker' fp = do
-  js <- readJson fp
-  firstEitherT (WardenMarkerError . MarkerDecodeError fp . T.pack) . hoistEither $
-    parseEither toFileMarker js
-
 readViewMarker :: FilePath -> EitherT WardenError (ResourceT IO) ViewMarker
 readViewMarker fp = do
   js <- readJson fp
@@ -78,10 +59,6 @@ readViewMarker fp = do
 viewMarkerExists :: ViewMarker -> IO Bool
 viewMarkerExists =
   doesFileExist . viewMarkerPath
-
-fileMarkerExists :: ViewFile -> IO Bool
-fileMarkerExists =
-  doesFileExist . fileToMarker
 
 utcNow :: IO DateTime
 utcNow = local utcTZ

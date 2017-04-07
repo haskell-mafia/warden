@@ -69,9 +69,6 @@ run _wps (SummarizeMarkers fs) = do
 run _wps (FailedMarkers fs) = do
   ms <- orDie renderWardenError . mapEitherT runResourceT $ failedMarkers fs
   mapM_ putStrLn ms
-run wps (Sanity v sps) = do
-  r <- orDie renderWardenError . mapEitherT runResourceT $ sanity wps v sps
-  finishCheck (sanityVerbosity sps) (sanityExitType sps) r
 run _wps (SchemaValidate sf) = do
   void . orDie renderWardenError . mapEitherT runResourceT $ validateSchema sf
 

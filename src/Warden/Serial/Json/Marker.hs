@@ -3,9 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Warden.Serial.Json.Marker(
-    fromFileMarker
-  , toFileMarker
-  , fromRowCountSummary
+    fromRowCountSummary
   , toRowCountSummary
   , fromViewMarker
   , toViewMarker
@@ -137,32 +135,6 @@ toCheckResultSummary (Object o) = do
   t <- toCheckResultType =<< (o .: "type")
   pure $ CheckResultSummary s d t
 toCheckResultSummary x          = typeMismatch "Warden.Data.Marker.CheckResultSummary" x
-
-fromFileMarker :: FileMarker -> Value
-fromFileMarker (FileMarker wps vf ts crs) = object [
-    "version" .= fromMarkerVersion currentMarkerVersion
-  , "warden-params" .= fromWardenParams wps
-  , "view-file" .= fromViewFile vf
-  , "timestamp" .= fromDateTime ts
-  , "results" .= (fromCheckResultSummary <$> crs)
-  ]
-
-toFileMarker :: Value -> Parser FileMarker
-toFileMarker (Object o) = do
-  (toMarkerVersion =<< (o .: "version")) >>= \case
-    MarkerV1 -> markerV1V5
-    MarkerV2 -> markerV1V5
-    MarkerV3 -> markerV1V5
-    MarkerV4 -> markerV1V5
-    MarkerV5 -> markerV1V5
-  where
-    markerV1V5 = do
-      wps <- toWardenParams =<< (o .: "warden-params")
-      vf <- toViewFile =<< (o .: "view-file")
-      ts <- toDateTime =<< (o .: "timestamp")
-      crs <- mapM toCheckResultSummary =<< (o .: "results")
-      pure $ FileMarker wps vf ts crs
-toFileMarker x          = typeMismatch "Warden.Data.Marker.FileMarker" x
 
 fromViewMetadata :: ViewMetadata -> Value
 fromViewMetadata (ViewMetadata rcs ps ds vfs) = object [

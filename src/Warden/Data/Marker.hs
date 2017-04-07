@@ -7,7 +7,6 @@ module Warden.Data.Marker (
     CheckResultSummary(..)
   , CheckResultType(..)
   , DateRange(..)
-  , FileMarker(..)
   , MarkerFailure(..)
   , MarkerStatus(..)
   , RowCountSummary(..)
@@ -15,17 +14,14 @@ module Warden.Data.Marker (
   , ViewMetadata(..)
   , dateRange
   , filePathChar
-  , fileToMarker
-  , markerToFile
-  , mkFileMarker
   , mkViewMarker
   , viewMarkerPath
   ) where
 
 import           Control.DeepSeq.Generics (genericRnf)
 
-import           Data.Attoparsec.Text (IResult(..), Parser, parse)
-import           Data.Attoparsec.Text (string, satisfy, manyTill')
+import           Data.Attoparsec.Text (Parser)
+import           Data.Attoparsec.Text (satisfy)
 import           Data.Char (ord)
 import           Data.List.NonEmpty (NonEmpty)
 import           Data.Set (Set)
@@ -37,7 +33,7 @@ import           Delorean.Local.DateTime (DateTime(..))
 
 import           GHC.Generics (Generic)
 
-import           System.FilePath (takeFileName, replaceFileName, joinPath)
+import           System.FilePath (joinPath)
 import           System.IO (FilePath)
 
 import           P
@@ -110,52 +106,6 @@ summarizeResult :: CheckResultType -> CheckDescription -> CheckStatus -> CheckRe
 summarizeResult typ dsc st =
   let sst = summarizeStatus st in
   CheckResultSummary sst dsc typ
-
-data FileMarker =
-  FileMarker {
-    fmWardenParams :: !WardenParams
-  , fmViewFile :: !ViewFile
-  , fmTimestamp :: !DateTime
-  , fmCheckResults :: ![CheckResultSummary]
-  } deriving (Eq, Show, Generic)
-
-instance NFData FileMarker where rnf = genericRnf
-
-mkFileMarker :: WardenParams
-             -> ViewFile
-             -> CheckDescription
-             -> DateTime
-             -> CheckStatus
-             -> FileMarker
-mkFileMarker wps v dsc dt cs =
-  let crs = [summarizeResult FileResult dsc cs] in
-  FileMarker wps v dt crs
-
-markerSuffix :: FilePath
-markerSuffix = ".warden"
-
-fileToMarker :: ViewFile -> FilePath
-fileToMarker vf =
-  let fileName   = takeFileName $ viewFilePath vf
-      markerFile = "_" <> fileName <> markerSuffix in
-  replaceFileName (viewFilePath vf) markerFile
-
-markerToFile :: FilePath -> Maybe ViewFile
-markerToFile fp = case viewFile fp of
-  Left _ -> Nothing
-  Right vf -> do
-    fn <- finalize . parse fileMarker . T.pack $ takeFileName fp
-    let fp' = FilePart . T.pack $ replaceFileName (T.unpack . unFilePart $ vfFilePart vf) fn
-    pure $ vf { vfFilePart = fp' }
-  where
-    fileMarker :: Parser FilePath
-    fileMarker =
-      string "_" *> manyTill' filePathChar (string $ T.pack markerSuffix)
-
-    finalize (Partial c)  = finalize $ c ""
-    finalize (Done "" "") = Nothing
-    finalize (Done "" r)  = Just r
-    finalize _            = Nothing
 
 viewMarkerPath :: ViewMarker -> FilePath
 viewMarkerPath vm =
