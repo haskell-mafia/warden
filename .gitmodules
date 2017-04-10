@@ -28,3 +28,9 @@
 [submodule "lib/tine"]
 	path = lib/tine
 	url = git@github.com:ambiata/tine.git
+[submodule "lib/parsley"]
+	path = lib/parsley
+	url = git@github.com:ambiata/parsley.git
+[submodule "lib/anemone"]
+	path = lib/anemone
+	url = git@github.com:ambiata/anemone.git
