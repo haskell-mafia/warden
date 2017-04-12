@@ -80,6 +80,7 @@ library
                        DependencyInfo_ambiata_warden
                        Warden
                        Warden.Anomaly.Data
+                       Warden.Anomaly.Metric
                        Warden.Check
                        Warden.Check.File
                        Warden.Check.Row
