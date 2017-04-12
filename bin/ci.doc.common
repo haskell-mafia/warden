@@ -1,5 +1,3 @@
 #! /bin/sh -eux
 
-./mafia build
-
 cd doc && make
