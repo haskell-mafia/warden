@@ -25,6 +25,7 @@ import           Warden.Data.Numeric
 import           Warden.Data.Row
 import           Warden.Row (parseProbablyNumeric)
 
+-- | FIXME: ensure constant dimensionality
 newtype FeatureVector =
   FeatureVector {
     unFeatureVector :: VU.Vector Double
