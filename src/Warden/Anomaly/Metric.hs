@@ -8,6 +8,7 @@
 
 module Warden.Anomaly.Metric (
     Distance(..)
+  , distance0
   , euclidean
   ) where
 
@@ -28,7 +29,10 @@ import           Warden.Anomaly.Data
 newtype Distance =
   Distance {
     unDistance :: Double
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord, Num)
+
+distance0 :: Distance
+distance0 = Distance 0.0
 
 euclidean :: FeatureVector -> FeatureVector -> Distance
 euclidean (FeatureVector a) (FeatureVector b) =
