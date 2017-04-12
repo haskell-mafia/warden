@@ -1,9 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Anomaly.Metric (
