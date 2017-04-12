@@ -1,15 +1,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Warden.Anomaly.Metric (
     Distance(..)
+  , distance0
   , euclidean
   ) where
+
+import           Data.AEq (AEq)
 
 import qualified Data.Vector.Unboxed as VU
 
@@ -28,7 +27,10 @@ import           Warden.Anomaly.Data
 newtype Distance =
   Distance {
     unDistance :: Double
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord, Num, AEq)
+
+distance0 :: Distance
+distance0 = Distance 0.0
 
 euclidean :: FeatureVector -> FeatureVector -> Distance
 euclidean (FeatureVector a) (FeatureVector b) =
