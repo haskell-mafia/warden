@@ -4,16 +4,10 @@
 [build.profiling-7-10]
 
 [build.dist-7-10]
-  command = [["master", "build", "dist-7-10"]]
-
-[build.dist-doc]
-  command = [["./bin/ci.doc"]]
+  command = [["master", "build", "dist-7-10"], ["./bin/ci.doc"]]
 
 [build.branches-7-10]
-  command = [["master", "build", "branches-7-10"]]
-
-[build.branches-doc]
-  command = [["./bin/ci.doc.branches"]]
+  command = [["master", "build", "branches-7-10"], ["./bin/ci.doc.branches"]]
 
 [build.dist-validate]
   command = [["validate-respect"]]
