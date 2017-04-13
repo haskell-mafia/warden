@@ -5,8 +5,9 @@
 module Test.Warden.Anomaly.Metric where
 
 import           Data.AEq ((~==), AEq)
+import qualified Data.Vector.Unboxed as VU
 
-import           Disorder.Core.Property ((=/=))
+import           Disorder.Core.Property ((=/=), (~~~))
 
 import           P
 
@@ -78,9 +79,22 @@ x <~ y =
     , x < y
     ]
 
+square :: Int -> Int
+square x = x ^ (2 :: Int)
+
 prop_metric_euclidean :: Property
 prop_metric_euclidean =
   metricLaws euclidean
+
+prop_euclidean_r1 :: Double -> Double -> Property
+prop_euclidean_r1 x y =
+  let
+    a = FeatureVector $ VU.singleton x
+    b = FeatureVector $ VU.singleton y
+    d = abs $ x - y
+    d' = euclidean a b
+  in
+  (Distance d) ~~~ d'
 
 return []
 tests :: IO Bool
