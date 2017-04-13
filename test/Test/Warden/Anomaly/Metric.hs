@@ -37,7 +37,7 @@ separation
   -> FeatureVector
   -> Property
 separation f a b =
-  (f a b >= distance0) === True
+  counterexample "separation" $ (f a b >= distance0) === True
 
 indiscernibles
   :: (FeatureVector -> FeatureVector -> Distance)
@@ -66,7 +66,7 @@ triangle
   -> FeatureVector
   -> Property
 triangle f a b c =
-  ((f a c) <= ((f a b) + (f b c))) === True
+  counterexample "triangle inequality" $ ((f a c) <= ((f a b) + (f b c))) === True
 
 prop_metric_euclidean :: Property
 prop_metric_euclidean =
