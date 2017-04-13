@@ -10,6 +10,7 @@ module Warden.Anomaly.Metric (
 
 import           Data.AEq (AEq)
 
+import qualified Data.Vector.Algorithms.Insertion as Insertion
 import qualified Data.Vector.Unboxed as VU
 
 import           P
@@ -34,7 +35,11 @@ distance0 = Distance 0.0
 
 euclidean :: FeatureVector -> FeatureVector -> Distance
 euclidean (FeatureVector a) (FeatureVector b) =
-  Distance . sqrt . VU.foldl' (+) 0.0 $ VU.zipWith (\x y -> square $ x - y) a b
+  let
+    diffs = VU.zipWith (\x y -> square $ x - y) a b
+    diffs' = VU.modify Insertion.sort diffs
+  in
+  Distance . sqrt $ VU.foldl' (+) 0.0 diffs'
 
 square :: Double -> Double
 square x = x ^ (2 :: Int)
