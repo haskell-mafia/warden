@@ -4,6 +4,8 @@
 
 module Test.Warden.Anomaly.Metric where
 
+import           Data.AEq ((~==), AEq)
+
 import           Disorder.Core.Property ((=/=))
 
 import           P
@@ -66,7 +68,15 @@ triangle
   -> FeatureVector
   -> Property
 triangle f a b c =
-  counterexample "triangle inequality" $ ((f a c) <= ((f a b) + (f b c))) === True
+  counterexample "triangle inequality" $
+    ((f a c) <~ ((f a b) + (f b c))) === True
+
+(<~) :: (AEq a, Ord a) => a -> a -> Bool
+x <~ y =
+  or [
+      x ~== y
+    , x > y
+    ]
 
 prop_metric_euclidean :: Property
 prop_metric_euclidean =

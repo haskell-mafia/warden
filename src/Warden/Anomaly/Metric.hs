@@ -8,6 +8,8 @@ module Warden.Anomaly.Metric (
   , euclidean
   ) where
 
+import           Data.AEq (AEq)
+
 import qualified Data.Vector.Unboxed as VU
 
 import           P
@@ -25,7 +27,7 @@ import           Warden.Anomaly.Data
 newtype Distance =
   Distance {
     unDistance :: Double
-  } deriving (Eq, Show, Ord, Num)
+  } deriving (Eq, Show, Ord, Num, AEq)
 
 distance0 :: Distance
 distance0 = Distance 0.0
