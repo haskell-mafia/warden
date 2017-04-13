@@ -6,16 +6,19 @@ module Warden.Anomaly.KDTree (
     KDTree(..)
   , KD(..)
   , fromList
+  , toList
   ) where
 
 import qualified Data.List as L
 import qualified Data.Vector.Algorithms.Intro as Intro
 import qualified Data.Vector.Unboxed as VU
 
-import           P
+import           P hiding (toList)
 
 import           Warden.Anomaly.Data
 
+-- | k-dimensional search tree for nearest neighbours in Cartesian metric
+-- spaces.
 data KDTree =
   KDTree {
     treeK :: !Dimensionality
@@ -32,6 +35,13 @@ data KD =
 newtype Depth =
   Depth Int
   deriving (Eq, Show)
+
+toList :: KDTree -> [FeatureVector]
+toList (KDTree _ r) = toList' r
+
+toList' :: Maybe KD -> [FeatureVector]
+toList' Nothing = []
+toList' (Just (KD l v r)) = v : ((toList' l) <> (toList' r))
 
 fromList :: Dimensionality -> [FeatureVector] -> KDTree
 fromList dim vs =
