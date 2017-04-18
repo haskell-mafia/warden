@@ -86,18 +86,23 @@ descend :: Depth -> Depth
 descend (Depth d) =
   Depth $ d + 1
 
+-- | Find the index of the node we'll use to construct the pivot
+-- plane. This is the median of the input nodes in the splitting
+-- dimension, which is determined by the node's depth in the tree.
 layerPivot :: Depth -> Dimensionality -> [FeatureVector] -> Int
 layerPivot (Depth i) (Dimensionality k) vs =
   let
-    axis = i `mod` k
+    -- Take the splitting dimension from our depth in the tree.
+    splittingDim = i `mod` k
     n = length vs
+    -- Build a vector from our input points decorated by their
+    -- indices; we want to sort on value but return an index.
     candidates = VU.zip (VU.generate n id) .
-                   VU.fromList $ fmap (component axis) vs
+                   VU.fromList $ fmap (component splittingDim) vs
+    -- Sort up to half the length of the input list so we can find
+    -- an approximate median.
     psed = VU.modify
              (\z -> Intro.partialSortBy (\x y -> compare (snd x) (snd y)) z (n `div` 2))
              candidates
   in
   fst $ psed VU.! (n `div` 2)
-  
-    
-    
