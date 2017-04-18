@@ -105,7 +105,6 @@ parseViewFile caps verb g ff s lb fft st pct vf = do
   ss <- mapConcurrently (\c -> readViewChunk ff s lb vf c $$ sinkParse) $ NE.toList cs
   liftIO $ resolveSVParseState fft g st pct ss
   where
-    -- FIXME: could probably get away with fewer Gens created
     sinkParse = do
       g' <- liftIO createSystemRandom
       sinkFoldM (parseViewFile' fft g' st pct)
