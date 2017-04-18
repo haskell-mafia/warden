@@ -45,6 +45,7 @@ import           Test.QuickCheck.Instances ()
 
 import           Text.Printf (printf)
 
+import           Warden.Anomaly.Data
 import           Warden.Data
 import           Warden.Parser.PII
 
@@ -870,3 +871,8 @@ renderedNonDate = do
   where
     noDigits =
       elements $ [0x00..0xff] \\ [0x30..0x39]
+
+genFeatureVector :: Int -> Gen FeatureVector
+genFeatureVector n =
+  (vectorOf n arbitrary)
+    >>= (pure . FeatureVector . VU.fromList)
