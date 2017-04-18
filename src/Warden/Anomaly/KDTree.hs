@@ -19,6 +19,19 @@ import           Warden.Anomaly.Data
 
 -- | k-dimensional search tree for nearest neighbours in Cartesian metric
 -- spaces.
+--
+-- The k-d tree is a binary space-partitioning tree. Each node is a
+-- point in a k-dimensional Euclidean vector space which has a
+-- co-ordinate system. Each non-leaf node has two children, and
+-- divides the rest of the tree into two half-spaces along an implicit
+-- "pivot plane".
+--
+-- The pivot plane is defined by assigning each node \( v \) a splitting
+-- dimension; a node's splitting dimension \( s \) is determined by its depth
+-- in the tree. The hyperplane perpendicular to \( s \) is the pivot plane
+-- at \( v \), splitting the subtree rooted at \( v \) such that every
+-- node which is smaller in the \( s \) dimension will appear to the
+-- left of \( v \) and vice-versa for nodes larger in \( s \).
 data KDTree =
   KDTree {
     treeK :: !Dimensionality
