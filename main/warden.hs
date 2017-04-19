@@ -116,9 +116,9 @@ markerCommandP = subparser $
        (SummarizeMarkers <$> some markerFileP)
 
   <> command'
-    "failed"
-    "Given a list of view marker paths, output all those containing failed checks."
-    (FailedMarkers <$> some markerFileP)
+       "failed"
+       "Given a list of view marker paths, output all those containing failed checks."
+       (FailedMarkers <$> some markerFileP)
 
 schemaCommandP :: Parser Command
 schemaCommandP = subparser $
