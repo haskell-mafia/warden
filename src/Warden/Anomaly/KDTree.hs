@@ -33,6 +33,8 @@ import           Warden.Anomaly.Data
 -- at \( v \), splitting the subtree rooted at \( v \) such that every
 -- node which is smaller in the \( s \) dimension will appear to the
 -- left of \( v \) and vice-versa for nodes larger in \( s \).
+--
+-- More: https://en.wikipedia.org/wiki/K-d_tree
 data KDTree =
   KDTree {
     treeK :: !Dimensionality
