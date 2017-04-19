@@ -1,0 +1,21 @@
+#!/bin/sh -eu
+
+. $(dirname $0)/../core/setup.sh
+
+banner Display Version
+#---------------------
+
+$WARDEN_SAMPLE -v | grep -q warden-sample
+
+$WARDEN_SAMPLE --version
+
+banner Display Help
+#------------------
+
+$WARDEN_SAMPLE -h
+
+$WARDEN_SAMPLE --help
+
+WARDEN_SAMPLE="$WARDEN_SAMPLE --dry-run"
+
+$WARDEN_SAMPLE extract -o foo.csv bar.json baz.json
