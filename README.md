@@ -77,6 +77,18 @@ warden schema validate schema.json
 find _warden -name \*.warden -print0 | xargs -0 warden marker failed
 ```
 
+Extracting numeric samples
+--------------------------
+
+Samples can be extracted as CSV files from view markers for easier
+interactive analysis.
+
+```
+warden-sample extract \
+    -o samples.csv \
+    _warden/$view/$data_dates/*/*.json
+```
+
 Future Work
 -----------
 
