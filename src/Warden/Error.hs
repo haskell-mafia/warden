@@ -6,12 +6,14 @@ module Warden.Error (
   , InferenceError(..)
   , LoadError(..)
   , MarkerError(..)
+  , SampleError(..)
   , SchemaError(..)
   , TraversalError(..)
   , ValidationFailure(..)
   , renderInferenceError
   , renderLoadError
   , renderMarkerError
+  , renderSampleError
   , renderSchemaError
   , renderTraversalError
   , renderValidationFailure
@@ -40,6 +42,7 @@ data WardenError =
   | WardenMarkerError MarkerError
   | WardenSchemaError SchemaError
   | WardenInferenceError InferenceError
+  | WardenSampleError SampleError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -52,6 +55,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenMarkerError me) = renderMarkerError me
     render' (WardenSchemaError se) = renderSchemaError se
     render' (WardenInferenceError ie) = renderInferenceError ie
+    render' (WardenSampleError se) = renderSampleError se
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -204,3 +208,17 @@ renderValidationFailure f = "Validation failure: " <> render' f
       ]
     render' NoFieldCounts = "No field counts to perform inference on."
     render' (ChecksMarkedFailed rids) = "Some markers recorded a failed check status and cannot be used in inference: " <> (T.intercalate ", " . NE.toList $ renderRunId <$> rids)
+
+data SampleError =
+    NumericFieldMismatch
+  | NoNumericSummaries !FilePath
+  deriving (Eq, Show)
+
+renderSampleError :: SampleError -> Text
+renderSampleError = ("sample error: " <>) . render'
+  where
+    render' NumericFieldMismatch =
+      "mismatch in field numeric types when combining markers"
+    render' (NoNumericSummaries f) =
+      "file contains no numeric summaries: " <> (T.pack f)
+
