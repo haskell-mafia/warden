@@ -3,6 +3,7 @@
 
 module Warden.Commands(
     check
+  , extractNumericFields
   , failedMarkers
   , fileCheck
   , infer
@@ -117,3 +118,11 @@ failedMarkers fs =
     markerFailed mf = do
       vm <- readViewMarker mf
       pure $ or (fmap resultSummaryFailed $ vmCheckResults vm)
+
+extractNumericFields
+  :: FilePath
+  -> [FilePath]
+  -> EitherT WardenError (ResourceT IO) ()
+extractNumericFields _outp _fs =
+  left WardenNotImplementedError
+

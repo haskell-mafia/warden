@@ -1,5 +1,6 @@
 WARDEN=${1:-./dist/build/warden/warden}
 WARDEN_GEN=${2:-./dist/build/warden-gen/warden-gen}
+WARDEN_SAMPLE=${3:-./dist/build/warden-sample/warden-sample}
 export AWS_DEFAULT_REGION="ap-southeast-2"
 export AMBIATA_ENV="test"
 
