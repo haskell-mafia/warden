@@ -6,8 +6,6 @@ module Test.Warden.Commands.Sample where
 
 import           Data.List (take, repeat, nub)
 
-import           Disorder.Core.UniquePair (UniquePair(..))
-
 import           P
 
 import           System.IO (IO)
