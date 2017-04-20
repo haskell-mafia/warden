@@ -876,3 +876,13 @@ genFeatureVector :: Int -> Gen FeatureVector
 genFeatureVector n =
   (vectorOf n arbitrary)
     >>= (pure . FeatureVector . VU.fromList)
+
+genFeatures :: Int -> Gen Features
+genFeatures d = do
+  n <- choose (1, 20)
+  xs <- replicateM n (genFeatureVector d)
+  pure . Features $ V.fromList xs
+
+instance Arbitrary Dimensionality where
+  arbitrary =
+    Dimensionality <$> choose (1, 20)
