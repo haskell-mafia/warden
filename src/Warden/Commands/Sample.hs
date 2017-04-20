@@ -3,6 +3,7 @@
 
 module Warden.Commands.Sample (
     extractNumericFields
+  , identical
 ) where
 
 import           Control.Monad.Trans.Resource (ResourceT)
