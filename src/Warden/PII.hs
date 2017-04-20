@@ -10,7 +10,7 @@ module Warden.PII (
   ) where
 
 import           Data.ByteString (ByteString)
-import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..), (<|))
 import qualified Data.List.NonEmpty as NE
 import           Data.Semigroup ((<>))
 

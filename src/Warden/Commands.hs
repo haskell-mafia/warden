@@ -14,7 +14,7 @@ module Warden.Commands(
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
-import           Data.List.NonEmpty (NonEmpty(..), (<|), nonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..), (<|))
 import qualified Data.Text as T
 import qualified Data.Vector as V
 
