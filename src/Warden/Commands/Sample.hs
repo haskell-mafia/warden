@@ -5,6 +5,8 @@ module Warden.Commands.Sample (
     extractNumericFields
   , readNumericSummary
   , identical
+  , transposeSamples
+  , transposeSamples'
 ) where
 
 import           Control.Monad.Trans.Resource (ResourceT)
@@ -40,6 +42,34 @@ extractNumericFields _outp fs =
       nss <- mapM readNumericSummary fs'
       _ss <- hoistEither . first WardenSampleError $ combineMarkerSamples nss
       left WardenNotImplementedError
+
+transposeSamples :: V.Vector Sample -> V.Vector (VU.Vector Double)
+transposeSamples ss =
+  let
+    reify (Sample xs) = Just xs
+    reify NoSample = Nothing
+
+    svs = V.mapMaybe reify ss
+  in
+  transposeSamples' svs
+
+transposeSamples'
+  :: V.Vector (VU.Vector a)
+  -> V.Vector (VU.Vector a)
+transposeSamples' xs
+  | V.null xs = xs
+  | otherwise = transpose' (V.length xs) (VU.length $ V.head xs) xs
+
+transpose'
+  :: V.Vector (VU.Vector a)
+  -> V.Vector (VU.Vector a)
+transpose' ncol nrow mat =
+  let
+    rowAt ix = VU.generate ncol (valAt mat ix)
+
+    valAt rowx colx = (mat V.! colx) VU.! rowx
+  in
+  V.generate nrow rowAt
 
 readNumericSummary
   :: FilePath
