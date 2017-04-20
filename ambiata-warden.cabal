@@ -230,6 +230,7 @@ executable warden-sample
                      , ambiata-x-eithert
                      , ambiata-x-optparse
                      , optparse-applicative            == 0.11.*
+                     , resourcet                       == 1.1.*
                      , text                            == 1.2.*
                      , vector                          == 0.10.*
 
