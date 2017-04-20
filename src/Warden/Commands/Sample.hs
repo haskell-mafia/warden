@@ -7,17 +7,23 @@ module Warden.Commands.Sample (
   , identical
 ) where
 
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (ResourceT)
 
+import qualified Data.ByteString as BS
+import qualified Data.List as L
 import           Data.List.NonEmpty (NonEmpty(..))
 import           Data.List.NonEmpty (nonEmpty)
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 
 import           P
 
-import           System.IO (IO, FilePath)
+import           System.IO (IO, FilePath, Handle, IOMode(..))
+import           System.IO (withFile)
 
 import           Warden.Data.Marker
 import           Warden.Data.Numeric
@@ -32,14 +38,52 @@ extractNumericFields
   :: FilePath
   -> [FilePath]
   -> EitherT WardenError (ResourceT IO) ()
-extractNumericFields _outp fs =
+extractNumericFields outp fs =
   case nonEmpty fs of
     Nothing ->
       pure ()
     Just fs' -> do
       nss <- mapM readNumericSummary fs'
-      _ss <- hoistEither . first WardenSampleError $ combineMarkerSamples nss
-      left WardenNotImplementedError
+      ss <- hoistEither . first WardenSampleError $ combineMarkerSamples nss
+      writeSamples outp ss
+
+writeSamples
+  :: FilePath
+  -> V.Vector Sample
+  -> EitherT WardenError (ResourceT IO) ()
+writeSamples fp ss =
+  let
+    ssT = transposeSamples ss
+  in
+  liftIO $ withFile fp WriteMode $ \h ->
+    V.mapM_ (writeRow h) ssT
+
+writeRow
+  :: Handle
+  -> VU.Vector Double
+  -> IO ()
+writeRow h xs =
+  let
+    row = T.encodeUtf8 . T.intercalate "," . fmap renderFractional $ VU.toList xs
+  in
+  BS.hPut h row
+
+transposeSamples :: V.Vector Sample -> V.Vector (VU.Vector Double)
+transposeSamples ss =
+  let
+    reify (Sample xs) = Just xs
+    reify NoSample = Nothing
+
+    svs = V.fromList . catMaybes . V.toList $ V.map reify ss
+  in
+  savageTranspose svs
+  where
+    savageTranspose mat =
+      let
+        l = V.toList $ V.map VU.toList mat
+        l' = L.transpose l
+      in
+      V.fromList $ fmap VU.fromList l'
 
 readNumericSummary
   :: FilePath
