@@ -4,6 +4,8 @@
 import           BuildInfo_ambiata_warden
 import           DependencyInfo_ambiata_warden
 
+import           Control.Monad.Trans.Resource (runResourceT)
+
 import           Options.Applicative (Parser)
 import           Options.Applicative (subparser)
 import           Options.Applicative (long, short, help)
@@ -13,9 +15,12 @@ import           P
 
 import           System.IO (IO, BufferMode(..), FilePath)
 import           System.IO (stdout, stderr, hSetBuffering)
-import           System.IO (hPutStrLn)
-import           System.Exit (exitFailure)
 
+import           Warden.Commands.Sample
+import           Warden.Error
+
+import           X.Control.Monad.Trans.Either (mapEitherT)
+import           X.Control.Monad.Trans.Either.Exit (orDie)
 import           X.Options.Applicative (cli, command')
 
 data Command =
@@ -28,9 +33,9 @@ main = do
   hSetBuffering stderr LineBuffering
   cli "warden-sample" buildInfoVersion dependencyInfo commandP $ \cmd ->
     case cmd of
-      Extract _op _fs -> do
-        hPutStrLn stderr $ "implement me!"
-        exitFailure
+      Extract op fs -> do
+        orDie renderWardenError . mapEitherT runResourceT $
+          extractNumericFields op fs
 
 commandP :: Parser Command
 commandP = subparser $
