@@ -31,8 +31,9 @@ prop_writeViewMarker vms =
   let
     vms' = fmap (\vm -> vm { vmView = v }) vms
     vms'' = fmap (setNumericFieldSummary nfs) vms'
+    fps = fmap viewMarkerPath vms''
 
-  writeViewMarker vm'
+  mapM_ writeViewMarker vms''
   vm'' <- readViewMarker $ viewMarkerPath vm'
   pure $ vm'' === vm'
 
