@@ -65,8 +65,9 @@ writeRow
 writeRow h xs =
   let
     row = T.encodeUtf8 . T.intercalate "," . fmap renderFractional $ VU.toList xs
-  in
+  in do
   BS.hPut h row
+  BS.hPut h "\n"
 
 transposeSamples :: V.Vector Sample -> V.Vector (VU.Vector Double)
 transposeSamples ss =
