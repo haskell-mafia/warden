@@ -606,8 +606,12 @@ instance Arbitrary FieldNumericState where
 instance Arbitrary NumericFieldSummary where
   arbitrary = oneof [
       pure NoNumericFieldSummary
-    , (NumericFieldSummary . V.fromList) <$> listOf1 arbitrary
+    , genNumericFieldSummary
     ]
+
+genNumericFieldSummary :: Gen NumericFieldSummary
+genNumericFieldSummary =
+  (NumericFieldSummary . V.fromList) <$> listOf1 arbitrary
 
 instance Arbitrary MStdDevAcc where
   arbitrary = oneof [
