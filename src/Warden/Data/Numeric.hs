@@ -8,35 +8,51 @@
 
 module Warden.Data.Numeric (
     FieldNumericState(..)
+
   , KAcc(..)
+
   , Maximum(..)
   , renderMaximum
+
   , Mean(..)
   , renderMean
+
   , MeanAcc(..)
+
   , MeanDevAcc(..)
+  , finalizeMeanDev
+
   , Median(..)
   , renderMedian
+
   , MNumericField(..)
+
   , MStdDevAcc(..)
+
   , Minimum(..)
   , renderMinimum
+
   , NumericField(..)
+
   , NumericState(..)
-  , NumericFieldSummary(..)
-  , NumericSummary(..)
-  , StdDev(..)
-  , renderStdDev
-  , StdDevAcc(..)
-  , Variance(..)
-  , finalizeMeanDev
-  , finalizeStdDevAcc
   , initialNumericState
-  , mkStdDev
-  , stdDevAccFromVariance
   , stateMaximum
   , stateMeanDev
   , stateMinimum
+
+  , NumericFieldSummary(..)
+
+  , NumericSummary(..)
+
+  , StdDev(..)
+  , mkStdDev
+  , renderStdDev
+
+  , StdDevAcc(..)
+  , finalizeStdDevAcc
+
+  , Variance(..)
+  , stdDevAccFromVariance
   , varianceFromStdDevAcc
   ) where
 
