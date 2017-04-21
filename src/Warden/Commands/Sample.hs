@@ -3,6 +3,7 @@
 
 module Warden.Commands.Sample (
     extractNumericFields
+  , summariseNumericFields
   , readNumericSummary
   , identical
 ) where
@@ -32,6 +33,13 @@ import           Warden.Marker
 import           X.Control.Monad.Trans.Either (EitherT)
 import           X.Control.Monad.Trans.Either (left, hoistEither)
 import qualified X.Data.Vector.Generic as XV
+
+summariseNumericFields
+  :: FilePath
+  -> [FilePath]
+  -> EitherT WardenError (ResourceT IO) ()
+summariseNumericFields _outd _fs =
+  left WardenNotImplementedError
 
 extractNumericFields
   :: FilePath
