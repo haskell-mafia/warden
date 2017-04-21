@@ -211,6 +211,7 @@ renderValidationFailure f = "Validation failure: " <> render' f
 
 data SampleError =
     NumericFieldMismatch
+  | ViewMismatch
   | NoNumericSummaries !FilePath
   deriving (Eq, Show)
 
@@ -219,6 +220,8 @@ renderSampleError = ("sample error: " <>) . render'
   where
     render' NumericFieldMismatch =
       "mismatch in field numeric types when combining markers"
+    render' ViewMismatch =
+      "mismatched views in provided markers"
     render' (NoNumericSummaries f) =
       "file contains no numeric summaries: " <> (T.pack f)
 
