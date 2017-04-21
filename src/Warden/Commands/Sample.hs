@@ -100,7 +100,8 @@ writeFieldSummaryStats d name xs =
   let
     fp = joinPath [d, T.unpack $ name <> ".csv"]
   in
-  liftIO $ withFile fp WriteMode $ \h ->
+  liftIO $ withFile fp WriteMode $ \h -> do
+    BS.hPut h $ T.encodeUtf8 summaryStatsHeader
     V.mapM_ (BS.hPut h . T.encodeUtf8 . renderSummaryStatsRecord) xs
 
 summariseStats
@@ -257,6 +258,19 @@ data SummaryStatsRecord =
   , summaryStdDev :: !StdDev
   , summaryMedian :: !Median
   } deriving (Eq, Show)
+
+summaryStatsHeader :: Text
+summaryStatsHeader =
+  flip T.snoc '\n' $
+    T.intercalate "," [
+      "start-date"
+    , "end-date"
+    , "minimum"
+    , "maximum"
+    , "mean"
+    , "std-dev"
+    , "median"
+    ]
 
 renderSummaryStatsRecord
   :: SummaryStatsRecord
