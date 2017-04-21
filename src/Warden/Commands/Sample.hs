@@ -129,7 +129,7 @@ reifySamples nss =
     False ->
       Left NumericFieldMismatch
     True ->
-      pure $ (V.fromList . catMaybes . V.toList . V.map sample) <$> nss
+      pure $ (XV.mapMaybe sample) <$> nss
 
 identical
   :: Eq a
