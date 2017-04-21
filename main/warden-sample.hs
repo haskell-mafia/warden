@@ -68,7 +68,8 @@ outputDirectoryP = strOption $
      metavar "OUTPUT"
   <> long "output-directory"
   <> short 'o'
-  <> help "Directory to write output files."
+  <> help "Directory to write output files (defaults to current working directory)."
+  <> value "."
 
 -- FIXME: dedupe (also in main warden cli)
 markerFileP :: Parser FilePath
