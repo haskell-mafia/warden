@@ -6,10 +6,13 @@
 module Warden.Commands.Sample (
     extractNumericFields
   , summariseNumericFields
+
   , readNumericSummary
   , identical
+  , writeFieldSummaryStats
 
   , SummaryStatsRecord(..)
+  , renderSummaryStatsRecord
 ) where
 
 import           Control.Monad.IO.Class (liftIO)
