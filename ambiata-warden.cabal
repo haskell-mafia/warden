@@ -87,6 +87,7 @@ library
                        Warden.Check.Row
                        Warden.Chunk
                        Warden.Commands
+                       Warden.Commands.Sample
                        Warden.Data
                        Warden.Data.Check
                        Warden.Data.Chunk

@@ -2,6 +2,7 @@ import           Disorder.Core.Main
 
 import qualified Test.Warden.Anomaly.KDTree
 import qualified Test.Warden.Anomaly.Metric
+import qualified Test.Warden.Commands.Sample
 import qualified Test.Warden.Data.Check
 import qualified Test.Warden.Data.Field
 import qualified Test.Warden.Data.FieldAnomaly
@@ -28,6 +29,7 @@ main :: IO ()
 main = disorderMain [
     Test.Warden.Anomaly.KDTree.tests
   , Test.Warden.Anomaly.Metric.tests
+  , Test.Warden.Commands.Sample.tests
   , Test.Warden.Data.Check.tests
   , Test.Warden.Data.Field.tests
   , Test.Warden.Data.FieldAnomaly.tests
