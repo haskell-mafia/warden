@@ -18,4 +18,16 @@ $WARDEN_SAMPLE --help
 
 WARDEN_SAMPLE="$WARDEN_SAMPLE --dry-run"
 
+#
+# warden-sample extract
+#
+
 $WARDEN_SAMPLE extract -o foo.csv bar.json baz.json
+
+#
+# warden-sample summarise
+#
+
+$WARDEN_SAMPLE summarise -o foo bar.json baz.json
+
+$WARDEN_SAMPLE summarise bar.json baz.json
