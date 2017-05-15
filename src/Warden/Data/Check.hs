@@ -25,7 +25,7 @@ module Warden.Data.Check (
 
 import           Control.DeepSeq.Generics (genericRnf)
 
-import           Data.List.NonEmpty (NonEmpty, (<|), nonEmpty)
+import           Data.List.NonEmpty (NonEmpty, (<|))
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S

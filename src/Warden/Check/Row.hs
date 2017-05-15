@@ -16,7 +16,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 
 import           Data.Conduit (Consumer, ($$))
 import qualified Data.Conduit.List as CL
-import           Data.List.NonEmpty (NonEmpty(..), nonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as S

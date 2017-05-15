@@ -22,9 +22,6 @@
 [submodule "lib/debruijn"]
 	path = lib/debruijn
 	url = git@github.com:ambiata/debruijn.git
-[submodule "lib/tinfoil"]
-	path = lib/tinfoil
-	url = git@github.com:ambiata/tinfoil.git
 [submodule "lib/tine"]
 	path = lib/tine
 	url = git@github.com:ambiata/tine.git
