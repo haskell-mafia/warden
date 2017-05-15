@@ -8,6 +8,7 @@ module Warden.Error (
   , MarkerError(..)
   , SampleError(..)
   , SchemaError(..)
+  , SummarizeError(..)
   , TraversalError(..)
   , ValidationFailure(..)
   , renderInferenceError
@@ -15,6 +16,7 @@ module Warden.Error (
   , renderMarkerError
   , renderSampleError
   , renderSchemaError
+  , renderSummarizeError
   , renderTraversalError
   , renderValidationFailure
   , renderWardenError
@@ -43,6 +45,7 @@ data WardenError =
   | WardenSchemaError SchemaError
   | WardenInferenceError InferenceError
   | WardenSampleError SampleError
+  | WardenSummarizeError SummarizeError
   deriving (Eq, Show)
 
 renderWardenError :: WardenError
@@ -56,6 +59,7 @@ renderWardenError = ("warden: " <>) . render'
     render' (WardenSchemaError se) = renderSchemaError se
     render' (WardenInferenceError ie) = renderInferenceError ie
     render' (WardenSampleError se) = renderSampleError se
+    render' (WardenSummarizeError se) = renderSummarizeError se
 
 data LoadError =
     RowDecodeFailed ViewFile Text
@@ -224,4 +228,19 @@ renderSampleError = ("sample error: " <>) . render'
       "mismatched views in provided markers"
     render' (NoNumericSummaries f) =
       "file contains no numeric summaries: " <> (T.pack f)
+
+data SummarizeError =
+    SummarizeNoViewMarkers
+  | SummarizeMarkerValidationFailure !ValidationFailure
+  deriving (Eq, Show)
+
+renderSummarizeError :: SummarizeError -> Text
+renderSummarizeError = ("summarize error: " <>) . render'
+  where
+    render' SummarizeNoViewMarkers =
+      "No view markers provided."
+    render' (SummarizeMarkerValidationFailure vf) =
+      "Invalid view markers: " <> renderValidationFailure vf
+
+
 

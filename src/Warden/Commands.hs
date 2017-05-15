@@ -62,7 +62,8 @@ sanity :: WardenParams
 sanity wps view sps =
   let idf = sanityIncludeDotFiles sps in do
   vfs <- traverseView idf view
-  frs <- fmap join . traverse (forM File.fileChecks) $ (File.runFileCheck wps (sanityVerbosity sps) (sanityForce sps)) <$> vfs
+  frs <- fmap join . traverse (forM File.fileChecks) $
+    (File.runFileCheck wps (sanityVerbosity sps) (sanityForce sps)) <$> vfs
   pure frs
 
 checkViewFiles :: WardenParams
@@ -106,8 +107,12 @@ validateSchema sf =
 
 summarizeMarkers :: [FilePath]
                  -> EitherT WardenError (ResourceT IO) ()
-summarizeMarkers _fs =
-  left WardenNotImplementedError
+summarizeMarkers fs =
+  case nonEmpty fs of
+    Nothing -> left $ WardenSummarizeError SummarizeNoViewMarkers
+    Just fs' -> do
+      ms <- mapM readViewMarker fs'
+      left WardenNotImplementedError
 
 failedMarkers :: [FilePath]
               -> EitherT WardenError (ResourceT IO) [FilePath]
