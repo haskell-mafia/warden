@@ -570,8 +570,10 @@ instance Arbitrary IncludeDotFiles where
 smallPositiveEven :: Gen Int
 smallPositiveEven = fmap (* 2) (choose (1, 20))
 
+-- KAcc is only defined for n >= 2 (corresponding to one or more records
+-- seen).
 instance Arbitrary KAcc where
-  arbitrary = fmap (KAcc . unNPlus) arbitrary
+  arbitrary = fmap (KAcc . (+ 1) . unNPlus) arbitrary
 
 instance Arbitrary StdDevAcc where
   arbitrary = fmap StdDevAcc (choose (0.0, 10000.0))
