@@ -46,6 +46,7 @@ import           Test.QuickCheck.Instances ()
 import           Text.Printf (printf)
 
 import           Warden.Anomaly.Data
+import           Warden.Commands.Sample
 import           Warden.Data
 import           Warden.Parser.PII
 
@@ -890,3 +891,19 @@ genFeatures d = do
 instance Arbitrary Dimensionality where
   arbitrary =
     Dimensionality <$> choose (1, 20)
+
+instance Arbitrary DateRange where
+  arbitrary =
+    DateRange
+      <$> arbitrary
+      <*> arbitrary
+
+instance Arbitrary SummaryStatsRecord where
+  arbitrary =
+    SummaryStatsRecord
+      <$> arbitrary -- dates
+      <*> arbitrary -- min
+      <*> arbitrary -- max
+      <*> arbitrary -- mean
+      <*> arbitrary -- stddev
+      <*> arbitrary -- median

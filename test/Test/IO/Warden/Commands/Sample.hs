@@ -7,13 +7,17 @@ module Test.IO.Warden.Commands.Sample where
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Resource (runResourceT)
 
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Data.Vector as V
 
 import           Disorder.Core.IO (testIO)
+import           Disorder.Core.Gen (genValidUtf81)
 
 import           P
 
 import           System.IO
+import           System.FilePath ((</>))
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -54,6 +58,23 @@ prop_readNumericSummary_no vm =
   writeViewMarker vm'
   nss' <- liftIO . runResourceT . runEitherT $ readNumericSummary mp
   pure $ Left (WardenSampleError (NoNumericSummaries mp)) === nss'
+
+prop_writeFieldSummaryStats_header :: SummaryStatsRecord -> Property
+prop_writeFieldSummaryStats_header ssr =
+  forAll genValidUtf81 $ \name ->
+  testIO $ withTestView $ \v -> unsafeWarden $ do
+    let
+      ssrs = V.singleton ssr
+      fp = (unView v) </> "summary.csv"
+
+    writeFieldSummaryStats fp name ssrs
+    x <- liftIO $ withFile fp ReadMode T.hGetLine
+
+    let
+      commas = T.count "," $ renderSummaryStatsRecord ssr
+      commas' = T.count "," x
+
+    pure $ commas === commas'
 
 setNumericFieldSummary :: NumericFieldSummary -> ViewMarker -> ViewMarker
 setNumericFieldSummary nfs vm =

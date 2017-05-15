@@ -8,30 +8,51 @@
 
 module Warden.Data.Numeric (
     FieldNumericState(..)
+
   , KAcc(..)
+
   , Maximum(..)
+  , renderMaximum
+
   , Mean(..)
+  , renderMean
+
   , MeanAcc(..)
+
   , MeanDevAcc(..)
-  , Median(..)
-  , MNumericField(..)
-  , MStdDevAcc(..)
-  , Minimum(..)
-  , NumericField(..)
-  , NumericState(..)
-  , NumericFieldSummary(..)
-  , NumericSummary(..)
-  , StdDev(..)
-  , StdDevAcc(..)
-  , Variance(..)
   , finalizeMeanDev
-  , finalizeStdDevAcc
+
+  , Median(..)
+  , renderMedian
+
+  , MNumericField(..)
+
+  , MStdDevAcc(..)
+
+  , Minimum(..)
+  , renderMinimum
+
+  , NumericField(..)
+
+  , NumericState(..)
   , initialNumericState
-  , mkStdDev
-  , stdDevAccFromVariance
   , stateMaximum
   , stateMeanDev
   , stateMinimum
+
+  , NumericFieldSummary(..)
+
+  , NumericSummary(..)
+
+  , StdDev(..)
+  , mkStdDev
+  , renderStdDev
+
+  , StdDevAcc(..)
+  , finalizeStdDevAcc
+
+  , Variance(..)
+  , stdDevAccFromVariance
   , varianceFromStdDevAcc
   ) where
 
@@ -70,6 +91,10 @@ instance Monoid Minimum where
           else Minimum prev
   {-# INLINE mappend #-}
 
+renderMinimum :: Text -> Minimum -> Text
+renderMinimum missing NoMinimum = missing
+renderMinimum _ (Minimum x) = renderFractional x
+
 data Maximum =
     Maximum !Double
   | NoMaximum
@@ -92,6 +117,10 @@ instance Monoid Maximum where
           then Maximum cur
           else Maximum prev
   {-# INLINE mappend #-}
+
+renderMaximum :: Text -> Maximum -> Text
+renderMaximum missing NoMaximum = missing
+renderMaximum _ (Maximum x) = renderFractional x
 
 -- | Counter param for mean/stddev calculation. Equal to one plus the number
 -- of records seen.
@@ -145,12 +174,20 @@ instance AEq Mean where
   _ ~== NoMean = False
   (Mean x) ~== (Mean y) = x ~== y
 
+renderMean :: Text -> Mean -> Text
+renderMean missing NoMean = missing
+renderMean _ (Mean x) = renderFractional x
+
 data Median =
     Median !Double
   | NoMedian
   deriving (Eq, Show, Generic)
 
 instance NFData Median where rnf = genericRnf
+
+renderMedian :: Text -> Median -> Text
+renderMedian missing NoMedian = missing
+renderMedian _ (Median x) = renderFractional x
 
 -- | Accumulator for standard deviation calculation. Closer to variance than 
 -- standard deviation to avoid repeated square roots.
@@ -221,6 +258,10 @@ instance AEq StdDev where
   NoStdDev ~== _ = False
   _ ~== NoStdDev = False
   (StdDev x) ~== (StdDev y) = x ~== y
+
+renderStdDev :: Text -> StdDev -> Text
+renderStdDev missing NoStdDev = missing
+renderStdDev _ (StdDev x) = renderFractional x
 
 mkStdDev :: Double -> StdDev
 mkStdDev v
