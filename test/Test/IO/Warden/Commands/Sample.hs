@@ -12,7 +12,7 @@ import qualified Data.Text.IO as T
 import qualified Data.Vector as V
 
 import           Disorder.Core.IO (testIO)
-import           Disorder.Core.Gen (genValidUtf81)
+import           Disorder.Corpus (muppets)
 
 import           P
 
@@ -61,13 +61,14 @@ prop_readNumericSummary_no vm =
 
 prop_writeFieldSummaryStats_header :: SummaryStatsRecord -> Property
 prop_writeFieldSummaryStats_header ssr =
-  forAll genValidUtf81 $ \name ->
+  forAll (elements muppets) $ \name ->
   testIO $ withTestView $ \v -> unsafeWarden $ do
     let
       ssrs = V.singleton ssr
-      fp = (unView v) </> "summary.csv"
+      d = unView v
+      fp = d </> (T.unpack $ name <> ".csv")
 
-    writeFieldSummaryStats fp name ssrs
+    writeFieldSummaryStats d name ssrs
     x <- liftIO $ withFile fp ReadMode T.hGetLine
 
     let
