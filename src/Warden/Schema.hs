@@ -45,4 +45,4 @@ renderSchema' = encodePretty . fromSchema
 
 writeSchema :: Schema -> SchemaFile -> EitherT WardenError (ResourceT IO) ()
 writeSchema s (SchemaFile fp) =
-  liftIO . writeFile fp $ renderSchema' s
+  liftIO . writeFile fp $ renderSchema' s `BSL.snoc` 0x0a

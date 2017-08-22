@@ -21,6 +21,7 @@ import           Control.Monad.Trans.Resource (ResourceT)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Aeson (decode')
 import           Data.Aeson.Types (Value, parseEither)
+import qualified Data.ByteString.Lazy as BSL
 import           Data.ByteString.Lazy (writeFile, readFile)
 import qualified Data.Text as T
 import           Data.Time.Zones (utcTZ)
@@ -44,7 +45,7 @@ writeFileMarker :: FileMarker -> EitherT WardenError (ResourceT IO) ()
 writeFileMarker fm =
   let markf = fileToMarker $ fmViewFile fm
       markJson = encodePretty $ fromFileMarker fm in
-  liftIO $ writeFile markf markJson
+  liftIO . writeFile markf $ markJson `BSL.snoc` 0x0a
 
 writeViewMarker :: ViewMarker -> EitherT WardenError (ResourceT IO) ()
 writeViewMarker vm =
@@ -52,7 +53,7 @@ writeViewMarker vm =
       markd = takeDirectory markf
       markJson = encodePretty $ fromViewMarker vm in liftIO $ do
   createDirectoryIfMissing True markd
-  writeFile markf markJson
+  writeFile markf $ markJson `BSL.snoc` 0x0a
 
 readJson :: FilePath -> EitherT WardenError (ResourceT IO) Value
 readJson fp = do
